@@ -25,12 +25,9 @@ import { PetGallery } from './PetGallery'
 
 const releaseVersion = '1.0.32'
 const releaseInstallerName = `WindowPet_Setup_v${releaseVersion}.exe`
-const releaseInstallerHref = `${import.meta.env.BASE_URL}downloads/${releaseInstallerName}`
-const releaseFileName = `window-pet-${releaseVersion}.zip`
-const releaseDownloadHref = `${import.meta.env.BASE_URL}downloads/${releaseFileName}`
-const releasePackageUrl = `https://windowpet.cn/pet/downloads/${releaseFileName}`
+const releaseInstallerHref = `https://github.com/panda008006/WindowPet/releases/download/v${releaseVersion}/${releaseInstallerName}`
 const releaseSha256 = 'db61578204c10f9fa1c4d8872a0ee665b996b680340af13e06b27e76f5c347f4'
-const githubRepoUrl = 'https://github.com/WindowPet/WindowPet'
+const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 
 const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
 
@@ -409,17 +406,11 @@ function App() {
           >
             GitHub 开源
           </a>
-          <a href={`${import.meta.env.BASE_URL}pay.html`} style={{ color: '#1677ff', fontWeight: 'bold' }}>
-            赞助特权
-          </a>
-          <a href={`${import.meta.env.BASE_URL}login.html`}>
-            账号登录
-          </a>
         </nav>
 
         <a className="nav-download" href={releaseInstallerHref} download={releaseInstallerName}>
           <Download size={17} />
-          下载安装包
+          免费下载 (50MB)
         </a>
       </header>
 
@@ -444,19 +435,20 @@ function App() {
               Window Pet 把可爱的角色、日常提醒和轻量桌面工具放在一起。下载后，选择喜欢的伙伴，让它陪你工作、休息和记录琐事。
             </p>
             <div className="hero-actions">
-              <a className="primary-download" href={releaseDownloadHref} download={releaseFileName}>
+              <a className="primary-download" href={releaseInstallerHref} download={releaseInstallerName}>
                 <Download size={21} />
-                下载 Windows 版
+                下载 Windows 安装包 (仅 50MB)
               </a>
               <button className="secondary-action" type="button" onClick={() => scrollToSection(1)}>
-                看看角色
+                浏览全部 24 款角色
                 <ChevronDown size={18} />
               </button>
             </div>
             <div className="hero-meta" aria-label="版本信息">
-              <span>v{releaseVersion}</span>
-              <span>Windows 10-11</span>
-              <span>桌面互动</span>
+              <span>v{releaseVersion} 正式版</span>
+              <span>仅 50MB 极速秒开</span>
+              <span>24 款全套萌宠</span>
+              <span>100% 永久免费开源</span>
             </div>
           </div>
 
@@ -742,15 +734,16 @@ function App() {
               </div>
               <a className="primary-download wide" href={releaseInstallerHref} download={releaseInstallerName}>
                 <Download size={20} />
-                下载 Windows 安装包 (推荐，自动桌面快捷方式)
+                下载 Windows 安装包 (仅 50MB · 极速推荐)
               </a>
               <a
                 className="secondary-action wide"
-                href={releaseDownloadHref}
-                download={releaseFileName}
+                href="https://github.com/panda008006/WindowPet/releases"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{ marginTop: '10px', width: '100%', justifyContent: 'center' }}
               >
-                下载绿色免安装版 (ZIP)
+                前往 GitHub Releases 查看发布动态
               </a>
               <div className="safety-note">
                 <strong>开源安全背书与 Windows 提示说明</strong>
@@ -767,11 +760,11 @@ function App() {
               <dl className="release-list">
                 <div>
                   <dt>开源仓库</dt>
-                  <dd><a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">GitHub / WindowPet</a></dd>
+                  <dd><a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">panda008006/WindowPet</a></dd>
                 </div>
                 <div>
                   <dt>官方直链</dt>
-                  <dd>{releasePackageUrl}</dd>
+                  <dd><a href={releaseInstallerHref} target="_blank" rel="noopener noreferrer">GitHub Releases 附件直达</a></dd>
                 </div>
                 <div>
                   <dt>SHA256</dt>
