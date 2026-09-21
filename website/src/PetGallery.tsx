@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowLeft,
   Camera,
   Check,
   Code2,
@@ -23,6 +22,7 @@ import './gallery.css'
 
 interface PetGalleryProps {
   onBackToHome?: () => void
+  onClose?: () => void
 }
 
 const themeOptions = [
@@ -42,7 +42,8 @@ function generateOrderNumber() {
   return `WP-PET-2026-${nextOrderSeq}`
 }
 
-export function PetGallery({ onBackToHome }: PetGalleryProps) {
+export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
+  const handleClose = onClose || onBackToHome
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedPet, setSelectedPet] = useState<GalleryPet | null>(null)
@@ -224,30 +225,30 @@ export function PetGallery({ onBackToHome }: PetGalleryProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        closePetDetail()
-        setIsCustomModalOpen(false)
-        setIsCreatorModalOpen(false)
+        if (selectedPet) {
+          closePetDetail()
+        } else if (isCustomModalOpen) {
+          setIsCustomModalOpen(false)
+        } else if (isCreatorModalOpen) {
+          setIsCreatorModalOpen(false)
+        } else if (handleClose) {
+          handleClose()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [selectedPet, isCustomModalOpen, isCreatorModalOpen, handleClose])
 
   return (
     <div className="gallery-page-container" data-gallery-theme={theme}>
       {/* 顶部导航 Header */}
       <header className="gallery-header">
         <div className="gallery-header-left">
-          {onBackToHome && (
-            <button className="gallery-back-btn" type="button" onClick={onBackToHome} title="返回官网首页">
-              <ArrowLeft size={16} />
-              <span>官网首页</span>
-            </button>
-          )}
           <div className="gallery-logo-brand">
             <PawPrint size={22} color="var(--brand)" />
             <span>WindowPet</span>
-            <span className="gallery-logo-badge">小鼻嘎展馆</span>
+            <span className="gallery-logo-badge">小鼻嘎展馆 · 全 24 款萌宠</span>
           </div>
         </div>
 
@@ -311,6 +312,20 @@ export function PetGallery({ onBackToHome }: PetGalleryProps) {
               />
             ))}
           </div>
+
+          {/* 优雅关闭展馆浮层按钮 */}
+          {handleClose && (
+            <button
+              type="button"
+              className="gallery-lightbox-close-btn"
+              onClick={handleClose}
+              title="关闭展馆 (ESC)"
+              aria-label="关闭展馆"
+            >
+              <X size={17} />
+              <span>关闭展馆</span>
+            </button>
+          )}
         </div>
       </header>
 

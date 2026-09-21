@@ -244,21 +244,41 @@ function petAsset(fileName: string) {
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'gallery'>(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#/gallery' ? 'gallery' : 'home'
+  const [isGalleryOpen, setIsGalleryOpen] = useState(() => {
+    return typeof window !== 'undefined' && window.location.hash === '#/gallery'
   })
 
   useEffect(() => {
     const handleHash = () => {
       if (window.location.hash === '#/gallery') {
-        setCurrentView('gallery')
-      } else if (!window.location.hash || window.location.hash === '#home') {
-        setCurrentView('home')
+        setIsGalleryOpen(true)
       }
     }
     window.addEventListener('hashchange', handleHash)
     return () => window.removeEventListener('hashchange', handleHash)
   }, [])
+
+  const handleOpenGallery = () => {
+    setIsGalleryOpen(true)
+  }
+
+  const handleCloseGallery = () => {
+    setIsGalleryOpen(false)
+    if (window.location.hash === '#/gallery') {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+  }
+
+  useEffect(() => {
+    if (isGalleryOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isGalleryOpen])
 
   const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
   const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
@@ -323,6 +343,7 @@ function App() {
   }
 
   const handleWheel: WheelEventHandler<HTMLElement> = (event) => {
+    if (isGalleryOpen) return
     if (window.matchMedia('(max-width: 860px)').matches || Math.abs(event.deltaY) < 18) return
 
     event.preventDefault()
@@ -337,17 +358,6 @@ function App() {
     window.setTimeout(() => {
       wheelLockRef.current = false
     }, 760)
-  }
-
-  if (currentView === 'gallery') {
-    return (
-      <PetGallery
-        onBackToHome={() => {
-          window.location.hash = ''
-          setCurrentView('home')
-        }}
-      />
-    )
   }
 
   return (
@@ -377,18 +387,15 @@ function App() {
               {item.label}
             </a>
           ))}
-          <a
+          <button
+            type="button"
             className="nav-gallery-link"
-            href="#/gallery"
-            onClick={(event) => {
-              event.preventDefault()
-              window.location.hash = '#/gallery'
-              setCurrentView('gallery')
-            }}
+            onClick={handleOpenGallery}
+            title="打开小鼻嘎展馆，查看全部 24 款萌宠"
           >
             小鼻嘎展馆
             <span className="nav-gallery-tag">NEW</span>
-          </a>
+          </button>
           <a
             className="nav-github-link"
             href={githubRepoUrl}
@@ -472,7 +479,18 @@ function App() {
           <div className="section-heading">
             <p className="eyebrow">CHOOSE YOUR PET</p>
             <h2>选择你的桌面伙伴</h2>
-            <p>喜欢安静陪伴、软萌反馈，还是灵敏互动？点击角色和动作，先看看它在桌面上的样子。</p>
+            <p>
+              喜欢安静陪伴、软萌反馈，还是灵敏互动？点击角色和动作，先看看它在桌面上的样子。
+              <button
+                type="button"
+                className="section-heading-gallery-link"
+                onClick={handleOpenGallery}
+                title="打开小鼻嘎展馆，探索全部 24 款萌宠"
+              >
+                <Sparkles size={14} />
+                <span>探索全部 24 款萌宠图鉴</span>
+              </button>
+            </p>
           </div>
 
           <div className="pet-showcase">
@@ -759,6 +777,20 @@ function App() {
           </footer>
         </div>
       </section>
+
+      {isGalleryOpen && (
+        <div
+          className="gallery-lightbox-overlay"
+          onClick={handleCloseGallery}
+          role="dialog"
+          aria-modal="true"
+          aria-label="WindowPet 小鼻嘎展馆"
+        >
+          <div className="gallery-lightbox-card" onClick={(e) => e.stopPropagation()}>
+            <PetGallery onClose={handleCloseGallery} />
+          </div>
+        </div>
+      )}
     </main>
   )
 }
