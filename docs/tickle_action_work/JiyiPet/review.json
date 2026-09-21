@@ -1,0 +1,23 @@
+{
+    "character":  "JiyiPet",
+    "animation":  "feather-tickle",
+    "personality_route":  "shy bashful giggle with pink pouch",
+    "source":  "[local-source-not-in-handoff]/feather-tickle-generated-strip.png",
+    "frames":  [
+                   "[local-source-not-in-handoff]/00.png",
+                   "[local-source-not-in-handoff]/01.png",
+                   "[local-source-not-in-handoff]/02.png",
+                   "[local-source-not-in-handoff]/03.png",
+                   "[local-source-not-in-handoff]/04.png",
+                   "[local-source-not-in-handoff]/05.png",
+                   "[local-source-not-in-handoff]/06.png",
+                   "[local-source-not-in-handoff]/07.png"
+               ],
+    "frame_count":  8,
+    "cell_size":  [
+                      192,
+                      208
+                  ],
+    "chroma_key":  "#00FF00",
+    "notes":  "Generated with built-in image generation and extracted by keeping the main connected sprite component per slot."
+}

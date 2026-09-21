@@ -87,3 +87,8 @@ venv.bak/
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Media raw sources
+video_sources/
+*.mov
+*.mp4

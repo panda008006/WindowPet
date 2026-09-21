@@ -1,0 +1,21 @@
+{
+  "id": "screensaver-sleep",
+  "name": "Screensaver Sleep",
+  "description": "Put the pet into a looping sleep or lying-down animation when screensaver mode starts.",
+  "events": {
+    "screen_saver_enter": {
+      "animation_candidates": [
+        "sleep",
+        "sleeping",
+        "lying-sleep",
+        "nap",
+        "idle_sleep",
+        "idle_sleepy",
+        "waiting",
+        "idle"
+      ],
+      "loop": true,
+      "return_to_idle": false
+    }
+  }
+}

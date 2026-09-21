@@ -1,0 +1,33 @@
+{
+  "id": "wake-stretch",
+  "name": "Wake Stretch",
+  "description": "Play a short stretch or wake-up animation on app startup and when screensaver sleep ends.",
+  "events": {
+    "startup": {
+      "animation_candidates": [
+        "stretch",
+        "wake-stretch",
+        "waking-up",
+        "wake",
+        "waving",
+        "jumping",
+        "idle"
+      ],
+      "loop": false,
+      "return_to_idle": true
+    },
+    "screen_saver_exit": {
+      "animation_candidates": [
+        "stretch",
+        "wake-stretch",
+        "waking-up",
+        "wake",
+        "waving",
+        "jumping",
+        "idle"
+      ],
+      "loop": false,
+      "return_to_idle": true
+    }
+  }
+}
