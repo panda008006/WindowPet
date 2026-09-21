@@ -5,7 +5,7 @@
 #define MyAppDisplayName "WindowPet 桌面宠物"
 #define MyAppVersion "1.0.32"
 #define MyAppPublisher "WindowPet Open Source Community"
-#define MyAppURL "https://github.com/WindowPet/WindowPet"
+#define MyAppURL "https://github.com/panda008006/WindowPet"
 #define MyAppExeName "Window Pet.exe"
 
 [Setup]
