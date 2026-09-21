@@ -1042,6 +1042,95 @@
   overflow-wrap: anywhere;
 }
 
+.download-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #638098;
+  padding-top: 6px;
+}
+
+.download-links a {
+  color: #126ad6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.download-links a:hover {
+  text-decoration: underline;
+}
+
+.page-bottom-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(143, 191, 235, 0.22);
+  font-size: 12px;
+  color: rgba(92, 103, 120, 0.72);
+}
+
+.page-bottom-footer a {
+  color: rgba(92, 103, 120, 0.72);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.page-bottom-footer a:hover {
+  color: #126ad6;
+  text-decoration: underline;
+}
+
+/* 最后一页精简单屏吸附适配：防止内容过长撑破 100vh */
+.control-page {
+  padding-top: 76px;
+  padding-bottom: 20px;
+}
+
+.control-page .section-heading {
+  margin-bottom: 12px;
+}
+
+.control-page .cockpit-and-download {
+  grid-template-columns: minmax(0, 1.15fr) 360px;
+  gap: 16px;
+}
+
+.control-page .cockpit-window {
+  min-height: 420px;
+}
+
+.control-page .cockpit-body {
+  min-height: 370px;
+}
+
+.control-page .cockpit-hero {
+  padding: 16px;
+  gap: 16px;
+}
+
+.control-page .cockpit-hero img {
+  width: 150px;
+}
+
+.control-page .cockpit-hero strong {
+  font-size: 26px;
+}
+
+.control-page .cockpit-tools div {
+  min-height: 46px;
+  font-size: 13px;
+}
+
+.control-page .download-panel {
+  padding: 18px;
+  gap: 12px;
+}
+
 .medal-wall {
   display: grid;
   gap: 14px;

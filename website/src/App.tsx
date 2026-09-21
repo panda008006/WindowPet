@@ -26,7 +26,6 @@ import { PetGallery } from './PetGallery'
 const releaseVersion = '1.0.32'
 const releaseInstallerName = `WindowPet_Setup_v${releaseVersion}.exe`
 const releaseInstallerHref = `https://github.com/panda008006/WindowPet/releases/download/v${releaseVersion}/${releaseInstallerName}`
-const releaseSha256 = 'db61578204c10f9fa1c4d8872a0ee665b996b680340af13e06b27e76f5c347f4'
 const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 
 const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
@@ -123,13 +122,6 @@ const featureCards = [
     title: '桌面互动',
     text: '点一下、拖一下、逗一下，它都会用动作回应，让桌面不再只是背景。',
   },
-]
-
-const cockpitSteps = [
-  '下载压缩包并解压',
-  '打开 Window Pet',
-  '选择喜欢的角色',
-  '按需调整位置和大小',
 ]
 
 const controlViews = [
@@ -749,30 +741,22 @@ function App() {
                 <strong>开源安全背书与 Windows 提示说明</strong>
                 <span>WindowPet 已在 GitHub 全量开源，绿色安全。若初次运行提示“未知发布者”，点击【更多信息】选择【仍要运行】即可正常开启。</span>
               </div>
-              <ol className="install-steps">
-                {cockpitSteps.map((step) => (
-                  <li key={step}>
-                    <CheckCircle2 size={17} />
-                    {step}
-                  </li>
-                ))}
-              </ol>
-              <dl className="release-list">
-                <div>
-                  <dt>开源仓库</dt>
-                  <dd><a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">panda008006/WindowPet</a></dd>
-                </div>
-                <div>
-                  <dt>官方直链</dt>
-                  <dd><a href={releaseInstallerHref} target="_blank" rel="noopener noreferrer">GitHub Releases 附件直达</a></dd>
-                </div>
-                <div>
-                  <dt>SHA256</dt>
-                  <dd>{releaseSha256}</dd>
-                </div>
-              </dl>
+              <div className="download-links">
+                <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">GitHub 开源仓库</a>
+                <span>·</span>
+                <a href="https://github.com/panda008006/WindowPet/releases" target="_blank" rel="noopener noreferrer">版本发布记录</a>
+                <span>·</span>
+                <span>MIT 协议</span>
+              </div>
             </div>
           </div>
+
+          <footer className="page-bottom-footer">
+            <span>© 2026 WindowPet Open Source Community · 永久开源免费</span>
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+              桂ICP备2026009615号-2
+            </a>
+          </footer>
         </div>
       </section>
     </main>
