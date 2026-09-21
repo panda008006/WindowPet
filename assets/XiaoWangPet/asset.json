@@ -33,8 +33,8 @@
     }
   },
   "video_sources": {
-    "idle": "video_sources/idle_Puppy_panting_in_chroma_studio_20260911234138.mp4",
-    "click": "video_sources/click_Puppy_performing_tricks_on_screen_20260911234708.mp4",
-    "drag": "video_sources/drag_Puppy_swimming_in_mid-air_1080p_20260911234846.mp4"
+    "idle": "video_sources/idle_audio.aac",
+    "click": "video_sources/click_audio.aac",
+    "drag": "video_sources/drag_audio.aac"
   }
 }

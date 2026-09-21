@@ -61,9 +61,9 @@
     }
   },
   "video_sources": {
-    "gesture-dance": "video_sources/source_character_transparent.mov",
-    "happy-dance": "video_sources/happy-dance_character_transparent.mov",
-    "reverse-warning": "video_sources/reverse-warning_character_transparent.mov"
+    "gesture-dance": "video_sources/source_audio.aac",
+    "happy-dance": "video_sources/happy-dance_audio.aac",
+    "reverse-warning": "video_sources/reverse-warning_audio.aac"
   },
   "triggers": {
     "left-click": "click",

@@ -40,8 +40,8 @@
     }
   },
   "video_sources": {
-    "idle": "video_sources/idle_transparent.mov",
-    "click": "video_sources/source_transparent.mov",
-    "drag": "video_sources/source_transparent.mov"
+    "idle": "video_sources/idle_audio.aac",
+    "click": "video_sources/click_audio.aac",
+    "eat": "video_sources/eat_audio.aac"
   }
 }

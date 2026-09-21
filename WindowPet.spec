@@ -30,7 +30,9 @@ EXTERNAL_ROOT = Path(DISTPATH)
 
 # 打进 exe 的素材（运行时从 _MEIPASS 读取；外置副本仍由 collect_external_data 复制）
 datas = [
-    (str(ROOT / "assets"), "assets"),
+    (str(ROOT / "assets" / "UiAssets"), "assets/UiAssets"),
+    (str(ROOT / "assets" / "XiaobaPet"), "assets/XiaobaPet"),
+    (str(ROOT / "assets" / "XiaochaiPet"), "assets/XiaochaiPet"),
     (str(ROOT / "AI角色制作"), "AI角色制作"),
     (str(ROOT / "AGENTS.md"), "."),
     (str(ROOT / "CLAUDE.md"), "."),

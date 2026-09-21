@@ -89,6 +89,7 @@ venv.bak/
 Thumbs.db
 
 # Media raw sources
-video_sources/
 *.mov
 *.mp4
+*.mkv
+*.avi
