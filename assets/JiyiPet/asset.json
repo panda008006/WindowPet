@@ -1,0 +1,169 @@
+{
+  "type": "frame_animation",
+  "name": "吉伊",
+  "fps": 8,
+  "preview": "jiyi_01.png",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running",
+    "shy-paw-fidget",
+    "shy-cheek-peek",
+    "bashful-small-bow"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 8,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 8,
+      "loop": true
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 8,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 10,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 8,
+      "loop": false
+    },
+    "running": {
+      "folder": "running",
+      "fps": 8,
+      "loop": false
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 10,
+      "loop": false
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 10,
+      "loop": false
+    },
+    "review": {
+      "folder": "review",
+      "fps": 8,
+      "loop": false
+    },
+    "concert-hum": {
+      "folder": "concert-hum",
+      "fps": 8,
+      "loop": false,
+      "duration_seconds": 20
+    },
+    "reward": {
+      "folder": "reward",
+      "fps": 8,
+      "loop": false
+    },
+    "shy-paw-fidget": {
+      "folder": "shy-paw-fidget",
+      "fps": 8,
+      "loop": false
+    },
+    "shy-cheek-peek": {
+      "folder": "shy-cheek-peek",
+      "fps": 8,
+      "loop": false
+    },
+    "bashful-small-bow": {
+      "folder": "bashful-small-bow",
+      "fps": 8,
+      "loop": false
+    },
+    "fall": {
+      "folder": "fall",
+      "fps": 8,
+      "loop": true
+    },
+    "land": {
+      "folder": "land",
+      "fps": 8,
+      "loop": false
+    },
+    "edge-crawl-bottom": {
+      "folder": "edge-crawl-bottom",
+      "fps": 8,
+      "loop": false
+    },
+    "edge-crawl-top": {
+      "folder": "edge-crawl-top",
+      "fps": 8,
+      "loop": false
+    },
+    "edge-crawl-left": {
+      "folder": "edge-crawl-left",
+      "fps": 8,
+      "loop": false
+    },
+    "edge-crawl-right": {
+      "folder": "trio-right-fig2",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-bottom-fig1": {
+      "folder": "trio-bottom-fig1",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-bottom-fig3": {
+      "folder": "trio-bottom-fig3",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-right-fig2": {
+      "folder": "trio-right-fig2",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-time-1500-fig4": {
+      "folder": "trio-time-1500-fig4",
+      "fps": 8,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "notes": "Independent hover/click frames added 2026-05-19 from imagegen sources; replaced waving/jumping reuse."
+}

@@ -1,0 +1,162 @@
+{
+    "type":  "frame_animation",
+    "name":  "小豚鼠吉祥物",
+    "fps":  10,
+    "preview":  "logo-guinea-pig_01.png",
+    "character_id":  "logo-guinea-pig",
+    "idle_variants":  [
+                          "waiting",
+                          "waving",
+                          "review",
+                          "running"
+                      ],
+    "animations":  {
+                       "idle":  {
+                                    "folder":  ".",
+                                    "fps":  10,
+                                    "loop":  true
+                                },
+                       "hover":  {
+                                     "folder":  "hover",
+                                     "fps":  10,
+                                     "loop":  false
+                                 },
+                       "click":  {
+                                     "folder":  "click",
+                                     "fps":  12,
+                                     "loop":  false
+                                 },
+                       "waiting":  {
+                                       "folder":  "waiting",
+                                       "fps":  10,
+                                       "loop":  false
+                                   },
+                       "right-double-click":  {
+                                                  "folder":  "waving",
+                                                  "fps":  10,
+                                                  "loop":  false
+                                              },
+                       "waving":  {
+                                      "folder":  "waving",
+                                      "fps":  10,
+                                      "loop":  false
+                                  },
+                       "jumping":  {
+                                       "folder":  "jumping",
+                                       "fps":  12,
+                                       "loop":  false
+                                   },
+                       "failed":  {
+                                      "folder":  "failed",
+                                      "fps":  10,
+                                      "loop":  false
+                                  },
+                       "running":  {
+                                       "folder":  "running",
+                                       "fps":  10,
+                                       "loop":  false
+                                   },
+                       "running-left":  {
+                                            "folder":  "running-left",
+                                            "fps":  12,
+                                            "loop":  false
+                                        },
+                       "running-right":  {
+                                             "folder":  "running-right",
+                                             "fps":  12,
+                                             "loop":  false
+                                         },
+                       "review":  {
+                                      "folder":  "review",
+                                      "fps":  10,
+                                      "loop":  false
+                                  },
+                       "drag":  {
+                                    "folder":  "drag",
+                                    "fps":  10,
+                                    "loop":  true
+                                },
+                       "mascot-greeting":  {
+                                               "folder":  "mascot-greeting",
+                                               "fps":  10,
+                                               "loop":  false
+                                           },
+                       "fall":  {
+                                    "folder":  "fall",
+                                    "fps":  10,
+                                    "loop":  true,
+                                    "duration_seconds":  0
+                                },
+                       "land":  {
+                                    "folder":  "land",
+                                    "fps":  12,
+                                    "loop":  false
+                                },
+                       "sleep":  {
+                                     "folder":  "sleep",
+                                     "fps":  8,
+                                     "loop":  true
+                                 },
+                       "wake-stretch":  {
+                                            "folder":  "wake-stretch",
+                                            "fps":  10,
+                                            "loop":  false
+                                        },
+                       "reward":  {
+                                      "folder":  "reward",
+                                      "fps":  10,
+                                      "loop":  false
+                                  },
+                       "edge-crawl-top":  {
+                                              "folder":  "edge-crawl-top",
+                                              "fps":  8,
+                                              "loop":  true,
+                                              "duration_seconds":  0
+                                          },
+                       "edge-crawl-bottom":  {
+                                                 "folder":  "edge-crawl-bottom",
+                                                 "fps":  8,
+                                                 "loop":  true,
+                                                 "duration_seconds":  0
+                                             },
+                       "edge-crawl-left":  {
+                                               "folder":  "edge-crawl-left",
+                                               "fps":  8,
+                                               "loop":  true,
+                                               "duration_seconds":  0
+                                           },
+                       "edge-crawl-right":  {
+                                                "folder":  "edge-crawl-right",
+                                                "fps":  8,
+                                                "loop":  true,
+                                                "duration_seconds":  0
+                                            },
+                       "feather-tickle":  {
+                                              "folder":  "waving",
+                                              "fps":  10,
+                                              "loop":  false,
+                                              "source_animation":  "waving"
+                                          },
+                       "whip-hit":  {
+                                        "folder":  "failed",
+                                        "fps":  10,
+                                        "loop":  false,
+                                        "source_animation":  "failed"
+                                    }
+                   },
+    "missing_action_source":  {
+                                  "source_sheet":  "[local-source-not-in-handoff]/ig_092916a0ab05654d0169ff580ec594819a8935470817c74a57.png",
+                                  "frames":  {
+                                                 "fall":  7,
+                                                 "land":  7,
+                                                 "sleep":  7,
+                                                 "wake-stretch":  7,
+                                                 "reward":  7,
+                                                 "edge-crawl-top":  7,
+                                                 "edge-crawl-bottom":  7,
+                                                 "edge-crawl-left":  8,
+                                                 "edge-crawl-right":  8
+                                             },
+                                  "style":  "calm low-profile capybara/guinea-pig mascot actions"
+                              }
+}

@@ -1,0 +1,92 @@
+{
+  "type": "frame_animation",
+  "name": "黄前久美子",
+  "fps": 10,
+  "preview": "kumiko_01.png",
+  "character_id": "kumiko",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 10,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 10,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 12,
+      "loop": false
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 10,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 10,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 10,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 12,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 10,
+      "loop": false
+    },
+    "running": {
+      "folder": "running",
+      "fps": 10,
+      "loop": false
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 12,
+      "loop": false
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 12,
+      "loop": false
+    },
+    "review": {
+      "folder": "review",
+      "fps": 10,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "feather-tickle": {
+      "folder": "waving",
+      "fps": 10,
+      "loop": false,
+      "source_animation": "waving"
+    },
+    "whip-hit": {
+      "folder": "failed",
+      "fps": 10,
+      "loop": false,
+      "source_animation": "failed"
+    }
+  }
+}

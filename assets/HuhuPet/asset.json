@@ -1,0 +1,96 @@
+{
+  "type": "frame_animation",
+  "name": "小狐",
+  "fps": 8,
+  "preview": "huhu_01.png",
+  "character_id": "huhu",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 8,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 8,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 10,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 8,
+      "loop": false
+    },
+    "running": {
+      "folder": "running",
+      "fps": 8,
+      "loop": true
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 10,
+      "loop": true
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 10,
+      "loop": true
+    },
+    "review": {
+      "folder": "review",
+      "fps": 8,
+      "loop": false
+    },
+    "reward": {
+      "folder": "reward",
+      "fps": 8,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "notes": "Remade 2026-05-19 with hatch-pet image generation. Replaces the earlier source-sheet extraction version that looked choppy. running-left is mirrored from generated running-right because Huhu has no text, logo, handed prop, or side-specific identity mark."
+}

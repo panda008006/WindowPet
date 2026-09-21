@@ -1,0 +1,112 @@
+{
+  "type": "frame_animation",
+  "name": "水豚嘟嘟",
+  "fps": 10,
+  "preview": "lulu-capybara_01.png",
+  "character_id": "dudu-capybara",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 10,
+      "loop": true,
+      "label": "基础待机"
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 10,
+      "loop": false,
+      "label": "好奇注视"
+    },
+    "click": {
+      "folder": "click",
+      "fps": 12,
+      "loop": false,
+      "label": "轻戳点击"
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false,
+      "label": "羽毛挠痒"
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 10,
+      "loop": false,
+      "label": "乖乖等待"
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 10,
+      "loop": false,
+      "label": "双击互动"
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 10,
+      "loop": false,
+      "label": "挥手打招呼"
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 12,
+      "loop": false,
+      "label": "开心跳跃"
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 10,
+      "loop": false,
+      "label": "受挫委屈"
+    },
+    "running": {
+      "folder": "running",
+      "fps": 10,
+      "loop": false,
+      "label": "欢快奔跑"
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 12,
+      "loop": false,
+      "label": "向左奔跑"
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 12,
+      "loop": false,
+      "label": "向右奔跑"
+    },
+    "review": {
+      "folder": "review",
+      "fps": 10,
+      "loop": false,
+      "label": "特殊才艺"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true,
+      "label": "提溜拖拽"
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false,
+      "label": "抽鞭督促"
+    }
+  },
+  "has_music": true,
+  "music_file": "dudu_music.wav",
+  "triggers": {
+    "left-click": "click",
+    "left-drag": "drag",
+    "left-double-click": "right-double-click"
+  }
+}

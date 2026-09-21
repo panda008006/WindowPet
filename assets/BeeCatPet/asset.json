@@ -1,0 +1,47 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "哈基蜂",
+  "character_id": "BeeCatPet",
+  "fps": 10,
+  "preview": "BeeCatPet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 10,
+      "loop": true
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false,
+      "label": "大口吃东西"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "eat": {
+      "folder": "eat",
+      "fps": 10,
+      "loop": false,
+      "label": "张嘴大口吃东西"
+    }
+  },
+  "source": {
+    "method": "video_import",
+    "actions": {
+      "idle": "video_sources/idle_audio.aac",
+      "click": "video_sources/click_audio.aac",
+      "drag": 96,
+      "eat": "video_sources/eat_audio.aac"
+    }
+  },
+  "video_sources": {
+    "idle": "video_sources/idle_transparent.mov",
+    "click": "video_sources/source_transparent.mov",
+    "drag": "video_sources/source_transparent.mov"
+  }
+}
