@@ -1,0 +1,15 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "我的角色",
+  "character_id": "my-pet",
+  "fps": 10,
+  "preview": "my-pet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": { "folder": ".", "fps": 8, "loop": true },
+    "click": { "folder": "click", "fps": 10, "loop": false },
+    "drag": { "folder": "drag", "fps": 10, "loop": true },
+    "waving": { "folder": "waving", "fps": 10, "loop": false, "label": "挥挥手" }
+  }
+}

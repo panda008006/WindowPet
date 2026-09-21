@@ -1,0 +1,85 @@
+{
+  "profile": "creator-default",
+  "description": "平台只保留待机、单击和拖拽三种基础状态；额外动作由用户从右键“动作”菜单按名称选择，不设置额外自动触发方式",
+  "canvas": {
+    "width": 192,
+    "height": 208,
+    "format": "PNG",
+    "alpha_required": true
+  },
+  "reference_image_policy": {
+    "mode": "reference_first",
+    "required_when_user_attaches_image": true,
+    "source_of_truth": "original_attached_image",
+    "must_extract_before_animation": true,
+    "attach_reference_to_every_action_job": true,
+    "forbid_text_only_redraw": true,
+    "forbid_redesign_or_identity_drift": true,
+    "if_reference_unavailable": "stop_and_request_attachment"
+  },
+  "action_motion_policy": {
+    "require_character_action_research_when_identifiable": true,
+    "research_target_count": "3-5",
+    "require_all_basic_actions": true,
+    "require_idle_independent_frames": true,
+    "require_unique_action_per_basic_action": true,
+    "require_frame_level_pose_changes": true,
+    "image_generation_provider": "user_configured_api_or_account",
+    "forbid_overlay_icons": true,
+    "forbid_sticker_or_separate_png_compositing": true,
+    "require_anticipation_action_settle": true,
+    "require_one_image_per_frame": true,
+    "forbid_whole_image_scaling_only": true,
+    "forbid_translation_rotation_opacity_only": true,
+    "forbid_shared_animation_aliases_for_basic_actions": true,
+    "manual_actions_require_human_readable_name": true
+  },
+  "storage": {
+    "informational_only": true,
+    "default_frames_per_action": 6
+  },
+  "master_sheet": {
+    "format": "6_columns_x_3_rows",
+    "total_cells": 18,
+    "preferred_size": [3072, 1536],
+    "minimum_recommended_size": [2304, 1152],
+    "row_order": [
+      "idle",
+      "click",
+      "drag"
+    ],
+    "shared_crop_and_scale": true,
+    "preserve_authored_motion_offset": true,
+    "atomic_install": true,
+    "overwrite_existing_character": false
+  },
+  "required_actions": {
+    "idle": { "target_frames": 6, "min_frames": 4, "fps": 8, "loop": true },
+    "click": { "target_frames": 6, "min_frames": 4, "fps": 10, "loop": false },
+    "drag": { "target_frames": 6, "min_frames": 4, "fps": 10, "loop": true }
+  },
+  "optional_actions": {
+    "unlimited": true,
+    "default_frames_each": 6,
+    "display_in_right_click_actions_menu": true,
+    "must_have_human_readable_label": true,
+    "examples": ["waving", "dance", "concert-special", "feather-tickle", "whip-hit", "fall", "land"]
+  },
+  "special_modes": {
+    "head_track": {
+      "description": "仅用于身体静止、头部或眼神随鼠标方向变化的角色",
+      "grid": "5x5",
+      "required_animations": ["idle", "head_track"],
+      "exclude_from_basic_action_profile": true
+    }
+  },
+  "triggers": [
+    "idle",
+    "left_click",
+    "left_drag"
+  ],
+  "right_click": {
+    "opens_menu_only": true,
+    "manual_action_playback": "one_shot_then_idle"
+  }
+}

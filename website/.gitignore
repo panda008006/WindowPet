@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+server/.data/
+public/downloads/*.zip
+*.log
+.DS_Store
+Thumbs.db

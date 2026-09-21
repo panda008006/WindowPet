@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>账号中心 - WindowPet 小鼻嘎</title>
+<link rel="icon" href="/pet/favicon.ico">
+<style>
+:root {
+  --primary: #0052d9;
+  --primary-light: #e8f0fe;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-subtle: #666666;
+  --border: #e0e5ec;
+  --success: #07c160;
+  --danger: #e34d59;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+}
+.logo { text-align: center; margin-bottom: 24px; }
+.logo h1 { font-size: 24px; color: var(--primary); font-weight: 700; }
+.logo p { font-size: 13px; color: var(--text-subtle); margin-top: 4px; }
+.tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 22px; }
+.tab {
+  flex: 1; text-align: center; padding: 10px 0; font-size: 14px; color: var(--text-subtle);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s;
+  font-weight: 500;
+}
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.fg { margin-bottom: 14px; }
+.fg label { display: block; font-size: 12px; color: var(--text-subtle); margin-bottom: 6px; font-weight: 500; }
+.fg input {
+  width: 100%; padding: 11px 13px; font-size: 14px; border: 1px solid var(--border);
+  border-radius: 8px; outline: none; transition: border-color .2s;
+}
+.fg input:focus { border-color: var(--primary); }
+.ir { display: flex; gap: 8px; }
+.ir input { flex: 1; }
+.btn-send {
+  white-space: nowrap; padding: 0 14px; font-size: 12px; background: var(--primary-light);
+  color: var(--primary); border: 1px solid var(--primary); border-radius: 8px; cursor: pointer;
+  font-weight: 600; transition: all .2s;
+}
+.btn-send:disabled { background: #f0f0f0; color: #999; border-color: #e0e0e0; cursor: not-allowed; }
+.btn-submit {
+  width: 100%; padding: 12px; font-size: 15px; font-weight: 600; background: var(--primary);
+  color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 6px; transition: opacity .2s;
+}
+.btn-submit:hover { opacity: .92; }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+.msg { font-size: 13px; text-align: center; margin-top: 10px; min-height: 20px; line-height: 20px; }
+.msg.s { color: var(--success); }
+.msg.e { color: var(--danger); }
+.panel { display: none; }
+.panel.active { display: block; }
+.sub-links { display: flex; justify-content: space-between; margin-top: 12px; font-size: 12px; }
+.sub-links a { color: var(--primary); text-decoration: none; cursor: pointer; }
+.sub-links a:hover { text-decoration: underline; }
+.ft { text-align: center; font-size: 12px; color: #999; margin-top: 20px; }
+.user-info { text-align: center; padding: 20px 0; }
+.user-badge {
+  display: inline-block; background: #fff3e0; color: #e65100; font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 12px; margin-top: 8px; border: 1px solid #ffe082;
+}
+.user-badge.vip { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.nav-btn {
+  display: inline-block; margin-top: 16px; padding: 10px 20px; background: var(--primary);
+  color: #fff; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>🐾 WindowPet</h1>
+    <p>桌面宠物，陪你每一天</p>
+  </div>
+
+  <div id="auth-container">
+    <div class="tabs">
+      <div class="tab active" data-tab="login">登录</div>
+      <div class="tab" data-tab="register">注册</div>
+      <div class="tab" data-tab="reset">重置密码</div>
+    </div>
+
+    <!-- 登录 -->
+    <div class="panel active" id="panel-login">
+      <div class="fg">
+        <label>常用邮箱</label>
+        <input type="email" id="l-email" placeholder="name@example.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>账号密码</label>
+        <input type="password" id="l-pwd" placeholder="输入密码" autocomplete="current-password">
+      </div>
+      <button class="btn-submit" id="l-btn" onclick="handleLogin()">立即登录</button>
+      <div class="msg" id="l-msg"></div>
+    </div>
+
+    <!-- 注册 -->
+    <div class="panel" id="panel-register">
+      <div class="fg">
+        <label>常用邮箱</label>
+        <input type="email" id="r-email" placeholder="接收验证码的邮箱" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>邮箱验证码</label>
+        <div class="ir">
+          <input type="text" id="r-code" placeholder="6 位验证码" maxlength="6">
+          <button class="btn-send" id="r-send-btn" onclick="sendCode('register')">发送验证码</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>你的昵称</label>
+        <input type="text" id="r-name" placeholder="设置昵称">
+      </div>
+      <div class="fg">
+        <label>设置密码</label>
+        <input type="password" id="r-pwd" placeholder="至少 6 位密码" autocomplete="new-password">
+      </div>
+      <button class="btn-submit" id="r-btn" onclick="handleRegister()">创建账号</button>
+      <div class="msg" id="r-msg"></div>
+    </div>
+
+    <!-- 重置密码 -->
+    <div class="panel" id="panel-reset">
+      <div class="fg">
+        <label>注册邮箱</label>
+        <input type="email" id="f-email" placeholder="已注册的邮箱" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>邮箱验证码</label>
+        <div class="ir">
+          <input type="text" id="f-code" placeholder="6 位验证码" maxlength="6">
+          <button class="btn-send" id="f-send-btn" onclick="sendCode('reset_password')">发送验证码</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>设置新密码</label>
+        <input type="password" id="f-pwd" placeholder="设置新密码（至少 6 位）" autocomplete="new-password">
+      </div>
+      <button class="btn-submit" id="f-btn" onclick="handleResetPassword()">重置密码</button>
+      <div class="msg" id="f-msg"></div>
+    </div>
+  </div>
+
+  <div id="user-container" style="display:none;" class="user-info">
+    <h2 id="u-name" style="font-size:18px;"></h2>
+    <p id="u-email" style="font-size:13px;color:var(--text-subtle);margin-top:4px;"></p>
+    <div id="u-badge" class="user-badge">标准账号</div>
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;">
+      <a href="/pet/" class="nav-btn">返回官网</a>
+      <a href="/pet/pay.html" class="nav-btn" style="background:#07c160;">赞助与特权</a>
+    </div>
+    <div style="margin-top:16px;">
+      <a onclick="handleLogout()" style="font-size:12px;color:var(--danger);cursor:pointer;">退出登录</a>
+    </div>
+  </div>
+
+  <div class="ft">WindowPet 小鼻嘎 · 桌面伙伴</div>
+</div>
+
+<script>
+const API_BASE = '/pet-api';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    clearMsgs();
+  });
+});
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg ' + (type || '');
+}
+
+function clearMsgs() {
+  document.querySelectorAll('.msg').forEach(m => { m.textContent = ''; m.className = 'msg'; });
+}
+
+let countdownTimers = {};
+function startCountdown(btnId, seconds) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = true;
+  let s = seconds;
+  btn.textContent = `${s}s 后重试`;
+  if (countdownTimers[btnId]) clearInterval(countdownTimers[btnId]);
+  countdownTimers[btnId] = setInterval(() => {
+    s -= 1;
+    if (s <= 0) {
+      clearInterval(countdownTimers[btnId]);
+      btn.disabled = false;
+      btn.textContent = '发送验证码';
+    } else {
+      btn.textContent = `${s}s 后重试`;
+    }
+  }, 1000);
+}
+
+async function sendCode(purpose) {
+  const emailInput = purpose === 'register' ? document.getElementById('r-email') : document.getElementById('f-email');
+  const msgId = purpose === 'register' ? 'r-msg' : 'f-msg';
+  const btnId = purpose === 'register' ? 'r-send-btn' : 'f-send-btn';
+  const email = emailInput.value.trim();
+
+  if (!email || !email.includes('@')) {
+    return showMsg(msgId, '请先填写有效邮箱地址', 'e');
+  }
+
+  showMsg(msgId, '正在发送验证码...', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/email-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, purpose })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return showMsg(msgId, data.error || '验证码发送失败', 'e');
+    }
+    showMsg(msgId, data.message || '验证码已发送至邮箱，请查收', 's');
+    startCountdown(btnId, 60);
+  } catch (err) {
+    showMsg(msgId, '网络请求失败，请稍后再试', 'e');
+  }
+}
+
+async function handleLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pwd').value;
+  if (!email) return showMsg('l-msg', '请输入邮箱', 'e');
+  if (!password) return showMsg('l-msg', '请输入密码', 'e');
+
+  showMsg('l-msg', '正在登录...', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return showMsg('l-msg', data.error || '登录失败，请检查账号密码', 'e');
+    }
+    localStorage.setItem('wp_token', data.token);
+    localStorage.setItem('wp_user', JSON.stringify(data.user));
+    showMsg('l-msg', '登录成功！正在跳转...', 's');
+    setTimeout(renderUser, 800);
+  } catch (err) {
+    showMsg('l-msg', '网络异常，请重试', 'e');
+  }
+}
+
+async function handleRegister() {
+  const email = document.getElementById('r-email').value.trim();
+  const code = document.getElementById('r-code').value.trim();
+  const name = document.getElementById('r-name').value.trim();
+  const password = document.getElementById('r-pwd').value;
+
+  if (!email) return showMsg('r-msg', '请填写邮箱', 'e');
+  if (!code) return showMsg('r-msg', '请填写邮箱验证码', 'e');
+  if (!password || password.length < 6) return showMsg('r-msg', '密码至少需要 6 位', 'e');
+
+  showMsg('r-msg', '正在创建账号...', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, emailCode: code, name: name || email.split('@')[0], password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return showMsg('r-msg', data.error || '注册失败', 'e');
+    }
+    localStorage.setItem('wp_token', data.token);
+    localStorage.setItem('wp_user', JSON.stringify(data.user));
+    showMsg('r-msg', '注册成功并已自动登录！', 's');
+    setTimeout(renderUser, 800);
+  } catch (err) {
+    showMsg('r-msg', '网络异常，请重试', 'e');
+  }
+}
+
+async function handleResetPassword() {
+  const email = document.getElementById('f-email').value.trim();
+  const code = document.getElementById('f-code').value.trim();
+  const password = document.getElementById('f-pwd').value;
+
+  if (!email) return showMsg('f-msg', '请填写邮箱', 'e');
+  if (!code) return showMsg('f-msg', '请填写邮箱验证码', 'e');
+  if (!password || password.length < 6) return showMsg('f-msg', '密码至少需要 6 位', 'e');
+
+  showMsg('f-msg', '正在重置密码...', '');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, emailCode: code, newPassword: password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return showMsg('f-msg', data.error || '重置密码失败', 'e');
+    }
+    localStorage.setItem('wp_token', data.token);
+    localStorage.setItem('wp_user', JSON.stringify(data.user));
+    showMsg('f-msg', '密码重置成功！已自动登录', 's');
+    setTimeout(renderUser, 800);
+  } catch (err) {
+    showMsg('f-msg', '网络异常，请重试', 'e');
+  }
+}
+
+function handleLogout() {
+  const token = localStorage.getItem('wp_token');
+  if (token) {
+    fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).catch(() => {});
+  }
+  localStorage.removeItem('wp_token');
+  localStorage.removeItem('wp_user');
+  document.getElementById('user-container').style.display = 'none';
+  document.getElementById('auth-container').style.display = 'block';
+}
+
+function renderUser() {
+  const userStr = localStorage.getItem('wp_user');
+  if (!userStr) {
+    document.getElementById('auth-container').style.display = 'block';
+    document.getElementById('user-container').style.display = 'none';
+    return;
+  }
+  try {
+    const user = JSON.parse(userStr);
+    document.getElementById('auth-container').style.display = 'none';
+    const uc = document.getElementById('user-container');
+    uc.style.display = 'block';
+    document.getElementById('u-name').textContent = user.name || 'WindowPet 用户';
+    document.getElementById('u-email').textContent = user.email || '';
+    const badge = document.getElementById('u-badge');
+    if (user.isVip || user.allUnlocked) {
+      badge.textContent = '🌟 VIP 会员 · 永久全角色已解锁';
+      badge.className = 'user-badge vip';
+    } else {
+      badge.textContent = '标准账号（未解锁全角色）';
+      badge.className = 'user-badge';
+    }
+  } catch {
+    handleLogout();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('wp_token');
+  if (token) {
+    fetch(`${API_BASE}/api/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(res => res.json()).then(data => {
+      if (data && data.user) {
+        localStorage.setItem('wp_user', JSON.stringify(data.user));
+        renderUser();
+      } else {
+        handleLogout();
+      }
+    }).catch(() => renderUser());
+  } else {
+    renderUser();
+  }
+});
+</script>
+</body>
+</html>

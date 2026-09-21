@@ -1,0 +1,29 @@
+{
+  "current_scene": "notes",
+  "anchor_mode": "pet",
+  "opacity": 0.95,
+  "pin_top": true,
+  "scenes": {
+    "todo": {
+      "title": "待办清单",
+      "content": "# 今日待办\n- [ ] 体验 WindowPet 3D 黏土拟态新界面\n- [ ] 使用 NotchNotes 便签记录任务灵感\n- [ ] 尝试把文件拖入底部暂存架快速暂存\n"
+    },
+    "notes": {
+      "title": "工作笔记",
+      "content": "# 工作与学习笔记\n\n## 快捷提示\n- 灵感来源于 **oil-oil/NotchNotes** 暗黑美学便签\n- 点击便签顶部药丸按钮可在 **Todo / Notes / Ideas** 之间流畅切换\n- 支持 Markdown 语法与底部文件随手暂存架\n"
+    },
+    "ideas": {
+      "title": "灵感草稿",
+      "content": "# 脑洞与碎碎念\n\n- [Idea] 给桌宠增加更多微互动动作\n- [Idea] 定时提醒与番茄钟完成联动播报\n"
+    }
+  },
+  "file_shelf": [
+    {
+      "path": "G:\\Windpet\\WindowPet最终交接打包_2026年8月15日172746\\01_发给同事_项目包\\01_软件与源码\\03_最新开发源码1.0.32_candidate\\icon.ico",
+      "name": "icon.ico",
+      "ext": ".ico",
+      "size": "82.0 KB",
+      "is_dir": false
+    }
+  ]
+}

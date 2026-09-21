@@ -1,0 +1,138 @@
+{
+  "type": "frame_animation",
+  "name": "小八",
+  "fps": 8,
+  "preview": "xiaoba_01.png",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running",
+    "sunny-guitar-bounce",
+    "buddy-guitar-cheer"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 8,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 8,
+      "loop": true
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 8,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 10,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 8,
+      "loop": false
+    },
+    "running": {
+      "folder": "running",
+      "fps": 8,
+      "loop": false
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 10,
+      "loop": false
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 10,
+      "loop": false
+    },
+    "review": {
+      "folder": "review",
+      "fps": 8,
+      "loop": false
+    },
+    "concert-piano": {
+      "folder": "concert-piano",
+      "fps": 8,
+      "loop": false,
+      "duration_seconds": 20
+    },
+    "reward": {
+      "folder": "reward",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-bottom-fig1": {
+      "folder": "trio-bottom-fig1",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-bottom-fig3": {
+      "folder": "trio-bottom-fig3",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-right-fig2": {
+      "folder": "trio-right-fig2",
+      "fps": 8,
+      "loop": false
+    },
+    "edge-crawl-right": {
+      "folder": "trio-right-fig2",
+      "fps": 8,
+      "loop": false
+    },
+    "trio-time-1500-fig4": {
+      "folder": "trio-time-1500-fig4",
+      "fps": 8,
+      "loop": false
+    },
+    "sunny-guitar-bounce": {
+      "folder": "sunny-guitar-bounce",
+      "fps": 8,
+      "loop": false
+    },
+    "buddy-guitar-cheer": {
+      "folder": "buddy-guitar-cheer",
+      "fps": 8,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "notes": "Independent hover/click frames added 2026-05-19 from imagegen sources; replaced waving/jumping reuse."
+}

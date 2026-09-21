@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "code_width": 4,
+  "ranges": {"official": "0001-0999", "custom": "1000-7999", "campaign": "8000-8999", "internal": "9000-9999"},
+  "packages": [
+    {"code":"0001","package_id":"bear","folder_name":"BearPet","display_name":"Bear","owner_type":"official","status":"published"},
+    {"code":"0002","package_id":"bubu","folder_name":"BubuPet","display_name":"Bubu","owner_type":"official","status":"published"},
+    {"code":"0003","package_id":"buya","folder_name":"BuyaPet","display_name":"\u4e0d\u9e2d","owner_type":"official","status":"published"},
+    {"code":"0004","package_id":"huhu2","folder_name":"Huhu2Pet","display_name":"\u547c\u547c","owner_type":"official","status":"published"},
+    {"code":"0005","package_id":"huhu","folder_name":"HuhuPet","display_name":"\u5c0f\u72d0","owner_type":"official","status":"published"},
+    {"code":"0006","package_id":"jiyi","folder_name":"JiyiPet","display_name":"\u5409\u4f0a","owner_type":"official","status":"published"},
+    {"code":"0007","package_id":"kumiko","folder_name":"KumikoPet","display_name":"\u9ec4\u524d\u4e45\u7f8e\u5b50","owner_type":"official","status":"published"},
+    {"code":"0008","package_id":"kun-like","folder_name":"KunLikePet","display_name":"Kun Like","owner_type":"official","status":"published"},
+    {"code":"0009","package_id":"logo-guinea-pig","folder_name":"LogoGuineaPigPet","display_name":"\u5c0f\u8c5a\u9f20\u5409\u7965\u7269","owner_type":"official","status":"published"},
+    {"code":"0010","package_id":"lulu-capybara","folder_name":"LuluCapybaraPet","display_name":"\u6c34\u8c5a\u565c\u565c","owner_type":"official","status":"published"},
+    {"code":"0011","package_id":"mianmian","folder_name":"MianmianPet","display_name":"\u7ef5\u7ef5","owner_type":"official","status":"published"},
+    {"code":"0012","package_id":"nezuko","folder_name":"NezukoPet","display_name":"Nezuko","owner_type":"official","status":"published"},
+    {"code":"0013","package_id":"nuonuo","folder_name":"NuonuoPet","display_name":"\u7cef\u7cef","owner_type":"official","status":"published"},
+    {"code":"0014","package_id":"panda","folder_name":"PandaPet","display_name":"Panda","owner_type":"official","status":"published"},
+    {"code":"0015","package_id":"penguin-sister","folder_name":"PenguinSisterPet","display_name":"\u4f01\u9e45\u59b9","owner_type":"official","status":"published"},
+    {"code":"0016","package_id":"usagi","folder_name":"UsagiPet","display_name":"\u4e4c\u8428\u5947","owner_type":"official","status":"published"},
+    {"code":"1001","package_id":"xiaoba","folder_name":"XiaobaPet","display_name":"\u5c0f\u516b","owner_type":"custom","status":"preview"},
+    {"code":"0018","package_id":"xiaochai","folder_name":"XiaochaiPet","display_name":"\u5c0f\u67f4","owner_type":"official","status":"published"},
+    {"code":"0019","package_id":"window-pet-buddy","folder_name":"WindowPetBuddy","display_name":"\u7535\u5149\u5c0f\u9f3b\u560e","owner_type":"official","status":"preview"},
+    {"code":"0020","package_id":"kukukaka","folder_name":"KukukakaPet","display_name":"\u5e93\u5e93\u5494\u5494","owner_type":"official","status":"legacy"},
+    {"code":"0021","package_id":"dora","folder_name":"DoraPet","display_name":"Dora","owner_type":"official","status":"published"}
+  ]
+}

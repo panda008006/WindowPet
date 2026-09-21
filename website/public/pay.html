@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Window Pet - 支付宝扫码支付 / 会员赞助</title>
+  <link rel="icon" type="image/svg+xml" href="/pet/favicon.svg">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --alipay: #1677ff;
+      --alipay-hover: #0958d9;
+      --success: #10b981;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 70%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 50px rgba(59, 130, 246, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .brand-logo img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .brand-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .user-badge span {
+      color: var(--text-muted);
+    }
+
+    .user-badge strong {
+      color: #38bdf8;
+    }
+
+    .user-badge a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .plans-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .plan-card {
+      position: relative;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .plan-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .plan-card.selected {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .plan-info h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plan-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      color: #fff;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .plan-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .plan-price {
+      text-align: right;
+    }
+
+    .price-num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    .price-unit {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+
+    .original-price {
+      font-size: 12px;
+      color: #64748b;
+      text-decoration: line-through;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .pay-button {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--alipay), #00a0e9);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 20px rgba(22, 119, 255, 0.35);
+    }
+
+    .pay-button:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(22, 119, 255, 0.45);
+    }
+
+    .pay-button:active {
+      transform: translateY(0);
+    }
+
+    .pay-button svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* QR Code Payment View */
+    .qr-view {
+      display: none;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .qr-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 16px 0;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .qr-image {
+      width: 220px;
+      height: 220px;
+      display: block;
+    }
+
+    .qr-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .qr-tip {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .qr-countdown {
+      font-size: 12px;
+      color: #f59e0b;
+      margin-bottom: 16px;
+    }
+
+    .qr-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-mock {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-mock:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+
+    /* Paid Success View */
+    .success-view {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 2px solid var(--success);
+      color: var(--success);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+
+    .success-view h3 {
+      font-size: 22px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .success-view p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .feature-checkmarks {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+    }
+
+    .feature-checkmarks li {
+      list-style: none;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-checkmarks li::before {
+      content: "✓";
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-links a {
+      color: #38bdf8;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand-header">
+      <a href="/pet/" class="brand-logo">
+        <img src="/pet/apple-touch-icon.png" alt="Window Pet">
+        <span>Window Pet</span>
+      </a>
+      <p class="brand-subtitle">桌面萌宠 · 终身特权与角色解锁</p>
+    </div>
+
+    <!-- User Account Status -->
+    <div class="user-badge" id="userBadge">
+      <div>
+        <span>当前绑定账号：</span>
+        <strong id="userAccountDisplay">未登录（游客）</strong>
+      </div>
+      <a href="/pet/login.html" id="userActionLink">前往登录</a>
+    </div>
+
+    <!-- Step 1: Select Plan & Create Order -->
+    <div id="selectionView">
+      <div class="section-title">
+        <span>选择特权方案</span>
+        <span style="font-size: 11px; color: #38bdf8;">限时特惠</span>
+      </div>
+
+      <div class="plans-grid" id="plansContainer">
+        <div class="plan-card selected" data-id="plan_lifetime_vip" data-amount="9.90" onclick="selectPlan(this)">
+          <div class="plan-info">
+            <h4>终身全角色解锁包 <span class="plan-tag">最受欢迎</span></h4>
+            <div class="plan-desc">一键解锁全套 8 款角色、全部动作与永久 VIP 标识</div>
+          </div>
+          <div class="plan-price">
+            <div class="price-num">￥9.90<span class="price-unit">/永久</span></div>
+            <div class="original-price">￥29.90</div>
+          </div>
+        </div>
+
+        <div class="plan-card" data-id="plan_vip_ai" data-amount="19.90" onclick="selectPlan(this)">
+          <div class="plan-info">
+            <h4>终身 VIP + 优先 AI 配额</h4>
+            <div class="plan-desc">含全角色解锁 + 永久优先 AI 对话配额 + 专属气泡</div>
+          </div>
+          <div class="plan-price">
+            <div class="price-num">￥19.90<span class="price-unit">/永久</span></div>
+            <div class="original-price">￥59.90</div>
+          </div>
+        </div>
+
+        <div class="plan-card" data-id="plan_sponsor" data-amount="29.90" onclick="selectPlan(this)">
+          <div class="plan-info">
+            <h4>开发者赞助包</h4>
+            <div class="plan-desc">全特权 + 角色工坊首发体验 + 贡献者专属金色勋章</div>
+          </div>
+          <div class="plan-price">
+            <div class="price-num">￥29.90<span class="price-unit">/赞助</span></div>
+            <div class="original-price">￥99.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="accountInput">授权账号（手机号或邮箱，用于开通永久权益）</label>
+        <input type="text" id="accountInput" placeholder="请输入您的邮箱或手机号" required>
+      </div>
+
+      <button class="pay-button" id="startPayBtn" onclick="initiatePayment()">
+        <svg viewBox="0 0 1024 1024">
+          <path d="M798.72 593.92c-56.32-35.84-128-66.56-209.92-87.04 25.6-35.84 46.08-76.8 61.44-117.76H768v-61.44H563.2V256h-81.92v71.68H256v61.44h317.44c-15.36 35.84-35.84 71.68-61.44 102.4-76.8-25.6-158.72-35.84-240.64-35.84v61.44c76.8 0 153.6 10.24 225.28 35.84-81.92 61.44-184.32 107.52-296.96 133.12l35.84 61.44c122.88-30.72 235.52-87.04 327.68-158.72 76.8 20.48 148.48 51.2 204.8 87.04l50.68-60.48z"/>
+        </svg>
+        <span>支付宝扫码支付 ￥<span id="btnPriceDisplay">9.90</span></span>
+      </button>
+    </div>
+
+    <!-- Step 2: QR Code Scanning View -->
+    <div id="qrView" class="qr-view">
+      <div class="qr-title">请使用手机支付宝扫码支付</div>
+      <div class="qr-tip">支付完成后将自动开通特权，请勿关闭本页面</div>
+
+      <div class="qr-card">
+        <img id="qrImage" class="qr-image" src="" alt="支付宝付款码">
+      </div>
+
+      <div class="qr-countdown" id="qrCountdown">支付倒计时：05:00</div>
+
+      <div class="qr-actions">
+        <button class="btn-mock" id="mockPayBtn" onclick="simulatePay()" style="display: none;">
+          ⚡ [沙箱/测试模式] 点击一键模拟支付成功
+        </button>
+        <button class="btn-secondary" onclick="backToSelection()">
+          返回重新选择方案
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Success View -->
+    <div id="successView" class="success-view">
+      <div class="success-icon">✓</div>
+      <h3>支付成功，权益已到账！</h3>
+      <p>感谢您对 Window Pet 的支持！您的账号已永久开通 VIP 权益与全角色解锁。</p>
+
+      <ul class="feature-checkmarks">
+        <li>全套 8 款萌宠角色全部解锁</li>
+        <li>动作工坊（Action Studio）自由自定义</li>
+        <li>闭麦静音与定时关机/休眠功能已激活</li>
+        <li>多设备云端配置与勋章数据永久漫游</li>
+      </ul>
+
+      <div style="display: flex; gap: 12px;">
+        <a href="/pet/downloads/window-pet-1.0.32.zip" class="pay-button" style="text-decoration: none; flex: 1;">
+          下载最新桌面端
+        </a>
+        <a href="/pet/" class="btn-secondary" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+          返回官网
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <a href="/pet/">官网首页</a> ·
+      <a href="/pet/login.html">账号登录</a> ·
+      <a href="/pet/#/gallery">萌宠展馆</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/pet-api';
+    let currentOrderId = null;
+    let pollTimer = null;
+    let countdownTimer = null;
+    let selectedPlanId = 'plan_lifetime_vip';
+    let selectedAmount = '9.90';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkLoginStatus();
+      fetchPlans();
+    });
+
+    function checkLoginStatus() {
+      try {
+        const storedUser = localStorage.getItem('wp_user');
+        const token = localStorage.getItem('wp_token');
+        if (storedUser && token) {
+          const user = JSON.parse(storedUser);
+          const account = user.email || user.username || user.phone || '已登录用户';
+          document.getElementById('userAccountDisplay').textContent = account;
+          document.getElementById('accountInput').value = account;
+          document.getElementById('userActionLink').textContent = '切换账号';
+        }
+      } catch (e) {
+        console.warn('Read user info failed:', e);
+      }
+    }
+
+    async function fetchPlans() {
+      try {
+        const res = await fetch(`${API_BASE}/api/pay/plans`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.plans && data.plans.length > 0) {
+          renderPlans(data.plans);
+        }
+      } catch (e) {
+        console.warn('Fetch plans failed, using default fallback plans:', e);
+      }
+    }
+
+    function renderPlans(plans) {
+      const container = document.getElementById('plansContainer');
+      container.innerHTML = '';
+      plans.forEach((plan, idx) => {
+        const card = document.createElement('div');
+        card.className = `plan-card ${idx === 0 ? 'selected' : ''}`;
+        card.dataset.id = plan.id;
+        card.dataset.amount = (plan.amount / 100).toFixed(2);
+        card.onclick = () => selectPlan(card);
+
+        const original = plan.originalPrice ? `<div class="original-price">￥${(plan.originalPrice / 100).toFixed(2)}</div>` : '';
+        const tag = plan.tag ? `<span class="plan-tag">${plan.tag}</span>` : '';
+
+        card.innerHTML = `
+          <div class="plan-info">
+            <h4>${plan.name} ${tag}</h4>
+            <div class="plan-desc">${plan.description || ''}</div>
+          </div>
+          <div class="plan-price">
+            <div class="price-num">￥${(plan.amount / 100).toFixed(2)}<span class="price-unit">/${plan.period || '永久'}</span></div>
+            ${original}
+          </div>
+        `;
+        container.appendChild(card);
+        if (idx === 0) {
+          selectedPlanId = plan.id;
+          selectedAmount = (plan.amount / 100).toFixed(2);
+          document.getElementById('btnPriceDisplay').textContent = selectedAmount;
+        }
+      });
+    }
+
+    function selectPlan(element) {
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedPlanId = element.dataset.id;
+      selectedAmount = element.dataset.amount;
+      document.getElementById('btnPriceDisplay').textContent = selectedAmount;
+    }
+
+    async function initiatePayment() {
+      const account = document.getElementById('accountInput').value.trim();
+      if (!account) {
+        alert('请输入授权账号（邮箱或手机号），以保证权益顺利到账！');
+        document.getElementById('accountInput').focus();
+        return;
+      }
+
+      const btn = document.getElementById('startPayBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 正在创建支付宝订单...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pay/order/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planId: selectedPlanId,
+            amount: selectedAmount,
+            paymentMethod: 'alipay',
+            email: account,
+            returnUrl: window.location.href
+          })
+        });
+
+        const data = await res.json();
+        const orderId = data.orderId || (data.order && data.order.id);
+        if (!orderId) {
+          throw new Error(data.message || data.error || '创建支付订单失败');
+        }
+
+        currentOrderId = orderId;
+        showQrCodeView({
+          orderId: orderId,
+          isSimulation: data.isSimulation || data.simulation || (data.order && data.order.isSimulation),
+          qrCodeUrl: data.qrCodeUrl || (data.order && data.order.qrCodeUrl)
+        });
+      } catch (err) {
+        alert('发起支付失败: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg viewBox="0 0 1024 1024">
+            <path d="M798.72 593.92c-56.32-35.84-128-66.56-209.92-87.04 25.6-35.84 46.08-76.8 61.44-117.76H768v-61.44H563.2V256h-81.92v71.68H256v61.44h317.44c-15.36 35.84-35.84 71.68-61.44 102.4-76.8-25.6-158.72-35.84-240.64-35.84v61.44c76.8 0 153.6 10.24 225.28 35.84-81.92 61.44-184.32 107.52-296.96 133.12l35.84 61.44c122.88-30.72 235.52-87.04 327.68-158.72 76.8 20.48 148.48 51.2 204.8 87.04l50.68-60.48z"/>
+          </svg>
+          <span>支付宝扫码支付 ￥<span id="btnPriceDisplay">${selectedAmount}</span></span>
+        `;
+      }
+    }
+
+    function showQrCodeView(orderData) {
+      document.getElementById('selectionView').style.display = 'none';
+      const qrView = document.getElementById('qrView');
+      qrView.style.display = 'block';
+
+      const qrImg = document.getElementById('qrImage');
+      qrImg.src = `${API_BASE}/api/pay/qrcode/${orderData.orderId}?t=${Date.now()}`;
+
+      const mockBtn = document.getElementById('mockPayBtn');
+      if (orderData.isSimulation || window.location.search.includes('test=1')) {
+        mockBtn.style.display = 'block';
+      } else {
+        mockBtn.style.display = 'none';
+      }
+
+      startCountdown(300);
+      startPolling(orderData.orderId);
+    }
+
+    function startCountdown(seconds) {
+      clearInterval(countdownTimer);
+      let remaining = seconds;
+      const display = document.getElementById('qrCountdown');
+
+      countdownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownTimer);
+          clearInterval(pollTimer);
+          display.textContent = '订单已超时，请重新发起';
+          alert('支付二维码已过期，请重新创建订单');
+          backToSelection();
+        } else {
+          const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+          const s = String(remaining % 60).padStart(2, '0');
+          display.textContent = `支付倒计时：${m}:${s}`;
+        }
+      }, 1000);
+    }
+
+    function startPolling(orderId) {
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pay/order/status/${orderId}`);
+          if (!res.ok) return;
+          const statusData = await res.json();
+          if (statusData.isPaid || statusData.status === 'paid') {
+            clearInterval(pollTimer);
+            clearInterval(countdownTimer);
+            showSuccessView();
+          }
+        } catch (e) {
+          console.warn('Poll status error:', e);
+        }
+      }, 2000);
+    }
+
+    async function simulatePay() {
+      if (!currentOrderId) return;
+      const btn = document.getElementById('mockPayBtn');
+      btn.disabled = true;
+      btn.textContent = '正在模拟支付确认...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pay/order/mock-pay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: currentOrderId })
+        });
+        const data = await res.json();
+        if (data.ok || data.success) {
+          clearInterval(pollTimer);
+          clearInterval(countdownTimer);
+          showSuccessView();
+        } else {
+          alert('模拟支付失败: ' + (data.message || '未知错误'));
+          btn.disabled = false;
+        }
+      } catch (err) {
+        alert('请求失败: ' + err.message);
+        btn.disabled = false;
+      }
+    }
+
+    function showSuccessView() {
+      document.getElementById('qrView').style.display = 'none';
+      document.getElementById('selectionView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+
+      try {
+        const stored = localStorage.getItem('wp_user');
+        if (stored) {
+          const user = JSON.parse(stored);
+          user.isVip = true;
+          localStorage.setItem('wp_user', JSON.stringify(user));
+        }
+      } catch (e) {}
+    }
+
+    function backToSelection() {
+      clearInterval(pollTimer);
+      clearInterval(countdownTimer);
+      currentOrderId = null;
+      document.getElementById('qrView').style.display = 'none';
+      document.getElementById('successView').style.display = 'none';
+      document.getElementById('selectionView').style.display = 'block';
+
+      const btn = document.getElementById('startPayBtn');
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg viewBox="0 0 1024 1024">
+          <path d="M798.72 593.92c-56.32-35.84-128-66.56-209.92-87.04 25.6-35.84 46.08-76.8 61.44-117.76H768v-61.44H563.2V256h-81.92v71.68H256v61.44h317.44c-15.36 35.84-35.84 71.68-61.44 102.4-76.8-25.6-158.72-35.84-240.64-35.84v61.44c76.8 0 153.6 10.24 225.28 35.84-81.92 61.44-184.32 107.52-296.96 133.12l35.84 61.44c122.88-30.72 235.52-87.04 327.68-158.72 76.8 20.48 148.48 51.2 204.8 87.04l50.68-60.48z"/>
+        </svg>
+        <span>支付宝扫码支付 ￥<span id="btnPriceDisplay">${selectedAmount}</span></span>
+      `;
+    }
+  </script>
+</body>
+</html>

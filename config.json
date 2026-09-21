@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "asset_root": "assets",
+  "windows": [],
+  "_settings": {
+    "activity_state": {
+      "unlock_rule_version": 0,
+      "initialized": false,
+      "all_unlocked": false,
+      "unlocks": {},
+      "unlocked_asset_ids": [],
+      "email": null,
+      "identity": null,
+      "phone": "",
+      "token": null,
+      "user_id": null,
+      "user_number": null,
+      "name": null,
+      "provider": "local",
+      "auth_mode": null,
+      "local_account_id": null,
+      "logged_in_at": null,
+      "egg_chances": 0,
+      "claimed_invite_codes": [],
+      "invite_count": 0,
+      "invite_goal": 2,
+      "checkin_dates": [],
+      "last_checkin_date": null,
+      "checkin_streak": 0,
+      "next_day_checkin_done": false,
+      "mission_completed": false,
+      "login_free_open_recorded": false,
+      "history": [],
+      "feedback": [],
+      "invite_code": null
+    },
+    "pet_unlocks": {}
+  }
+}

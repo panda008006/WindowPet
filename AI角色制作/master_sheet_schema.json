@@ -1,0 +1,76 @@
+{
+  "format": "windowpet-master-sheet-v1",
+  "layout": {
+    "columns": 6,
+    "rows": 3,
+    "total_cells": 18,
+    "column_semantics": "frame_1_to_frame_6",
+    "row_order": [
+      "idle",
+      "click",
+      "drag"
+    ],
+    "preferred_pixels": {
+      "width": 3072,
+      "height": 1536,
+      "cell_width": 512,
+      "cell_height": 512
+    },
+    "minimum_recommended_pixels": {
+      "width": 2304,
+      "height": 1152,
+      "cell_width": 384,
+      "cell_height": 384
+    }
+  },
+  "background": {
+    "preferred": "transparent",
+    "fallback": "one uniform solid colour absent from the character",
+    "forbidden": [
+      "checkerboard",
+      "gradient",
+      "texture",
+      "scene",
+      "ground_shadow",
+      "visible_grid"
+    ]
+  },
+  "cell_rules": {
+    "exactly_one_character": true,
+    "full_character_visible": true,
+    "content_must_not_cross_cell": true,
+    "consistent_identity": true,
+    "consistent_scale": true,
+    "consistent_default_baseline": true,
+    "allow_authored_motion_offset": true,
+    "text_or_labels": false
+  },
+  "motion_rules": {
+    "frames_per_action": 6,
+    "arc": [
+      "neutral_or_anticipation",
+      "preparation_1",
+      "preparation_2",
+      "main_action",
+      "overshoot_or_reaction",
+      "settle_or_return"
+    ],
+    "real_pose_change_required": true,
+    "transform_only_animation_forbidden": true,
+    "static_base_plus_overlay_forbidden": true,
+    "three_basic_rows_must_be_unique": true
+  },
+  "packaging": {
+    "canvas_width": 192,
+    "canvas_height": 208,
+    "output_mode": "RGBA",
+    "installer": "build_character_from_sheet.py",
+    "overwrite_existing_character": false,
+    "atomic_install": true
+  },
+  "manual_actions": {
+    "creation": "author as separate named animation folders or import with video_to_character.py --action <safe-name>",
+    "runtime": "right-click Actions submenu; play once then return to idle",
+    "label_field_order": ["animations.<name>.label", "animations.<name>.display_name", "action_labels.<name>"]
+  }
+}
