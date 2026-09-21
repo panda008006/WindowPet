@@ -1,0 +1,107 @@
+{
+  "type": "frame_animation",
+  "name": "糯糯",
+  "fps": 8,
+  "preview": "nuonuo_01.png",
+  "character_id": "nuonuo",
+  "source_reference": "Doro.png",
+  "remake_run": "NuonuoPet_hatch_remake_20260519",
+  "idle_variants": [
+    "waiting",
+    "waving",
+    "review",
+    "running"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 8,
+      "loop": true
+    },
+    "click": {
+      "folder": "click",
+      "fps": 8,
+      "loop": false
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 8,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 9,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 8,
+      "loop": false
+    },
+    "running": {
+      "folder": "running",
+      "fps": 8,
+      "loop": false
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 10,
+      "loop": false
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 10,
+      "loop": false
+    },
+    "review": {
+      "folder": "review",
+      "fps": 8,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 8,
+      "loop": true
+    },
+    "reward": {
+      "folder": "reward",
+      "fps": 9,
+      "loop": false
+    },
+    "edge-crawl-right": {
+      "folder": "edge-crawl-right",
+      "fps": 10,
+      "loop": false
+    },
+    "edge-crawl-bottom": {
+      "folder": "edge-crawl-bottom",
+      "fps": 8,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "威虫",
+  "character_id": "WeiChongPet",
+  "fps": 10,
+  "preview": "WeiChongPet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 10,
+      "loop": true
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false,
+      "label": "高能变身姿态"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "transform": {
+      "folder": "transform",
+      "fps": 10,
+      "loop": false,
+      "label": "充电与高能变身"
+    }
+  },
+  "source": {
+    "method": "video_import",
+    "actions": {
+      "idle": 13,
+      "click": 28,
+      "drag": 13,
+      "transform": 28
+    }
+  }
+}

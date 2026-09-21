@@ -1,0 +1,89 @@
+{
+  "type": "frame_animation",
+  "name": "Panda",
+  "fps": 8,
+  "preview": "panda_01.png",
+  "character_id": "panda",
+  "idle_variants": [
+    "waiting",
+    "waving"
+  ],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 8,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 12,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "waiting": {
+      "folder": "waiting",
+      "fps": 8,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "waving": {
+      "folder": "waving",
+      "fps": 8,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 10,
+      "loop": false
+    },
+    "failed": {
+      "folder": "failed",
+      "fps": 8,
+      "loop": false
+    },
+    "running-left": {
+      "folder": "running-left",
+      "fps": 10,
+      "loop": true
+    },
+    "running-right": {
+      "folder": "running-right",
+      "fps": 10,
+      "loop": true
+    },
+    "running": {
+      "folder": "running",
+      "fps": 8,
+      "loop": true
+    },
+    "review": {
+      "folder": "review",
+      "fps": 8,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "whip-hit",
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "notes": "Imported from hatch-pet panda_hatch_run_20260510. Independent drag frames added 2026-05-19 from imagegen source; replaced running-right reuse. Independent hover/click frames added 2026-05-19 from imagegen sources; replaced waving/jumping reuse."
+}

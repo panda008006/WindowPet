@@ -1,0 +1,83 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "坡坡popo",
+  "character_id": "PopoPet",
+  "fps": 10,
+  "preview": "PopoPet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true,
+      "label": "基础待机"
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false,
+      "label": "轻戳点击"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true,
+      "label": "提溜拖拽"
+    },
+    "gesture-dance": {
+      "folder": "gesture-dance",
+      "fps": 15,
+      "loop": false,
+      "label": "奇不奇怪手势舞",
+      "duration_seconds": 10.066667,
+      "repeat_count": 3
+    },
+    "happy-dance": {
+      "folder": "happy-dance",
+      "fps": 14,
+      "loop": false,
+      "label": "要开心呀",
+      "duration_seconds": 17.4,
+      "repeat_count": 3
+    },
+    "reverse-warning": {
+      "folder": "reverse-warning",
+      "fps": 15,
+      "loop": false,
+      "label": "请注意倒车",
+      "duration_seconds": 14.133333
+    }
+  },
+  "source": {
+    "method": "video_import",
+    "actions": {
+      "idle": 6,
+      "click": 6,
+      "drag": 6,
+      "gesture-dance": 151,
+      "happy-dance": 240,
+      "reverse-warning": 211
+    }
+  },
+  "video_sources": {
+    "gesture-dance": "video_sources/source_character_transparent.mov",
+    "happy-dance": "video_sources/happy-dance_character_transparent.mov",
+    "reverse-warning": "video_sources/reverse-warning_character_transparent.mov"
+  },
+  "triggers": {
+    "left-click": "click",
+    "left-drag": "drag",
+    "idle": "drag",
+    "left-double-click": "gesture-dance"
+  },
+  "menu_actions": [],
+  "action_labels": {
+    "idle": "基础待机",
+    "click": "轻戳点击",
+    "drag": "提溜拖拽",
+    "gesture-dance": "奇不奇怪手势舞",
+    "happy-dance": "要开心呀",
+    "reverse-warning": "请注意倒车"
+  }
+}

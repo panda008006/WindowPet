@@ -1,0 +1,40 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "小汪",
+  "character_id": "XiaoWangPet",
+  "fps": 12,
+  "preview": "XiaoWangPet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 12,
+      "loop": true
+    },
+    "click": {
+      "folder": "click",
+      "fps": 12,
+      "loop": false,
+      "label": "撒欢互动"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 12,
+      "loop": true
+    }
+  },
+  "source": {
+    "method": "video_import",
+    "actions": {
+      "idle": 96,
+      "click": 96,
+      "drag": 96
+    }
+  },
+  "video_sources": {
+    "idle": "video_sources/idle_Puppy_panting_in_chroma_studio_20260911234138.mp4",
+    "click": "video_sources/click_Puppy_performing_tricks_on_screen_20260911234708.mp4",
+    "drag": "video_sources/drag_Puppy_swimming_in_mid-air_1080p_20260911234846.mp4"
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "月薪猫",
+  "character_id": "salary-cat",
+  "fps": 10,
+  "preview": "salary-cat_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": true
+    },
+    "hover": {
+      "folder": "hover",
+      "fps": 10,
+      "loop": false
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false
+    },
+    "jumping": {
+      "folder": "jumping",
+      "fps": 10,
+      "loop": false
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "feather-tickle": {
+      "folder": "feather-tickle",
+      "fps": 10,
+      "loop": false
+    },
+    "review": {
+      "folder": "review",
+      "fps": 10,
+      "loop": false
+    },
+    "waving": {
+      "folder": "review",
+      "fps": 10,
+      "loop": false
+    },
+    "right-double-click": {
+      "folder": "review",
+      "fps": 10,
+      "loop": false
+    },
+    "whip-hit": {
+      "folder": "feather-tickle",
+      "fps": 10,
+      "loop": false
+    }
+  },
+  "interaction_bindings": {
+    "hover": {
+      "selection": "shuffle_bag",
+      "actions": [
+        {
+          "action": "hover",
+          "weight": 100
+        }
+      ]
+    },
+    "left_click": {
+      "selection": "shuffle_bag",
+      "actions": [
+        {
+          "action": "click",
+          "weight": 100
+        }
+      ]
+    },
+    "left_double_click": {
+      "selection": "shuffle_bag",
+      "actions": [
+        {
+          "action": "jumping",
+          "weight": 100
+        }
+      ]
+    },
+    "drag_release": {
+      "hold": [
+        "drag"
+      ],
+      "release": [],
+      "fall": [],
+      "land": []
+    },
+    "middle_click": {
+      "selection": "shuffle_bag",
+      "actions": [
+        {
+          "action": "feather-tickle",
+          "weight": 100
+        }
+      ]
+    },
+    "right_menu": {
+      "items": [
+        {
+          "id": "review",
+          "label": "发工资啦",
+          "action": "review"
+        }
+      ]
+    }
+  },
+  "notes": "保留上一版月薪猫的全部 42 张原始图片；waving、right-double-click 和 whip-hit 仅为当前运行时兼容别名，不新增或覆盖图片。"
+}

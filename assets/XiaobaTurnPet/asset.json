@@ -1,0 +1,21 @@
+{
+  "type": "frame_animation",
+  "name": "麦脆角小猫",
+  "fps": 8,
+  "preview": "maicuijiao_neutral.png",
+  "interaction_mode": "head_track",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 8,
+      "loop": false
+    },
+    "head_track": {
+      "folder": "head_track",
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "notes": "麦脆角小猫 - oil-motion 2D 参数空间 (5x5=25帧), GrabCut 去背, 唯一功能: 鼠标跟随转头; idle 仅作中性静止帧(与 head_track 中心帧一致)"
+}

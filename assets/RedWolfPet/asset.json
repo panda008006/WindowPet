@@ -1,0 +1,42 @@
+{
+  "format_version": 2,
+  "type": "frame_animation",
+  "name": "曼波红狼",
+  "character_id": "RedWolfPet",
+  "fps": 10,
+  "preview": "RedWolfPet_01.png",
+  "idle_variants": [],
+  "animations": {
+    "idle": {
+      "folder": ".",
+      "fps": 10,
+      "loop": true
+    },
+    "click": {
+      "folder": "click",
+      "fps": 10,
+      "loop": false,
+      "label": "战术前滚翻"
+    },
+    "drag": {
+      "folder": "drag",
+      "fps": 10,
+      "loop": true
+    },
+    "fuel-march": {
+      "folder": "fuel-march",
+      "fps": 10,
+      "loop": false,
+      "label": "提油桶战术踏步"
+    }
+  },
+  "source": {
+    "method": "video_import",
+    "actions": {
+      "idle": "video_sources/idle_audio.aac",
+      "click": "video_sources/click_audio.aac",
+      "drag": 90,
+      "fuel-march": 64
+    }
+  }
+}
