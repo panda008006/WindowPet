@@ -64,7 +64,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
     },
     {
       id: 'hoshino',
-      name: '@星野同人漫研社',
+      name: '@星野光年漫研所',
       studio: '星野创作组',
       initial: '星',
       gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
