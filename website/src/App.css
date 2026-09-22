@@ -1,3 +1,10 @@
+.site-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .fullpage-site {
   height: 100vh;
   overflow-x: hidden;
@@ -103,15 +110,26 @@
   gap: 32px;
 }
 
-.site-nav nav a {
+.site-nav nav a,
+.site-nav nav .nav-link-btn {
   position: relative;
+  background: transparent;
+  border: none;
   color: #4b6a86;
   text-decoration: none;
   font-size: 15px;
   font-weight: 820;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  transition: color 160ms ease;
 }
 
-.site-nav nav a::after {
+.site-nav nav a::after,
+.site-nav nav .nav-link-btn::after {
   content: '';
   position: absolute;
   left: 0;
@@ -125,25 +143,36 @@
 }
 
 .site-nav nav a:hover,
-.site-nav nav a.is-active {
+.site-nav nav a.is-active,
+.site-nav nav .nav-link-btn:hover,
+.site-nav nav .nav-link-btn.is-active {
   color: #126ad6;
 }
 
-.site-nav nav .nav-gallery-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #2477ff;
-  background: transparent;
-  border: none;
-  font: inherit;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
+.site-nav nav a.is-active::after,
+.site-nav nav .nav-link-btn.is-active::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.site-nav nav .nav-gallery-link:hover {
+.site-nav nav .nav-gallery-link {
+  color: #2477ff;
+}
+
+.site-nav nav .nav-gallery-link:hover,
+.site-nav nav .nav-gallery-link.is-active {
   color: #0c56be;
+}
+
+.gallery-view-pane {
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  background-color: var(--gallery-bg, #f8fafc);
+  z-index: 30;
 }
 
 .section-heading-gallery-link {

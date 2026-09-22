@@ -313,17 +313,17 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
             ))}
           </div>
 
-          {/* 优雅关闭展馆浮层按钮 */}
+          {/* 返回首页按钮 */}
           {handleClose && (
             <button
               type="button"
               className="gallery-lightbox-close-btn"
               onClick={handleClose}
-              title="关闭展馆 (ESC)"
-              aria-label="关闭展馆"
+              title="返回官网首页"
+              aria-label="返回官网首页"
             >
-              <X size={17} />
-              <span>关闭展馆</span>
+              <Home size={15} />
+              <span>返回首页</span>
             </button>
           )}
         </div>

@@ -30,7 +30,7 @@ const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 
 const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
 
-const navItems = [
+const sectionDots = [
   { id: 'home', label: '首页' },
   { id: 'pets', label: '角色' },
   { id: 'features', label: '功能' },
@@ -244,14 +244,16 @@ function petAsset(fileName: string) {
 }
 
 function App() {
-  const [isGalleryOpen, setIsGalleryOpen] = useState(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#/gallery'
+  const [currentView, setCurrentView] = useState<'home' | 'gallery'>(() => {
+    return typeof window !== 'undefined' && window.location.hash === '#/gallery' ? 'gallery' : 'home'
   })
 
   useEffect(() => {
     const handleHash = () => {
       if (window.location.hash === '#/gallery') {
-        setIsGalleryOpen(true)
+        setCurrentView('gallery')
+      } else {
+        setCurrentView('home')
       }
     }
     window.addEventListener('hashchange', handleHash)
@@ -259,26 +261,21 @@ function App() {
   }, [])
 
   const handleOpenGallery = () => {
-    setIsGalleryOpen(true)
+    setCurrentView('gallery')
+    window.location.hash = '#/gallery'
   }
 
-  const handleCloseGallery = () => {
-    setIsGalleryOpen(false)
+  const handleBackToHome = () => {
+    setCurrentView('home')
     if (window.location.hash === '#/gallery') {
       history.replaceState(null, '', window.location.pathname + window.location.search)
     }
   }
 
-  useEffect(() => {
-    if (isGalleryOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isGalleryOpen])
+  const handleNavHome = () => {
+    handleBackToHome()
+    scrollToSection(0)
+  }
 
   const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
   const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
@@ -343,7 +340,7 @@ function App() {
   }
 
   const handleWheel: WheelEventHandler<HTMLElement> = (event) => {
-    if (isGalleryOpen) return
+    if (currentView !== 'home') return
     if (window.matchMedia('(max-width: 860px)').matches || Math.abs(event.deltaY) < 18) return
 
     event.preventDefault()
@@ -361,9 +358,9 @@ function App() {
   }
 
   return (
-    <main className="fullpage-site" ref={shellRef} onWheel={handleWheel}>
+    <div className="site-wrapper">
       <header className="site-nav">
-        <button className="brand-lockup" type="button" onClick={() => scrollToSection(0)} aria-label="返回首页">
+        <button className="brand-lockup" type="button" onClick={handleNavHome} aria-label="返回首页">
           <span className="brand-symbol">
             <img src={`${import.meta.env.BASE_URL}apple-touch-icon.png`} alt="" />
           </span>
@@ -374,22 +371,16 @@ function App() {
         </button>
 
         <nav aria-label="官网导航">
-          {navItems.map((item, index) => (
-            <a
-              className={activeIndex === index ? 'is-active' : undefined}
-              href={`#${item.id}`}
-              key={item.id}
-              onClick={(event) => {
-                event.preventDefault()
-                scrollToSection(index)
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
           <button
             type="button"
-            className="nav-gallery-link"
+            className={`nav-link-btn ${currentView === 'home' ? 'is-active' : ''}`}
+            onClick={handleNavHome}
+          >
+            首页
+          </button>
+          <button
+            type="button"
+            className={`nav-gallery-link nav-link-btn ${currentView === 'gallery' ? 'is-active' : ''}`}
             onClick={handleOpenGallery}
             title="打开小鼻嘎展馆，查看全部 24 款萌宠"
           >
@@ -413,17 +404,27 @@ function App() {
         </a>
       </header>
 
-      <aside className="section-dots" aria-label="页面进度">
-        {navItems.map((item, index) => (
-          <button
-            aria-label={`跳转到${item.label}`}
-            className={activeIndex === index ? 'is-active' : undefined}
-            key={item.id}
-            type="button"
-            onClick={() => scrollToSection(index)}
-          />
-        ))}
-      </aside>
+      {currentView === 'home' && (
+        <aside className="section-dots" aria-label="页面进度">
+          {sectionDots.map((item, index) => (
+            <button
+              aria-label={`跳转到第 ${index + 1} 屏：${item.label}`}
+              className={activeIndex === index ? 'is-active' : undefined}
+              key={item.id}
+              type="button"
+              onClick={() => scrollToSection(index)}
+              title={item.label}
+            />
+          ))}
+        </aside>
+      )}
+
+      <main
+        className="fullpage-site"
+        ref={shellRef}
+        onWheel={handleWheel}
+        style={{ display: currentView === 'home' ? 'block' : 'none' }}
+      >
 
       <section className="snap-section hero-page" id="home" aria-label="Window Pet 首页">
         <div className="section-inner hero-layout">
@@ -777,21 +778,15 @@ function App() {
           </footer>
         </div>
       </section>
-
-      {isGalleryOpen && (
-        <div
-          className="gallery-lightbox-overlay"
-          onClick={handleCloseGallery}
-          role="dialog"
-          aria-modal="true"
-          aria-label="WindowPet 小鼻嘎展馆"
-        >
-          <div className="gallery-lightbox-card" onClick={(e) => e.stopPropagation()}>
-            <PetGallery onClose={handleCloseGallery} />
-          </div>
-        </div>
-      )}
     </main>
+
+    {/* 小鼻嘎展馆：顶部导航栏保持不变，展馆呈现在下方的独立展示界面 */}
+    {currentView === 'gallery' && (
+      <div className="gallery-view-pane">
+        <PetGallery onBackToHome={handleBackToHome} />
+      </div>
+    )}
+  </div>
   )
 }
 
