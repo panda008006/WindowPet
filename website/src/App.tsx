@@ -1,799 +1,855 @@
-import { useEffect, useMemo, useRef, useState, type WheelEventHandler } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AlarmClock,
-  Award,
-  BellRing,
-  CalendarCheck,
   Camera,
   CheckCircle2,
-  ChevronDown,
+  ChevronRight,
   Download,
-  EyeOff,
-  FileArchive,
-  Gift,
-  HeartHandshake,
-  LockKeyhole,
+  Heart,
+  HelpCircle,
+  MessageSquare,
   MousePointerClick,
   PawPrint,
-  RotateCw,
-  Settings2,
+  Search,
+  ShieldCheck,
   Sparkles,
+  Star,
+  X,
 } from 'lucide-react'
 import './App.css'
 import './polish.css'
-import { PetGallery } from './PetGallery'
+import { galleryCategories, galleryPets, type GalleryPet } from './galleryData'
 
 const releaseVersion = '1.0.32'
 const releaseInstallerName = `WindowPet_Setup_v${releaseVersion}.exe`
 const releaseInstallerHref = `https://github.com/panda008006/WindowPet/releases/download/v${releaseVersion}/${releaseInstallerName}`
 const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
+const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
-const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
+interface NavItem {
+  id: 'home' | 'models' | 'custom' | 'tutorial' | 'faq'
+  label: string
+  badge?: string
+}
 
-const navItems = [
+const navItems: readonly NavItem[] = [
   { id: 'home', label: '首页' },
-  { id: 'pets', label: '角色' },
-  { id: 'features', label: '功能' },
+  { id: 'models', label: '模型库', badge: '24款' },
   { id: 'custom', label: '爱宠定制' },
-  { id: 'control', label: '下载' },
+  { id: 'tutorial', label: '使用教程' },
+  { id: 'faq', label: '常见问题' },
 ] as const
 
-const pets = [
+type SectionId = (typeof navItems)[number]['id']
+
+// 3 只精选代表萌宠用于首页动态展示
+const heroShowcasePets = [
   {
     id: 'jiyi',
-    code: '0006',
     name: '吉伊',
-    folderName: '人气主角',
-    title: '轻快活泼，适合每天陪着你',
-    intro: '吉伊会用挥手、表演和害羞反馈回应你的点击。她适合作为第一只桌面伙伴，存在感明亮，但不会打扰你做事。',
-    mood: '明亮 / 亲近 / 活泼',
-    traits: ['欢迎互动', '表情丰富', '轻量陪伴'],
+    badge: '人气担当',
+    desc: '活泼元气，打开电脑时欢快挥手打招呼',
+    image: 'pets/jiyi.png',
+    actionImage: 'pets/jiyi-action-waving.webp',
     actions: [
-      { id: 'waving', label: '挥手', src: 'jiyi-action-waving.webp', description: '打开电脑时先打个招呼' },
-      { id: 'concert', label: '演奏', src: 'jiyi-action-concert.webp', description: '给桌面加一点元气' },
-      { id: 'shy', label: '害羞', src: 'jiyi-action-shy.webp', description: '被点到时的小反应' },
-    ],
-    stats: [
-      ['日常', '陪伴风格'],
-      ['3 个', '精选动作'],
-      ['可调', '大小位置'],
+      { label: '挥手问候', image: 'pets/jiyi-action-waving.webp', tip: '开机打招呼' },
+      { label: '合奏协奏', image: 'pets/jiyi-action-concert.webp', tip: '欢快背景音' },
+      { label: '害羞捂脸', image: 'pets/jiyi-action-shy.webp', tip: '点击小互动' },
     ],
   },
   {
-    id: 'dora',
-    code: '0021',
-    name: 'Dora',
-    folderName: '软萌陪伴',
-    title: '软萌、爱回应的小伙伴',
-    intro: 'Dora 的反应更柔和，适合喜欢治愈感的用户。无论是挥手、跳跃，还是被小工具逗到，都会给桌面一点轻松感。',
-    mood: '软萌 / 治愈 / 反馈',
-    traits: ['治愈感', '轻快反馈', '可爱反应'],
+    id: 'xiaochai',
+    name: '小柴犬',
+    badge: '治愈萌宠',
+    desc: '摇尾巴摇出残影，专注蹲在屏幕边看着你',
+    image: 'pets/xiaochai.png',
+    actionImage: 'pets/xiaochai.png',
     actions: [
-      { id: 'waving', label: '挥手', src: 'dora-action-waving.webp', description: '轻轻挥手打招呼' },
-      { id: 'jump', label: '跳跃', src: 'dora-action-jump.webp', description: '开心时蹦一下' },
-      { id: 'feather', label: '羽毛逗弄', src: 'dora-action-feather.webp', description: '被逗到的小表情' },
-    ],
-    stats: [
-      ['治愈', '陪伴风格'],
-      ['3 个', '精选动作'],
-      ['可调', '大小位置'],
+      { label: '摇尾示好', image: 'pets/xiaochai.png', tip: '忠诚陪伴' },
+      { label: '乖乖坐好', image: 'pets/xiaochai.png', tip: '专注注视' },
+      { label: '兴奋扑腾', image: 'pets/xiaochai.png', tip: '完成任务庆祝' },
     ],
   },
   {
     id: 'fox',
-    code: '0005',
     name: '狐狸',
-    folderName: '灵敏搭档',
-    title: '小狐狸，适合喜欢互动感的人',
-    intro: '狐狸更适合承担工具反馈：提醒触发、逗弄、点击都会有更明确的动作回应，让桌面看起来更有生命力。',
-    mood: '灵敏 / 轻快 / 工具',
-    traits: ['反应灵敏', '工具互动', '状态反馈'],
+    badge: '灵敏互动',
+    desc: '大尾巴随节拍晃动，支持羽毛逗弄与状态反馈',
+    image: 'pets/fox.png',
+    actionImage: 'pets/fox-action-waving.webp',
     actions: [
-      { id: 'waving', label: '挥手', src: 'fox-action-waving.webp', description: '待机时也能保持存在感' },
-      { id: 'feather', label: '羽毛逗弄', src: 'fox-action-feather.webp', description: '被羽毛逗到的反应' },
-      { id: 'whip', label: '鞭子命中', src: 'fox-action-whip.webp', description: '工具命中后的反馈' },
-    ],
-    stats: [
-      ['灵敏', '陪伴风格'],
-      ['3 个', '精选动作'],
-      ['可调', '大小位置'],
+      { label: '翘尾致意', image: 'pets/fox-action-waving.webp', tip: '待机轻晃' },
+      { label: '羽毛逗弄', image: 'pets/fox-action-feather.webp', tip: '灵敏歪头' },
+      { label: '工具反馈', image: 'pets/fox-action-whip.webp', tip: '受击翻滚' },
     ],
   },
 ]
 
-const featureCards = [
+const faqItems = [
   {
-    icon: CalendarCheck,
-    title: '备忘录',
-    text: '把临时想法、待办和小提醒留在桌面边上，打开电脑就能看见。',
+    q: '为什么首次在 Windows 运行会提示“未知发布者”？',
+    a: 'WindowPet 是个人大学毕业开源心血之作，尚未向商业认证机构购买昂贵的代码数字签名（每年需数千元）。本项目已在 GitHub 100% 全量开源、绿色透明，绝无任何后门或恶意行为。首次运行时只需点击【更多信息】并选择【仍要运行】即可放心使用。',
   },
   {
-    icon: AlarmClock,
-    title: '闹钟',
-    text: '会议、休息、喝水、番茄钟，都可以交给桌面伙伴轻轻提醒你。',
+    q: '运行该软件会占用很多电脑 CPU 或内存吗？',
+    a: '完全不会！新版 1.0.32 经过深度重构与体积优化，无任何冗余大视频占用。待机 CPU 占用率接近 0%，内存常驻仅约 30~50MB，即使在后台全天开启，玩 3A 游戏、写代码或办公也不会有丝毫卡顿。',
   },
   {
-    icon: BellRing,
-    title: '提醒队列',
-    text: '今天要做的事集中放在一起，少开一个窗口，也少忘一件小事。',
+    q: '支持双显示器、带鱼屏或不同屏幕缩放（高 DPI）吗？',
+    a: '完美支持！WindowPet 具备智能屏幕边界检测引擎，您可以将萌宠自由拖拽到副屏、主屏底部或任务栏上方，并完美适配 Windows 100% ~ 250% 显示缩放。',
   },
   {
-    icon: MousePointerClick,
-    title: '桌面互动',
-    text: '点一下、拖一下、逗一下，它都会用动作回应，让桌面不再只是背景。',
+    q: '所有 24 款角色都是完全免费的吗？如何更新？',
+    a: '100% 永久免费开放！所有内置角色与动画均开箱可用，无需注册登录或付费。每次新版本发布时，访问官网或 GitHub Releases 页面下载新安装包直接覆盖安装即可，您的角色设置会自动继承保全。',
+  },
+  {
+    q: '我可以自己制作专属角色并向社区投稿吗？',
+    a: '非常欢迎！WindowPet 秉承开源共建原则（MIT 协议），无论您是画师、动画爱好者还是普通玩家，欢迎加入官方 QQ 交流群获取标准动作帧切片规范，共建小鼻嘎开源角色大家族！',
   },
 ]
 
-const controlViews = [
-  {
-    id: 'pets',
-    label: '角色管理',
-    icon: PawPrint,
-    image: 'jiyi-action-waving.webp',
-    eyebrow: '角色管理',
-    title: '选择喜欢的桌面伙伴',
-    text: '吉伊、Dora 和狐狸可以随时切换。想安静陪伴，还是想多一点互动，都能按自己的节奏来。',
-    points: ['切换角色', '调整大小', '保持置顶'],
-  },
-  {
-    id: 'actions',
-    label: '动作调试',
-    icon: Settings2,
-    image: 'dora-action-feather.webp',
-    eyebrow: '动作调试',
-    title: '试试它们怎么回应你',
-    text: '每个角色适配 5 个基础操作，规则统一、容易记住；每个操作还可以收纳多个动作候选。这里可以提前预览它们的回应。',
-    points: ['5 个基础操作', '一个操作多个动作', '互动道具反应'],
-  },
-  {
-    id: 'updates',
-    label: '更新中心',
-    icon: RotateCw,
-    image: 'fox-action-whip.webp',
-    eyebrow: '更新中心',
-    title: '下载和更新更省心',
-    text: '当前版本、下载入口和更新信息集中显示。之后有新版本，也能更快知道该怎么升级。',
-    points: ['版本信息', '下载入口', '文件校验'],
-  },
-  {
-    id: 'medals',
-    label: '勋章墙',
-    icon: Award,
-    image: 'jiyi-action-concert.webp',
-    eyebrow: '轻量收藏',
-    title: '不打扰你的勋章墙',
-    text: '勋章会在自然使用中悄悄解锁，不要求每日打卡，也不会影响角色的核心功能。',
-    points: ['自然解锁', '不设断签惩罚', '随时隐藏'],
-  },
-] as const
-
-const medals = [
-  { id: 'hello', icon: '✦', title: '第一次回应', detail: '第一次让角色回应你的互动', status: '已解锁', tone: 'blue' },
-  { id: 'three-days', icon: '☼', title: '熟悉的身影', detail: '自然使用 Window Pet 3 天', status: '已解锁', tone: 'mint' },
-  { id: 'actions', icon: '✧', title: '三种回应', detail: '体验过待机、单击和拖拽三种基础状态', status: '已解锁', tone: 'violet' },
-  { id: 'pet-collector', icon: '♢', title: '角色收藏家', detail: '认识 3 位桌面伙伴', status: '已解锁', tone: 'amber' },
-  { id: 'week', icon: '◌', title: '一周陪伴', detail: '继续自然使用即可解锁', status: '还有 4 天', tone: 'soft' },
-  { id: 'custom', icon: '♡', title: '专属伙伴', detail: '拥有一只定制角色后解锁', status: '待解锁', tone: 'soft' },
-  { id: 'quiet', icon: '⌁', title: '安静陪伴', detail: '让角色保持静态陪伴', status: '待解锁', tone: 'soft' },
-  { id: 'all-actions', icon: '✺', title: '动作体验家', detail: '慢慢体验更多互动，不用赶进度', status: '待解锁', tone: 'soft' },
-  { id: 'seasonal', icon: '❋', title: '夏日来信', detail: '下一次季节活动开放后解锁', status: '活动限定', tone: 'soft' },
- ] as const
-
-function MedalWall() {
-  const [isHidden, setIsHidden] = useState(false)
-
-  if (isHidden) {
-    return (
-      <div className="medal-wall-hidden">
-        <EyeOff size={28} />
-        <strong>勋章墙已暂时隐藏</strong>
-        <p>它不会打扰你的日常使用，想看时再回来就好。</p>
-        <button type="button" onClick={() => setIsHidden(false)}>
-          重新显示
-        </button>
-      </div>
-    )
-  }
-
-  const unlockedCount = medals.filter((medal) => medal.status === '已解锁').length
-
-  return (
-    <div className="medal-wall" aria-label="勋章墙预览">
-      <div className="medal-wall-header">
-        <div>
-          <span className="cockpit-hero-eyebrow">COLLECTION / OPTIONAL</span>
-          <strong>慢慢收集，不用赶进度</strong>
-          <p>目前已发现 {unlockedCount} 枚。没有每日任务，也不会因为几天没打开而失去进度。</p>
-        </div>
-        <button className="medal-hide-button" type="button" onClick={() => setIsHidden(true)}>
-          <EyeOff size={16} />
-          暂时隐藏
-        </button>
-      </div>
-      <div className="medal-wall-note">
-        <Sparkles size={16} />
-        <span>勋章只用于收藏和装扮，不会锁住角色功能。</span>
-      </div>
-      <div className="medal-grid">
-        {medals.map((medal) => {
-          const unlocked = medal.status === '已解锁'
-          return (
-            <article className={`medal-card ${unlocked ? 'is-unlocked' : 'is-locked'} tone-${medal.tone}`} key={medal.id}>
-              <div className="medal-icon" aria-hidden="true">
-                {unlocked ? medal.icon : <LockKeyhole size={18} />}
-              </div>
-              <div className="medal-copy">
-                <strong>{medal.title}</strong>
-                <span>{medal.detail}</span>
-              </div>
-              <small>{medal.status}</small>
-            </article>
-          )
-        })}
-      </div>
-    </div>
-  )
+function petAsset(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http') || path.startsWith('/')) return path
+  const base = import.meta.env.BASE_URL
+  const cleanPath = path.startsWith('./') ? path.slice(2) : path
+  return `${base}${cleanPath}`
 }
 
-function petImage(id: string) {
-  return `${import.meta.env.BASE_URL}pets/${id}.png`
-}
+export function App() {
+  const [activeSection, setActiveSection] = useState<SectionId>('home')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-function petAsset(fileName: string) {
-  return `${import.meta.env.BASE_URL}pets/${fileName}`
-}
+  // 首页精选萌宠交互状态
+  const [heroPetIndex, setHeroPetIndex] = useState(0)
+  const [heroActionIndex, setHeroActionIndex] = useState(0)
 
-function App() {
-  const [isGalleryOpen, setIsGalleryOpen] = useState(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#/gallery'
-  })
+  // 模型库筛选与搜索状态
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
+  // 角色动作试玩弹窗状态
+  const [previewPet, setPreviewPet] = useState<GalleryPet | null>(null)
+  const [previewActionIndex, setPreviewActionIndex] = useState(0)
+  const [copyCodeToast, setCopyCodeToast] = useState(false)
+
+  // FAQ 展开状态
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(0)
+
+  // 滚动监听（ScrollSpy），自动高亮顶栏对应标签
   useEffect(() => {
-    const handleHash = () => {
-      if (window.location.hash === '#/gallery') {
-        setIsGalleryOpen(true)
+    const handleScroll = () => {
+      const scrollY = window.scrollY + 180
+      for (let i = navItems.length - 1; i >= 0; i--) {
+        const el = document.getElementById(navItems[i].id)
+        if (el && el.offsetTop <= scrollY) {
+          setActiveSection(navItems[i].id)
+          break
+        }
       }
     }
-    window.addEventListener('hashchange', handleHash)
-    return () => window.removeEventListener('hashchange', handleHash)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleOpenGallery = () => {
-    setIsGalleryOpen(true)
-  }
+  // 监听 ESC 关闭试玩弹窗
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && previewPet) {
+        setPreviewPet(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [previewPet])
 
-  const handleCloseGallery = () => {
-    setIsGalleryOpen(false)
-    if (window.location.hash === '#/gallery') {
-      history.replaceState(null, '', window.location.pathname + window.location.search)
+  const scrollToSection = (id: SectionId) => {
+    setMobileMenuOpen(false)
+    const el = document.getElementById(id)
+    if (el) {
+      const topOffset = el.getBoundingClientRect().top + window.scrollY - 72
+      window.scrollTo({ top: topOffset, behavior: 'smooth' })
     }
   }
 
-  useEffect(() => {
-    if (isGalleryOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isGalleryOpen])
-
-  const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
-  const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
-  const [activeControlViewId, setActiveControlViewId] = useState<(typeof controlViews)[number]['id']>(
-    controlViews[0].id,
-  )
-  const [activeIndex, setActiveIndex] = useState(0)
-  const activeIndexRef = useRef(0)
-  const wheelLockRef = useRef(false)
-  const shellRef = useRef<HTMLElement | null>(null)
-
-  const selectedPet = useMemo(() => pets.find((pet) => pet.id === selectedPetId) ?? pets[0], [selectedPetId])
-  const selectedPetAction = useMemo(
-    () => selectedPet.actions.find((action) => action.id === selectedActionId) ?? selectedPet.actions[0],
-    [selectedPet, selectedActionId],
-  )
-  const activeControlView = useMemo(
-    () => controlViews.find((view) => view.id === activeControlViewId) ?? controlViews[0],
-    [activeControlViewId],
-  )
-
-  useEffect(() => {
-    activeIndexRef.current = activeIndex
-  }, [activeIndex])
-
-  useEffect(() => {
-    const root = shellRef.current
-    if (!root) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const bestEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (!bestEntry) return
-
-        const nextIndex = sectionIds.indexOf(bestEntry.target.id as (typeof sectionIds)[number])
-        if (nextIndex >= 0) {
-          setActiveIndex(nextIndex)
-        }
-      },
-      { root, threshold: [0.45, 0.62, 0.8] },
-    )
-
-    sectionIds.forEach((id) => {
-      const section = document.getElementById(id)
-      if (section) observer.observe(section)
+  // 过滤后的模型列表
+  const filteredPets = useMemo(() => {
+    return galleryPets.filter((pet) => {
+      const matchCat = selectedCategory === 'all' || pet.category === selectedCategory
+      const matchSearch =
+        !searchQuery.trim() ||
+        pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pet.enName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pet.description.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchCat && matchSearch
     })
+  }, [selectedCategory, searchQuery])
 
-    return () => observer.disconnect()
-  }, [])
-
-  const scrollToSection = (index: number) => {
-    const root = shellRef.current
-    const nextIndex = Math.max(0, Math.min(sectionIds.length - 1, index))
-    const target = document.getElementById(sectionIds[nextIndex])
-    if (!root || !target) return
-
-    activeIndexRef.current = nextIndex
-    setActiveIndex(nextIndex)
-    root.scrollTo({ top: target.offsetTop, behavior: 'smooth' })
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code)
+    setCopyCodeToast(true)
+    setTimeout(() => setCopyCodeToast(false), 2000)
   }
 
-  const handleWheel: WheelEventHandler<HTMLElement> = (event) => {
-    if (isGalleryOpen) return
-    if (window.matchMedia('(max-width: 860px)').matches || Math.abs(event.deltaY) < 18) return
-
-    event.preventDefault()
-    if (wheelLockRef.current) return
-
-    const direction = event.deltaY > 0 ? 1 : -1
-    const nextIndex = Math.max(0, Math.min(sectionIds.length - 1, activeIndexRef.current + direction))
-    if (nextIndex === activeIndexRef.current) return
-
-    wheelLockRef.current = true
-    scrollToSection(nextIndex)
-    window.setTimeout(() => {
-      wheelLockRef.current = false
-    }, 760)
-  }
+  const currentHeroPet = heroShowcasePets[heroPetIndex]
+  const currentHeroAction = currentHeroPet.actions[heroActionIndex] || currentHeroPet.actions[0]
 
   return (
-    <main className="fullpage-site" ref={shellRef} onWheel={handleWheel}>
+    <div className="bongo-site-container">
+      {/* 顶部常驻磨砂吸顶导航栏 */}
       <header className="site-nav">
-        <button className="brand-lockup" type="button" onClick={() => scrollToSection(0)} aria-label="返回首页">
-          <span className="brand-symbol">
-            <img src={`${import.meta.env.BASE_URL}apple-touch-icon.png`} alt="" />
-          </span>
-          <span>
-            <strong>Window Pet</strong>
-            <small>桌面萌宠下载</small>
-          </span>
-        </button>
+        <div className="site-nav-left">
+          <button
+            className="brand-lockup"
+            type="button"
+            onClick={() => scrollToSection('home')}
+            aria-label="返回首页"
+          >
+            <span className="brand-symbol">
+              <PawPrint size={20} color="#126ad6" />
+            </span>
+            <div className="brand-text">
+              <strong>WindowPet</strong>
+              <small>桌面伙伴社区</small>
+            </div>
+          </button>
+        </div>
 
-        <nav aria-label="官网导航">
-          {navItems.map((item, index) => (
-            <a
-              className={activeIndex === index ? 'is-active' : undefined}
-              href={`#${item.id}`}
+        <nav className="site-nav-center" aria-label="官网导航">
+          {navItems.map((item) => (
+            <button
               key={item.id}
-              onClick={(event) => {
-                event.preventDefault()
-                scrollToSection(index)
-              }}
+              type="button"
+              className={`site-nav-link ${activeSection === item.id ? 'is-active' : ''}`}
+              onClick={() => scrollToSection(item.id)}
             >
               {item.label}
-            </a>
+              {item.badge && <span className="nav-badge-pill">{item.badge}</span>}
+            </button>
           ))}
-          <button
-            type="button"
-            className="nav-gallery-link"
-            onClick={handleOpenGallery}
-            title="打开小鼻嘎展馆，查看全部 24 款萌宠"
-          >
-            小鼻嘎展馆
-            <span className="nav-gallery-tag">NEW</span>
-          </button>
+        </nav>
+
+        <div className="site-nav-right">
           <a
-            className="nav-github-link"
+            className="nav-community-link"
+            href={qqGroupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="加入 WindowPet 官方 QQ 交流群"
+          >
+            <MessageSquare size={15} />
+            <span>官方群</span>
+          </a>
+
+          <a
+            className="nav-star-btn"
             href={githubRepoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ fontWeight: 600, color: 'var(--wp-ink)' }}
+            title="在 GitHub 上点亮 Star 支持"
           >
-            GitHub 开源
+            <Star size={14} fill="currentColor" />
+            <span>Star</span>
           </a>
-        </nav>
 
-        <a className="nav-download" href={releaseInstallerHref} download={releaseInstallerName}>
-          <Download size={17} />
-          免费下载 (50MB)
-        </a>
+          <a
+            className="nav-download-btn"
+            href={releaseInstallerHref}
+            download={releaseInstallerName}
+            title="下载 Windows 安装包"
+          >
+            <Download size={15} />
+            <span>免费下载 (50MB)</span>
+          </a>
+
+          {/* 移动端汉堡菜单按钮 */}
+          <button
+            className="mobile-menu-toggle"
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="切换菜单"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
       </header>
 
-      <aside className="section-dots" aria-label="页面进度">
-        {navItems.map((item, index) => (
-          <button
-            aria-label={`跳转到${item.label}`}
-            className={activeIndex === index ? 'is-active' : undefined}
-            key={item.id}
-            type="button"
-            onClick={() => scrollToSection(index)}
-          />
-        ))}
-      </aside>
-
-      <section className="snap-section hero-page" id="home" aria-label="Window Pet 首页">
-        <div className="section-inner hero-layout">
-          <div className="hero-copy">
-            <p className="eyebrow">WINDOWS DESKTOP COMPANION</p>
-            <h1>让桌面多一个会回应你的伙伴</h1>
-            <p className="hero-subtitle">
-              Window Pet 把可爱的角色、日常提醒和轻量桌面工具放在一起。下载后，选择喜欢的伙伴，让它陪你工作、休息和记录琐事。
-            </p>
-            <div className="hero-actions">
-              <a className="primary-download" href={releaseInstallerHref} download={releaseInstallerName}>
-                <Download size={21} />
-                下载 Windows 安装包 (仅 50MB)
-              </a>
-              <button className="secondary-action" type="button" onClick={() => scrollToSection(1)}>
-                浏览全部 24 款角色
-                <ChevronDown size={18} />
-              </button>
-            </div>
-            <div className="hero-meta" aria-label="版本信息">
-              <span>v{releaseVersion} 正式版</span>
-              <span>仅 50MB 极速秒开</span>
-              <span>24 款全套萌宠</span>
-              <span>100% 永久免费开源</span>
-            </div>
-          </div>
-
-          <div className="hero-visual" aria-label="Window Pet 主视觉">
-            <div className="hero-screen-card">
-              <div className="hero-screen-toolbar">
-                <span />
-                <span />
-                <span />
-                <strong>角色预览</strong>
-              </div>
-              <div className="hero-pet-stage">
-                {pets.map((pet, index) => (
-                  <img
-                    alt={`${pet.name} 动态预览`}
-                    className={`hero-pet hero-pet-${index + 1}`}
-                    key={pet.id}
-                    src={petImage(pet.id)}
-                  />
-                ))}
-              </div>
-            </div>
+      {/* 移动端折叠导航抽屉 */}
+      {mobileMenuOpen && (
+        <div className="mobile-nav-drawer">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`mobile-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
+              onClick={() => scrollToSection(item.id)}
+            >
+              <span>{item.label}</span>
+              {item.badge && <span className="nav-badge-pill">{item.badge}</span>}
+            </button>
+          ))}
+          <div className="mobile-drawer-actions">
+            <a className="mobile-action-btn qq" href={qqGroupUrl} target="_blank" rel="noopener noreferrer">
+              <MessageSquare size={16} /> 官方 QQ 交流群
+            </a>
+            <a className="mobile-action-btn github" href={githubRepoUrl} target="_blank" rel="noopener noreferrer">
+              <Star size={16} fill="currentColor" /> GitHub 开源仓库
+            </a>
+            <a className="mobile-action-btn download" href={releaseInstallerHref} download={releaseInstallerName}>
+              <Download size={16} /> 免费下载 Windows 版 (50MB)
+            </a>
           </div>
         </div>
-      </section>
+      )}
 
-      <section className="snap-section pets-page" id="pets" aria-label="角色选择">
-        <div className="section-inner pet-layout">
-          <div className="section-heading">
-            <p className="eyebrow">CHOOSE YOUR PET</p>
-            <h2>选择你的桌面伙伴</h2>
-            <p>
-              喜欢安静陪伴、软萌反馈，还是灵敏互动？点击角色和动作，先看看它在桌面上的样子。
-              <button
-                type="button"
-                className="section-heading-gallery-link"
-                onClick={handleOpenGallery}
-                title="打开小鼻嘎展馆，探索全部 24 款萌宠"
-              >
-                <Sparkles size={14} />
-                <span>探索全部 24 款萌宠图鉴</span>
-              </button>
-            </p>
-          </div>
-
-          <div className="pet-showcase">
-            <div className="selected-pet-panel">
-              <div className="selected-pet-art">
-                <img
-                  key={`${selectedPet.id}-${selectedPetAction.id}`}
-                  src={petAsset(selectedPetAction.src)}
-                  alt={`${selectedPet.name} ${selectedPetAction.label}动作预览`}
-                />
+      {/* 主体长滚动模块内容 */}
+      <main className="bongo-main-flow">
+        {/* ==================== 1. 首页 (Hero Section) ==================== */}
+        <section className="site-section hero-section" id="home">
+          <div className="section-inner hero-grid">
+            <div className="hero-copy">
+              <div className="hero-badge">
+                <span className="pulse-dot" />
+                <span>永久开源免费 · 仅 50MB 极速秒开 · 24 款萌宠全内置</span>
               </div>
-              <div className="selected-pet-copy">
-                <span>NO.{selectedPet.code} / {selectedPet.folderName}</span>
-                <h3>{selectedPet.name}</h3>
-                <strong>{selectedPet.title}</strong>
-                <p>{selectedPet.intro}</p>
-                <div className="trait-row">
-                  {selectedPet.traits.map((trait) => (
-                    <span key={trait}>{trait}</span>
-                  ))}
+
+              <h1 className="hero-heading">
+                新一代超轻量
+                <br />
+                <span className="hero-gradient-text">桌面动态伙伴宠</span>
+              </h1>
+
+              <p className="hero-desc">
+                告别数百兆笨重体积，毫秒级轻快响应！基于现代响应式架构打造，支持 24
+                款萌宠自由换乘、屏幕边缘吸附漫步、丰富按键动作与贴心番茄钟提醒，低资源占用零打扰。
+              </p>
+
+              <div className="hero-actions">
+                <a className="hero-btn-primary" href={releaseInstallerHref} download={releaseInstallerName}>
+                  <Download size={18} />
+                  <span>下载 Windows 安装包 (仅 50MB)</span>
+                </a>
+                <button
+                  type="button"
+                  className="hero-btn-secondary"
+                  onClick={() => scrollToSection('models')}
+                >
+                  <PawPrint size={17} />
+                  <span>浏览 24 款模型库 ↓</span>
+                </button>
+                <a
+                  className="hero-btn-ghost"
+                  href={qqGroupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageSquare size={17} />
+                  <span>加入 QQ 官方群</span>
+                </a>
+              </div>
+
+              <div className="hero-stats-row">
+                <div className="stat-item">
+                  <strong>24 只</strong>
+                  <span>开箱即玩萌宠</span>
                 </div>
-                <div className="action-shelf" aria-label={`${selectedPet.name} 动作预览`}>
-                  <strong>5 个基础操作 · 先试试三个</strong>
-                  <div>
-                    {selectedPet.actions.map((action) => (
+                <div className="stat-item">
+                  <strong>~50 MB</strong>
+                  <span>极简小安装包</span>
+                </div>
+                <div className="stat-item">
+                  <strong>0 元</strong>
+                  <span>永久免费开源</span>
+                </div>
+                <div className="stat-item">
+                  <strong>&lt;1%</strong>
+                  <span>待机 CPU 占用</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero 右侧互动展台 */}
+            <div className="hero-interactive-stage">
+              <div className="stage-window-card">
+                <div className="stage-toolbar">
+                  <div className="stage-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <span className="stage-title">WindowPet 实时动态预览</span>
+                </div>
+
+                <div className="stage-body">
+                  <div className="stage-art-display">
+                    <img
+                      key={`${currentHeroPet.id}-${heroActionIndex}`}
+                      src={petAsset(currentHeroAction.image)}
+                      alt={`${currentHeroPet.name} 动作预览`}
+                      className="stage-pet-avatar"
+                    />
+                    <div className="stage-pet-tagline">
+                      <strong>{currentHeroPet.name}</strong>
+                      <span>{currentHeroAction.tip}</span>
+                    </div>
+                  </div>
+
+                  {/* 动作切换按钮组 */}
+                  <div className="stage-actions-shelf">
+                    <small>动作试看：</small>
+                    <div className="stage-action-pills">
+                      {currentHeroPet.actions.map((act, idx) => (
+                        <button
+                          key={act.label}
+                          type="button"
+                          className={`action-pill ${heroActionIndex === idx ? 'is-active' : ''}`}
+                          onClick={() => setHeroActionIndex(idx)}
+                        >
+                          {act.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 代表萌宠选择器 */}
+                  <div className="stage-pet-selector">
+                    {heroShowcasePets.map((pet, idx) => (
                       <button
-                        aria-pressed={selectedPetAction.id === action.id}
-                        className={selectedPetAction.id === action.id ? 'is-active' : undefined}
-                        key={action.id}
+                        key={pet.id}
                         type="button"
-                        onClick={() => setSelectedActionId(action.id)}
+                        className={`pet-tab-btn ${heroPetIndex === idx ? 'is-active' : ''}`}
+                        onClick={() => {
+                          setHeroPetIndex(idx)
+                          setHeroActionIndex(0)
+                        }}
                       >
-                        <span>{action.label}</span>
-                        <small>{action.description}</small>
+                        <img src={petAsset(pet.image)} alt={pet.name} />
+                        <div>
+                          <strong>{pet.name}</strong>
+                          <small>{pet.badge}</small>
+                        </div>
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="pet-stats">
-                {selectedPet.stats.map(([value, label]) => (
-                  <div key={label}>
-                    <strong>{value}</strong>
-                    <span>{label}</span>
-                  </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================== 2. 模型库 (Models Section) ==================== */}
+        <section className="site-section models-section" id="models">
+          <div className="section-inner">
+            <div className="section-heading text-center">
+              <p className="eyebrow">MODELS REPOSITORY</p>
+              <h2>小鼻嘎模型库 · 24 款萌宠全收录</h2>
+              <p>
+                对标 BongoCat 开放模型生态，所有角色 100% 永久免费内置，支持自由换宠、动作试玩与画师民间共建。点击卡片即刻预览生动动作。
+              </p>
+            </div>
+
+            {/* 筛选与搜索工具条 */}
+            <div className="models-toolbar">
+              <div className="category-chips-wrap">
+                {galleryCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`cat-chip ${selectedCategory === cat.id ? 'is-active' : ''}`}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    <span>{cat.label}</span>
+                    <small>{cat.count}</small>
+                  </button>
                 ))}
               </div>
+
+              <div className="models-search-box">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="搜索萌宠：吉伊、柴犬、卡皮巴拉、fox..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button type="button" className="clear-btn" onClick={() => setSearchQuery('')}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="pet-selector" aria-label="选择宠物">
-              {pets.map((pet) => (
-                <button
-                  aria-pressed={selectedPet.id === pet.id}
-                  className={selectedPet.id === pet.id ? 'is-selected' : undefined}
+            {/* 24 款萌宠卡片网格 */}
+            <div className="models-grid">
+              {filteredPets.map((pet) => (
+                <div
                   key={pet.id}
-                  type="button"
+                  className="model-card"
                   onClick={() => {
-                    setSelectedPetId(pet.id)
-                    setSelectedActionId(pet.actions[0].id)
+                    setPreviewPet(pet)
+                    setPreviewActionIndex(0)
                   }}
                 >
-                  <img src={petImage(pet.id)} alt="" />
-                  <span>{pet.name}</span>
-                  <small>NO.{pet.code} · {pet.mood}</small>
-                </button>
+                  <div className="card-top-bar">
+                    <span className={`rarity-badge rarity-${pet.rarity.toLowerCase()}`}>{pet.rarity}</span>
+                    <span className="card-cat-label">{pet.categoryLabel}</span>
+                  </div>
+
+                  <div className="card-avatar-wrap">
+                    <img src={petAsset(pet.image)} alt={pet.name} className="card-avatar" />
+                  </div>
+
+                  <div className="card-body">
+                    <div className="card-name-row">
+                      <strong>{pet.name}</strong>
+                      <span className="card-en">{pet.enName}</span>
+                    </div>
+                    <p className="card-tagline">{pet.tagline}</p>
+
+                    <div className="card-action-tags">
+                      {pet.actions.slice(0, 3).map((act) => (
+                        <span key={act.id} className="act-tag">
+                          {act.label}
+                        </span>
+                      ))}
+                      {pet.actions.length > 3 && <span className="act-tag more">+{pet.actions.length - 3}</span>}
+                    </div>
+
+                    <button type="button" className="card-preview-btn">
+                      <Sparkles size={14} />
+                      <span>试看动作详情</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="snap-section features-page" id="features" aria-label="功能亮点">
-        <div className="section-inner features-layout">
-          <div className="section-heading">
-            <p className="eyebrow">DESKTOP TOOLS</p>
-            <h2>不只是可爱，也能帮你记事</h2>
-            <p>把备忘录、闹钟、提醒和桌面互动放在一个轻量工具里，让陪伴感和实用性同时留在屏幕边上。</p>
+            {filteredPets.length === 0 && (
+              <div className="models-empty">
+                <PawPrint size={42} color="#94a3b8" />
+                <p>没有找到匹配的角色，试试其他关键词吧~</p>
+                <button type="button" onClick={() => setSearchQuery('')}>
+                  清除搜索条件
+                </button>
+              </div>
+            )}
           </div>
+        </section>
 
-          <div className="feature-stage">
-            <div className="assistant-board" aria-label="桌面助手功能预览">
-              <div className="board-topbar">
-                <span>今日提醒</span>
-                <strong>09:30</strong>
-              </div>
-              <div className="memo-list">
-                <article>
-                  <CalendarCheck size={18} />
-                  <div>
-                    <strong>备忘录</strong>
-                    <span>晚上整理桌面文件</span>
-                  </div>
-                </article>
-                <article>
-                  <AlarmClock size={18} />
-                  <div>
-                    <strong>闹钟</strong>
-                    <span>10 分钟后休息一下</span>
-                  </div>
-                </article>
-                <article>
-                  <BellRing size={18} />
-                  <div>
-                    <strong>提醒</strong>
-                    <span>有新版本时提醒我</span>
-                  </div>
-                </article>
-              </div>
-              <div className="board-pet">
-                <img src={petImage('fox')} alt="狐狸功能演示" />
-                <div>
-                  <strong>狐狸准备提醒你</strong>
-                  <span>到点后用动作给出反馈</span>
+        {/* ==================== 3. 爱宠定制 (Custom Section) ==================== */}
+        <section className="site-section custom-section" id="custom">
+          <div className="section-inner">
+            <div className="section-heading text-center">
+              <p className="eyebrow">CUSTOM PET STUDIO</p>
+              <h2>把自家的毛孩子，做成电脑桌面伙伴</h2>
+              <p>
+                喜欢你家猫咪踩奶、狗狗摇尾巴的乖巧模样吗？专属画师一对一动作还原，支持待机、走动、睡觉与被逗弄全套动作！
+              </p>
+            </div>
+
+            <div className="custom-steps-grid">
+              <div className="custom-step-card">
+                <div className="step-num">01</div>
+                <div className="step-icon-wrap">
+                  <Camera size={26} color="#126ad6" />
                 </div>
+                <h3>拍照收集日常照片</h3>
+                <p>
+                  只需提供 3~5 张毛孩子日常生活抓拍照（正面呆萌、侧脸玩耍、伸懒腰或趴卧睡姿），标注性格特色。
+                </p>
+              </div>
+
+              <div className="custom-step-card">
+                <div className="step-num">02</div>
+                <div className="step-icon-wrap">
+                  <Heart size={26} color="#e11d48" />
+                </div>
+                <h3>画师逐帧纯手绘还原</h3>
+                <p>
+                  专属画师进行高精度像素/矢量重绘，还原 5~8 组专属交互动作帧，赋予它独特的屏幕生命力。
+                </p>
+              </div>
+
+              <div className="custom-step-card">
+                <div className="step-num">03</div>
+                <div className="step-icon-wrap">
+                  <CheckCircle2 size={26} color="#059669" />
+                </div>
+                <h3>进群验收与一键导入</h3>
+                <p>
+                  在官方 QQ 交流群透明沟通制作进度，满意验收后生成独一无二的兑换码，客户端内输入直接导入桌面！
+                </p>
               </div>
             </div>
 
-            <div className="feature-card-grid">
-              {featureCards.map((feature) => {
-                const Icon = feature.icon
+            {/* 定制预约 CTA 卡片 */}
+            <div className="custom-cta-banner">
+              <div className="cta-content">
+                <span className="cta-badge">OFFICIAL COMMUNITY</span>
+                <h3>官方交流群现已开放预约通道</h3>
+                <p>画师一对一沟通细节，进度公开透明，支持验收满意后再交付，快来为心爱的毛孩子定制吧！</p>
+              </div>
+              <a className="cta-btn" href={qqGroupUrl} target="_blank" rel="noopener noreferrer">
+                <MessageSquare size={18} />
+                <span>立即预约定制 / 进群交流 (QQ: cYlRBbvuda)</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================== 4. 使用教程 (Tutorial Section) ==================== */}
+        <section className="site-section tutorial-section" id="tutorial">
+          <div className="section-inner">
+            <div className="section-heading text-center">
+              <p className="eyebrow">TUTORIAL & SHORTCUTS</p>
+              <h2>简单 3 步，在桌面上玩转它</h2>
+              <p>免除繁琐配置，双击即玩；统一的交互规则与贴心的日常效率小工具，让桌面不再是单调的背景。</p>
+            </div>
+
+            <div className="tutorial-cards-grid">
+              <div className="tutorial-card">
+                <div className="tut-icon-box">
+                  <MousePointerClick size={24} color="#126ad6" />
+                </div>
+                <h3>🐾 基础交互与边缘探头</h3>
+                <ul className="tut-list">
+                  <li>
+                    <strong>左键单击：</strong>抚摸、逗弄它，触发害羞、合奏等可爱动作反馈；
+                  </li>
+                  <li>
+                    <strong>右键菜单：</strong>随时切换 24 款角色、调节大小（50%~200%）或保持置顶；
+                  </li>
+                  <li>
+                    <strong>长按拖拽：</strong>随意拖到屏幕底端或两侧边缘，它会自动趴在任务栏或吸附漫步！
+                  </li>
+                </ul>
+              </div>
+
+              <div className="tutorial-card">
+                <div className="tut-icon-box">
+                  <ShieldCheck size={24} color="#059669" />
+                </div>
+                <h3>⚡ 快捷键与老板键避让</h3>
+                <ul className="tut-list">
+                  <li>
+                    <strong>Ctrl + H 老板键：</strong>一键瞬间隐藏到右下角托盘，工作学习安心无忧；
+                  </li>
+                  <li>
+                    <strong>全屏智能避让：</strong>玩全屏 3A 游戏或观影时自动休眠，绝不遮挡视线与掉帧；
+                  </li>
+                  <li>
+                    <strong>极简控制台 (Cockpit)：</strong>单窗口预览所有动作反应、检查版本更新与切换角色。
+                  </li>
+                </ul>
+              </div>
+
+              <div className="tutorial-card">
+                <div className="tut-icon-box">
+                  <AlarmClock size={24} color="#d97706" />
+                </div>
+                <h3>⏰ 日常健康与专注提醒</h3>
+                <ul className="tut-list">
+                  <li>
+                    <strong>喝水与久坐提醒：</strong>设定时间间隔，萌宠在桌面轻快弹窗提醒起身喝水活动；
+                  </li>
+                  <li>
+                    <strong>番茄钟工作法：</strong>陪伴你高效专注工作 25 分钟，完成后欢呼跳跃庆祝；
+                  </li>
+                  <li>
+                    <strong>桌面临时备忘录：</strong>随手记下一天的三件小事，不再忘掉任何关键安排。
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================== 5. 常见问题 (FAQ Section) ==================== */}
+        <section className="site-section faq-section" id="faq">
+          <div className="section-inner">
+            <div className="section-heading text-center">
+              <p className="eyebrow">HELP & FAQ</p>
+              <h2>常见疑问与安全答疑</h2>
+              <p>开源透明，绿色安全，解答您在使用与运行过程中的所有顾虑。</p>
+            </div>
+
+            <div className="faq-list">
+              {faqItems.map((item, idx) => {
+                const isOpen = expandedFaq === idx
                 return (
-                  <article className="feature-card" key={feature.title}>
-                    <Icon size={24} strokeWidth={2.1} />
-                    <h3>{feature.title}</h3>
-                    <p>{feature.text}</p>
-                  </article>
+                  <div key={item.q} className={`faq-card ${isOpen ? 'is-open' : ''}`}>
+                    <button
+                      type="button"
+                      className="faq-question-btn"
+                      onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                    >
+                      <HelpCircle size={18} className="faq-icon" />
+                      <span>{item.q}</span>
+                      <ChevronRight size={18} className="faq-arrow" />
+                    </button>
+                    {isOpen && (
+                      <div className="faq-answer">
+                        <p>{item.a}</p>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="snap-section custom-page" id="custom" aria-label="自家爱宠专属定制">
-        <div className="section-inner custom-layout">
-          <div className="section-heading">
-            <p className="eyebrow">CUSTOM PET STUDIO</p>
-            <h2>把自家毛孩子，做进电脑桌面陪伴你</h2>
-            <p>
-              不只是现成动漫角色！提供 1~3 张爱宠生活照（猫咪、狗狗、龙猫、鹦鹉），
-              AI 风格化提取 + 专业动作设计，生成专属陪伴桌宠。每一次敲键盘、看屏幕，爱宠都在身边。
-            </p>
-          </div>
-
-          <div className="custom-funnel-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', margin: '32px 0' }}>
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Camera size={28} color="var(--wp-coral-deep)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>01. 提供生活照</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>准备 1~3 张爱宠清晰的全身照（站立、坐姿或趴卧正面），AI 将自动提取外观花色特征与轮廓。</p>
-            </article>
-
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Sparkles size={28} color="var(--wp-mint-deep)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>02. 动作与性格定制</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>可自由挑选动作风格：日常发呆、桌面散步、打瞌睡、敲键盘陪加班，甚至专属小玩具互动。</p>
-            </article>
-
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Gift size={28} color="var(--wp-coral)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>03. 专属安装包交付</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>生成独一无二的专属角色包，双击即可召唤自家的毛孩子常驻桌面，永久陪伴。</p>
-            </article>
-          </div>
-
-          <div className="custom-cta-card" style={{ padding: '24px 32px', background: 'linear-gradient(135deg, rgba(255, 231, 234, 0.7) 0%, rgba(220, 247, 241, 0.7) 100%)', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <strong style={{ fontSize: '1.15rem', display: 'block', color: 'var(--wp-ink)' }}>想给自家宠物定制独一无二的专属桌宠？</strong>
-              <span style={{ color: 'var(--wp-muted)', fontSize: '0.9rem' }}>官方交流群现已开放预约，透明进度，支持验收满意后再交付。</span>
-            </div>
-            <a
-              className="primary-download"
-              href="https://qm.qq.com/q/cYlRBbvuda"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', textDecoration: 'none' }}
-            >
-              <HeartHandshake size={18} />
-              立即预约爱宠定制 / 进群交流
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section className="snap-section control-page" id="control" aria-label="控制台和下载">
-        <div className="section-inner control-layout">
-          <div className="section-heading">
-            <p className="eyebrow">CONTROL & DOWNLOAD</p>
-            <h2>下载后，在一个窗口里管好它</h2>
-            <p>选择角色、预览动作、检查更新，都可以在 Window Pet 控制台里完成。入口更集中，设置也更直观。</p>
-          </div>
-
-          <div className="cockpit-and-download">
-            <div className="cockpit-window" aria-label="Window Pet Cockpit 控制台预览">
-              <div className="cockpit-toolbar">
-                <span />
-                <span />
-                <span />
-                <strong>Window Pet Cockpit</strong>
-              </div>
-              <div className="cockpit-body">
-                <aside>
-                  {controlViews.map((view) => {
-                    const Icon = view.icon
-                    return (
-                      <button
-                        className={activeControlView.id === view.id ? 'is-active' : undefined}
-                        key={view.id}
-                        type="button"
-                        onClick={() => setActiveControlViewId(view.id)}
-                      >
-                        <Icon size={16} />
-                        {view.label}
-                      </button>
-                    )
-                  })}
-                </aside>
-                <div className="cockpit-main">
-                  {activeControlView.id === 'medals' ? (
-                    <MedalWall />
-                  ) : (
-                    <>
-                      <div className="cockpit-hero">
-                        <img src={petAsset(activeControlView.image)} alt={`${activeControlView.label}界面预览`} />
-                        <div>
-                          <span>{activeControlView.eyebrow}</span>
-                          <strong>{activeControlView.title}</strong>
-                          <p>{activeControlView.text}</p>
-                        </div>
-                      </div>
-                      <div className="cockpit-tools">
-                        {activeControlView.points.map((point) => (
-                          <div key={point}>
-                            <CheckCircle2 size={18} />
-                            {point}
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="download-panel">
-              <div className="download-head">
-                <FileArchive size={24} />
-                <div>
-                  <h3>WindowPet 官方发布版</h3>
-                  <span>Version {releaseVersion} · Windows 10/11</span>
-                </div>
-              </div>
-              <a className="primary-download wide" href={releaseInstallerHref} download={releaseInstallerName}>
+        {/* ==================== 底部下载与安全说明 Banner ==================== */}
+        <section className="site-section cta-download-section">
+          <div className="section-inner download-cta-box">
+            <h2>准备好开启你的桌面陪伴了吗？</h2>
+            <p>Windows 10 / 11 完美兼容 · 仅 50MB · 全量 24 款萌宠开箱即用 · 100% 永久免费开源</p>
+            <div className="download-cta-actions">
+              <a className="main-download-btn" href={releaseInstallerHref} download={releaseInstallerName}>
                 <Download size={20} />
-                下载 Windows 安装包 (仅 50MB · 极速推荐)
+                <span>立即下载 Windows 正式版安装包</span>
               </a>
-              <a
-                className="secondary-action wide"
-                href="https://github.com/panda008006/WindowPet/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ marginTop: '10px', width: '100%', justifyContent: 'center' }}
-              >
-                前往 GitHub Releases 查看发布动态
+              <a className="secondary-repo-btn" href={githubRepoUrl} target="_blank" rel="noopener noreferrer">
+                <Star size={18} fill="currentColor" />
+                <span>前往 GitHub 查看开源代码</span>
               </a>
-              <div className="safety-note">
-                <strong>开源安全背书与 Windows 提示说明</strong>
-                <span>WindowPet 已在 GitHub 全量开源，绿色安全。若初次运行提示“未知发布者”，点击【更多信息】选择【仍要运行】即可正常开启。</span>
-              </div>
-              <div className="download-links">
-                <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">GitHub 开源仓库</a>
-                <span>·</span>
-                <a href="https://github.com/panda008006/WindowPet/releases" target="_blank" rel="noopener noreferrer">版本发布记录</a>
-                <span>·</span>
-                <span>MIT 协议</span>
-              </div>
+            </div>
+            <div className="security-subtext">
+              <span>🔒 纯净绿色无广告 · 无任何弹窗骚扰 · 不上传任何用户个人数据</span>
             </div>
           </div>
+        </section>
+      </main>
 
-          <footer className="page-bottom-footer">
-            <span>© 2026 WindowPet Open Source Community · 永久开源免费</span>
-            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+      {/* ==================== 底部 Footer ==================== */}
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div className="footer-brand-col">
+            <div className="footer-logo">
+              <PawPrint size={22} color="#126ad6" />
+              <strong>WindowPet</strong>
+            </div>
+            <p>大学毕业独立开源心愿之作 · 超轻量桌面伙伴生态社区</p>
+            <small>© 2026 WindowPet Community. Released under the MIT License.</small>
+          </div>
+
+          <div className="footer-links-col">
+            <strong>快速导航</strong>
+            <button type="button" onClick={() => scrollToSection('home')}>
+              官网首页
+            </button>
+            <button type="button" onClick={() => scrollToSection('models')}>
+              24款模型库
+            </button>
+            <button type="button" onClick={() => scrollToSection('custom')}>
+              毛孩子专属定制
+            </button>
+            <button type="button" onClick={() => scrollToSection('tutorial')}>
+              快速上手教程
+            </button>
+            <button type="button" onClick={() => scrollToSection('faq')}>
+              常见问题 FAQ
+            </button>
+          </div>
+
+          <div className="footer-community-col">
+            <strong>社区与支持</strong>
+            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer">
+              GitHub 仓库 (Star 支持)
+            </a>
+            <a href={`${githubRepoUrl}/releases`} target="_blank" rel="noopener noreferrer">
+              版本发布日志 (Releases)
+            </a>
+            <a href={qqGroupUrl} target="_blank" rel="noopener noreferrer">
+              官方 QQ 交流群 (预约与答疑)
+            </a>
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" className="footer-icp-link">
               桂ICP备2026009615号-2
             </a>
-          </footer>
+          </div>
         </div>
-      </section>
+      </footer>
 
-      {isGalleryOpen && (
-        <div
-          className="gallery-lightbox-overlay"
-          onClick={handleCloseGallery}
-          role="dialog"
-          aria-modal="true"
-          aria-label="WindowPet 小鼻嘎展馆"
-        >
-          <div className="gallery-lightbox-card" onClick={(e) => e.stopPropagation()}>
-            <PetGallery onClose={handleCloseGallery} />
+      {/* ==================== 角色动作试看弹窗 (Modal) ==================== */}
+      {previewPet && (
+        <div className="pet-preview-modal-overlay" onClick={() => setPreviewPet(null)}>
+          <div className="pet-preview-dialog" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="dialog-close-btn"
+              onClick={() => setPreviewPet(null)}
+              title="关闭 (ESC)"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="dialog-header">
+              <span className={`rarity-badge rarity-${previewPet.rarity.toLowerCase()}`}>
+                {previewPet.rarity}
+              </span>
+              <h3>{previewPet.name}</h3>
+              <span className="dialog-en">{previewPet.enName}</span>
+              <span className="dialog-cat">{previewPet.categoryLabel}</span>
+            </div>
+
+            <div className="dialog-body">
+              <div className="dialog-stage">
+                <img
+                  src={petAsset(previewPet.image)}
+                  alt={previewPet.name}
+                  className="dialog-avatar"
+                />
+                <p className="dialog-tagline">{previewPet.tagline}</p>
+              </div>
+
+              <div className="dialog-info">
+                <strong>选择动作即时试看：</strong>
+                <div className="dialog-action-chips">
+                  {previewPet.actions.map((act, idx) => (
+                    <button
+                      key={act.id}
+                      type="button"
+                      className={`dialog-act-chip ${previewActionIndex === idx ? 'is-active' : ''}`}
+                      onClick={() => setPreviewActionIndex(idx)}
+                    >
+                      {act.label}
+                    </button>
+                  ))}
+                </div>
+
+                {previewPet.actions[previewActionIndex] && (
+                  <div className="dialog-act-detail">
+                    <strong>动作【{previewPet.actions[previewActionIndex].label}】：</strong>
+                    <span>{previewPet.actions[previewActionIndex].description}</span>
+                  </div>
+                )}
+
+                <div className="dialog-desc">
+                  <p>{previewPet.description}</p>
+                </div>
+
+                <div className="dialog-code-box">
+                  <div>
+                    <small>角色导入兑换码：</small>
+                    <code>{previewPet.redeemCode}</code>
+                  </div>
+                  <button
+                    type="button"
+                    className="copy-code-btn"
+                    onClick={() => handleCopyCode(previewPet.redeemCode)}
+                  >
+                    {copyCodeToast ? '已复制！' : '一键复制'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }
 
 export default App
-
