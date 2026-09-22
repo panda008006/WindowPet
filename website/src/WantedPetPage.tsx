@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Compass,
   Palette,
-  Zap,
   MessageSquareHeart,
 } from 'lucide-react'
 import './wanted.css'
@@ -286,12 +285,56 @@ interface WantedPetPageProps {
   onOpenCustom?: () => void
 }
 
-type FilterType = 'all' | 'hot' | 'claimed' | 'new'
+type FilterType = 'xiaobiga' | 'claimed'
+
+/**
+ * 7日心愿海交错布局算法：
+ * 保证近7天高票角色泡泡最大、最突出；
+ * 同时将大泡泡、小泡泡和中泡泡自然错落穿插，形成极具生命力的海洋泡泡星系图景。
+ */
+function distributeOceanBubbles(items: WishBubble[]): WishBubble[] {
+  if (items.length <= 4) return items
+  // 按7日票数降序排序
+  const sorted = [...items].sort((a, b) => b.votes - a.votes)
+
+  const big: WishBubble[] = []
+  const medium: WishBubble[] = []
+  const small: WishBubble[] = []
+
+  const total = sorted.length
+  const bigCutoff = Math.max(3, Math.floor(total * 0.22)) // 前排约 5~6 个大泡泡
+  const medCutoff = Math.floor(total * 0.55) // 中排约 8~9 个中泡泡
+
+  sorted.forEach((item, index) => {
+    if (index < bigCutoff) {
+      big.push(item)
+    } else if (index < medCutoff) {
+      medium.push(item)
+    } else {
+      small.push(item)
+    }
+  })
+
+  // 错落编排：大泡泡作为视觉核心锚点，周边有机穿插小泡泡与中泡泡
+  const result: WishBubble[] = []
+  let bIdx = 0
+  let mIdx = 0
+  let sIdx = 0
+
+  while (bIdx < big.length || mIdx < medium.length || sIdx < small.length) {
+    if (bIdx < big.length) result.push(big[bIdx++])
+    if (sIdx < small.length) result.push(small[sIdx++])
+    if (mIdx < medium.length) result.push(medium[mIdx++])
+    if (sIdx < small.length) result.push(small[sIdx++])
+  }
+
+  return result
+}
 
 export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: WantedPetPageProps) {
   const [bubbles, setBubbles] = useState<WishBubble[]>(initialBubbles)
   const [inputText, setInputText] = useState('')
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all')
+  const [activeFilter, setActiveFilter] = useState<FilterType>('xiaobiga')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [poppingId, setPoppingId] = useState<string | null>(null)
   const [isArtistMode, setIsArtistMode] = useState(false)
@@ -435,18 +478,23 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
     triggerSendWish(chipText)
   }
 
+  // 计算7日热度排行（1-indexed）
+  const voteRanks = useMemo(() => {
+    const sorted = [...bubbles].sort((a, b) => b.votes - a.votes)
+    const map: Record<string, number> = {}
+    sorted.forEach((b, idx) => {
+      map[b.id] = idx + 1
+    })
+    return map
+  }, [bubbles])
+
   // 过滤后的泡泡列表
   const filteredBubbles = useMemo(() => {
-    switch (activeFilter) {
-      case 'hot':
-        return [...bubbles].sort((a, b) => b.votes - a.votes)
-      case 'claimed':
-        return bubbles.filter((b) => Boolean(b.claimedBy))
-      case 'new':
-        return bubbles.filter((b) => b.id.startsWith('custom-'))
-      default:
-        return bubbles
+    if (activeFilter === 'claimed') {
+      return bubbles.filter((b) => Boolean(b.claimedBy) || Boolean(b.claimedCount && b.claimedCount > 0))
     }
+    // 默认 'xiaobiga'：近7天热度心愿海，高呼声大泡泡与小泡泡自然错落呈现
+    return distributeOceanBubbles(bubbles)
   }, [bubbles, activeFilter])
 
   // 计算最大票数，用于动态等比缩放
@@ -456,47 +504,33 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
 
   return (
     <div className="wanted-page-wrapper">
-      {/* 顶部轻量极简面包屑与快捷导航 */}
+      {/* 顶部极简快捷导航（tabs 放置在左侧，与返回首页成组） */}
       <header className="wanted-topbar">
-        <button type="button" className="wanted-back-btn" onClick={onBackToHome}>
-          <ArrowLeft size={16} />
-          <span>返回首页</span>
-        </button>
+        <div className="wanted-topbar-left">
+          <button type="button" className="wanted-back-btn" onClick={onBackToHome}>
+            <ArrowLeft size={16} />
+            <span>返回首页</span>
+          </button>
 
-        <div className="wanted-topbar-tabs">
-          <button
-            type="button"
-            className={`wanted-filter-pill ${activeFilter === 'all' ? 'is-active' : ''}`}
-            onClick={() => setActiveFilter('all')}
-          >
-            <span>全部心愿 ({bubbles.length})</span>
-          </button>
-          <button
-            type="button"
-            className={`wanted-filter-pill ${activeFilter === 'hot' ? 'is-active' : ''}`}
-            onClick={() => setActiveFilter('hot')}
-          >
-            <Flame size={13} fill={activeFilter === 'hot' ? '#ef4444' : 'none'} color="#ef4444" />
-            <span>呼声最高</span>
-          </button>
-          <button
-            type="button"
-            className={`wanted-filter-pill ${activeFilter === 'claimed' ? 'is-active' : ''}`}
-            onClick={() => setActiveFilter('claimed')}
-          >
-            <Palette size={13} color="#2f9f93" />
-            <span>画师已认领</span>
-          </button>
-          {bubbles.some((b) => b.id.startsWith('custom-')) && (
+          <div className="wanted-topbar-tabs">
             <button
               type="button"
-              className={`wanted-filter-pill ${activeFilter === 'new' ? 'is-active' : ''}`}
-              onClick={() => setActiveFilter('new')}
+              className={`wanted-filter-pill ${activeFilter === 'xiaobiga' ? 'is-active' : ''}`}
+              onClick={() => setActiveFilter('xiaobiga')}
+              title="7日心愿热度榜 · 大小泡泡自然错落涌动"
             >
-              <Zap size={13} color="#e85f6d" />
-              <span>社区最新提出</span>
+              <span>🐾 小鼻嘎</span>
             </button>
-          )}
+            <button
+              type="button"
+              className={`wanted-filter-pill ${activeFilter === 'claimed' ? 'is-active' : ''}`}
+              onClick={() => setActiveFilter('claimed')}
+              title="画师已认领角色"
+            >
+              <Palette size={13} color="#2f9f93" />
+              <span>画师已领</span>
+            </button>
+          </div>
         </div>
 
         <div className="wanted-topbar-actions">
@@ -517,26 +551,8 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
         </div>
       )}
 
-      {/* 主界面主体：心愿海洋与角色气泡天空 */}
+      {/* 主界面主体：心愿海洋与角色气泡天空（去除冗余大标题与说明段落，直接进入灵动泡泡海） */}
       <main className="wanted-main-stage">
-        <div className="wanted-hero-header">
-          <div className="wanted-badge-row">
-            <span className="wanted-eyebrow-badge">
-              <Sparkles size={14} />
-              <span>COMMUNITY LIVE WISH OCEAN · 许愿角色心愿海</span>
-            </span>
-            <span className="wanted-online-pill">
-              <span className="wanted-green-dot" />
-              <span>实时互动 · 灵感吐泡泡</span>
-            </span>
-          </div>
-
-          <h1 className="wanted-page-title">许愿什么角色住进桌面？打字让它冒出来！</h1>
-          <p className="wanted-page-subtitle">
-            输入任意你想在电脑桌面上见到的角色。谁的呼声高，谁的泡泡就膨胀得最大！
-            入驻画师与主理人会根据心愿海的泡泡热度，优先切帧制作并免费上线~
-          </p>
-        </div>
 
         {/* 画师入驻与心愿认领状态栏 (放置在气泡海洋上方，一目了然且永不被底部输入框遮挡) */}
         <div className="wanted-artist-callout">
@@ -592,9 +608,10 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
         {/* 气泡天空与海洋 */}
         <div className={`wanted-bubbles-ocean ${isArtistMode ? 'is-artist-mode' : ''}`}>
           {filteredBubbles.map((b, idx) => {
-            // 尺寸计算：从 82px 到 152px 动态线性平滑膨胀
+            const rank = voteRanks[b.id] || 99
+            // 尺寸计算：7天热度自然映射（大泡泡最膨胀至 152px，小泡泡精巧 82px，错落有致）
             const ratio = Math.min(1, Math.max(0, b.votes / maxVotes))
-            const sizePx = Math.round(82 + ratio * 68)
+            const sizePx = Math.round(82 + Math.pow(ratio, 0.82) * 70)
             const isPopping = poppingId === b.id
             const myVote = userVotes[b.id] || 0
             const claimCount = b.claimedCount || (b.claimedBy ? 1 : 0)
@@ -623,8 +640,24 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
                 role="button"
                 tabIndex={0}
               >
-                {b.isHot && (
-                  <span className="ocean-hot-badge" title="呼声超高！">
+                {/* 7日热度前三甲冠亚季军徽标与超高呼声火苗 */}
+                {rank === 1 && (
+                  <span className="ocean-rank-crown" title="近7天热度 Top 1 · 呼声最高！">
+                    👑 Top 1
+                  </span>
+                )}
+                {rank === 2 && (
+                  <span className="ocean-rank-crown is-rank-2" title="近7天热度 Top 2">
+                    🥈 Top 2
+                  </span>
+                )}
+                {rank === 3 && (
+                  <span className="ocean-rank-crown is-rank-3" title="近7天热度 Top 3">
+                    🥉 Top 3
+                  </span>
+                )}
+                {rank > 3 && b.isHot && (
+                  <span className="ocean-hot-badge" title="7日呼声超高！">
                     <Flame size={12} fill="#ef4444" color="#ef4444" />
                   </span>
                 )}
