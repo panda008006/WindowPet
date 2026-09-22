@@ -600,3 +600,37 @@ a:focus-visible {
     min-height: 62px;
   }
 }
+
+/* Hero Page Proportions Refinement */
+.hero-page {
+  padding-top: 84px;
+  padding-bottom: 24px;
+}
+
+.hero-page .hero-copy h1 {
+  font-size: clamp(36px, 3.8vw, 52px);
+  margin-top: 6px;
+  line-height: 1.1;
+}
+
+.hero-page .hero-subtitle {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.58;
+}
+
+.hero-page .hero-actions {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.hero-page .hero-meta {
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.hero-page .hero-meta span {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+

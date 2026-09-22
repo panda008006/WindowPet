@@ -23,10 +23,14 @@ import {
 import './App.css'
 import './polish.css'
 import './subpages.css'
+import './community.css'
 import { PetGallery } from './PetGallery'
 import { CustomPetPage } from './CustomPetPage'
 import { TutorialPage } from './TutorialPage'
 import { FaqPage } from './FaqPage'
+import { AgentLightDemo } from './AgentLightDemo'
+import { WishBubbleWall } from './WishBubbleWall'
+import { MasterCreatorSection } from './MasterCreatorSection'
 
 function QqIcon({ size = 15 }: { size?: number }) {
   return (
@@ -59,10 +63,11 @@ const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 const bilibiliVideoUrl = 'https://www.bilibili.com/video/BV1E2eb6PE5Q/'
 const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
-const sectionIds = ['home', 'pets', 'features', 'control'] as const
+const sectionIds = ['home', 'community', 'pets', 'features', 'control'] as const
 
 const sectionDots = [
   { id: 'home', label: '首页' },
+  { id: 'community', label: '主理人与心愿' },
   { id: 'pets', label: '角色' },
   { id: 'features', label: '功能' },
   { id: 'control', label: '下载' },
@@ -545,7 +550,7 @@ function App() {
                 下载 Windows 安装包 (仅 50MB)
               </a>
               <button className="secondary-action" type="button" onClick={() => scrollToSection(1)}>
-                浏览全部 24 款角色
+                主理人专栏 & 心愿池
                 <ChevronDown size={18} />
               </button>
             </div>
@@ -555,6 +560,7 @@ function App() {
               <span>24 款全套萌宠</span>
               <span>100% 永久免费开源</span>
             </div>
+            <AgentLightDemo />
           </div>
 
           <div className="hero-visual" aria-label="Window Pet 主视觉">
@@ -577,6 +583,18 @@ function App() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="snap-section community-page" id="community" aria-label="官方主理人与心愿池">
+        <div className="community-layout-inner">
+          <MasterCreatorSection
+            onNavigateCustom={() => navigateTo('custom')}
+            onNavigateGallery={() => navigateTo('gallery')}
+          />
+          <WishBubbleWall
+            onNavigateCustom={() => navigateTo('custom')}
+          />
         </div>
       </section>
 
