@@ -176,137 +176,427 @@
   margin: 0;
 }
 
-/* 画师阵容网格 */
-.custom-artists-grid {
+/* ==========================================================================
+   圆圈链式展示区：像博主一样的垂直圆环流（作者主圈 -> 案例圈 01 -> 案例圈 02）
+   ========================================================================== */
+.circle-chains-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 22px;
-  margin-bottom: 48px;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 24px;
+  align-items: stretch;
 }
 
-.custom-artist-card {
-  padding: 24px;
+.artist-circle-chain-card {
+  padding: 28px 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(235, 218, 210, 0.88);
+  border-radius: 24px;
 }
 
-.custom-artist-head {
+/* 链条节点通用布局 */
+.chain-node {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  text-align: center;
 }
 
-.custom-artist-avatar {
-  width: 48px;
-  height: 48px;
+/* 1. 作者主圆环外框与头像 */
+.circle-ring-outer {
+  position: relative;
+  border-radius: 50%;
+  border: 3px solid #e85f6d;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 127, 135, 0.16), 0 8px 24px rgba(232, 95, 109, 0.12);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
+}
+
+.circle-ring-outer:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 6px rgba(255, 127, 135, 0.25), 0 12px 30px rgba(232, 95, 109, 0.2);
+}
+
+.circle-ring-author {
+  width: 90px;
+  height: 90px;
+  padding: 4px;
+}
+
+.circle-ring-inner-avatar {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
-  font-size: 1.25rem;
+  color: #ffffff;
+  font-size: 2.1rem;
+  font-weight: 900;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.circle-badge-pill {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 0.72rem;
   font-weight: 800;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  border: 2px solid #ffffff;
 }
 
-.custom-artist-meta strong {
+.chain-author-meta {
+  margin-top: 14px;
+}
+
+.chain-author-name {
   display: block;
-  font-size: 1.05rem;
+  font-size: 1.12rem;
+  font-weight: 850;
   color: #08233f;
-  font-weight: 820;
 }
 
-.custom-artist-meta small {
+.chain-author-role {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  color: #2f9f93;
+  font-weight: 750;
   margin-top: 2px;
 }
 
-.custom-artist-desc {
-  font-size: 0.88rem;
+.chain-author-desc {
+  font-size: 0.84rem;
   color: #557595;
-  line-height: 1.6;
-  margin: 0;
+  line-height: 1.55;
+  margin: 8px 0 10px;
 }
 
-.custom-artist-tags {
+.chain-tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  justify-content: center;
+  gap: 5px;
 }
 
-.custom-artist-tag {
-  font-size: 0.76rem;
+.chain-tag-pill {
+  font-size: 0.72rem;
   font-weight: 650;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   background: rgba(87, 199, 184, 0.12);
   color: #20877c;
   border: 1px solid rgba(87, 199, 184, 0.25);
 }
 
-.custom-artist-footer {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(235, 218, 210, 0.85);
+/* 垂直连接轴线 */
+.chain-connector-v {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.82rem;
+  justify-content: center;
+  height: 38px;
+  position: relative;
+  margin: 6px 0;
 }
 
-.custom-artist-status {
+.connector-v-line {
+  width: 0;
+  height: 100%;
+  border-left: 2px dashed #e85f6d;
+  opacity: 0.55;
+}
+
+.connector-v-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e85f6d;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 0 5px rgba(232, 95, 109, 0.3);
+}
+
+/* 2. 定制案例圆环 */
+.circle-ring-case {
+  width: 82px;
+  height: 82px;
+  padding: 5px;
+  background: radial-gradient(circle at center, #ffffff 40%, #fff6f6 100%);
+}
+
+.circle-ring-case-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.circle-step-badge {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #08233f;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 750;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.chain-case-meta {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.chain-case-meta h4 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #08233f;
+}
+
+.chain-case-flow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  background: rgba(232, 95, 109, 0.08);
+  border: 1px solid rgba(232, 95, 109, 0.2);
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-bottom: 6px;
+}
+
+.chain-case-flow .flow-src {
+  color: #557595;
+}
+
+.chain-case-flow .flow-arrow {
+  color: #e85f6d;
+  font-weight: 900;
+}
+
+.chain-case-flow .flow-dst {
+  color: #e85f6d;
+  font-weight: 750;
+}
+
+.chain-case-meta p {
+  font-size: 0.8rem;
+  color: #557595;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.chain-case-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chain-case-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid rgba(47, 159, 147, 0.35);
+  background: rgba(87, 199, 184, 0.12);
+  color: #20877c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chain-case-import-btn:hover {
+  background: #2f9f93;
+  color: #ffffff;
+  border-color: #2f9f93;
+  transform: translateY(-1px);
+}
+
+.chain-case-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  border: 1px solid rgba(235, 218, 210, 0.9);
+  background: #ffffff;
+  color: #557595;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chain-case-copy-btn:hover {
+  border-color: #e85f6d;
+  color: #e85f6d;
+}
+
+/* 底部约稿直达按钮 */
+.chain-card-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(235, 218, 210, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.chain-book-author-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff7f87, #e85f6d);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 750;
+  box-shadow: 0 4px 12px rgba(232, 95, 109, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chain-book-author-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(232, 95, 109, 0.32);
+}
+
+.chain-status-badge {
+  font-size: 0.74rem;
   color: #059669;
   font-weight: 700;
 }
 
-/* 案例对比卡片 */
-.custom-showcase-grid {
+/* ==========================================================================
+   导入机制与画师入驻解剖卡片
+   ========================================================================== */
+.import-mechanisms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 24px;
-  margin-bottom: 48px;
 }
 
-.custom-showcase-item {
-  padding: 22px;
+.import-mech-card {
+  padding: 30px 28px;
+}
+
+.import-mech-head {
   display: flex;
-  gap: 16px;
   align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(235, 218, 210, 0.85);
 }
 
-.custom-showcase-pet-img {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
-  background: rgba(255, 255, 255, 0.9);
+.import-mech-icon-wrap {
+  width: 52px;
+  height: 52px;
   border-radius: 16px;
-  padding: 6px;
-  border: 1px solid rgba(235, 218, 210, 0.8);
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
 }
 
-.custom-showcase-info h4 {
-  margin: 0 0 6px;
-  font-size: 1.05rem;
+.import-mech-head h3 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  color: #08233f;
+  font-weight: 850;
+}
+
+.import-mech-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.import-mech-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.step-badge-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7f87, #e85f6d);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 850;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(232, 95, 109, 0.25);
+}
+
+.import-mech-step-item:nth-child(2) .step-badge-num {
+  background: linear-gradient(135deg, #2f9f93, #57c7b8);
+  box-shadow: 0 3px 8px rgba(47, 159, 147, 0.25);
+}
+
+.import-mech-step-item:nth-child(3) .step-badge-num {
+  background: linear-gradient(135deg, #fb923c, #f59e0b);
+  box-shadow: 0 3px 8px rgba(251, 146, 60, 0.25);
+}
+
+.import-mech-step-item strong {
+  display: block;
+  font-size: 0.95rem;
   color: #08233f;
   font-weight: 800;
+  margin-bottom: 4px;
 }
 
-.custom-showcase-info p {
-  margin: 0 0 8px;
+.import-mech-step-item p {
+  margin: 0;
   font-size: 0.86rem;
   color: #557595;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
-.custom-showcase-tags {
-  display: flex;
-  gap: 6px;
-  font-size: 0.76rem;
+.import-mech-step-item code {
+  background: rgba(232, 95, 109, 0.1);
   color: #e85f6d;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.dialog-mockup {
+  display: block;
+  margin: 6px 0;
+  padding: 6px 12px;
+  background: rgba(87, 199, 184, 0.1);
+  border-left: 3px solid #2f9f93;
+  border-radius: 4px;
+  color: #20877c;
+  font-weight: 750;
+  font-size: 0.84rem;
 }
 
 /* 底部 CTA 卡片 */

@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import {
   Camera,
-  CheckCircle2,
   Gift,
   HeartHandshake,
   Home,
   Palette,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
   HelpCircle,
   Copy,
   Check,
+  Zap,
+  Laptop,
 } from 'lucide-react'
 import './subpages.css'
 
@@ -24,100 +24,197 @@ const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
 export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProps) {
   const [copiedQq, setCopiedQq] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg)
+    setTimeout(() => {
+      setToastMessage(null)
+    }, 3000)
+  }
 
   const handleCopyQq = () => {
     try {
       navigator.clipboard.writeText('422616922')
       setCopiedQq(true)
+      showToast('官方定制直通群号 422616922 已复制到剪贴板！')
       setTimeout(() => setCopiedQq(false), 2400)
     } catch {
       // ignore
     }
   }
 
-  const artists = [
+  const handleCopyCode = (code: string, petName: string) => {
+    try {
+      navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      showToast(`🎉 备用识别码 ${code} 已复制！在桌面端粘贴即可装载【${petName}】`)
+      setTimeout(() => setCopiedCode(null), 2500)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDeepLink = (code: string, petName: string) => {
+    const deepLinkUrl = `windowpet://import?code=${encodeURIComponent(code)}&name=${encodeURIComponent(petName)}`
+    window.open(deepLinkUrl, '_self')
+    showToast(`🚀 正在呼叫 WindowPet 桌面端自动装载【${petName}】...（若未弹出请使用下方备用码）`)
+    try {
+      navigator.clipboard.writeText(code)
+    } catch {
+      // ignore
+    }
+  }
+
+  // 4 大画师链式圈圈展示（一个作者圆圈，下面圈一个案例，再下面圈一个案例）
+  const artistChains = [
     {
       id: 'chestnut',
       name: '@糖炒栗子',
+      shortName: '糖炒栗子',
       studio: '糖炒栗子定制工坊',
       initial: '栗',
-      gradient: 'linear-gradient(135deg, #ff7675, #fab1a0)',
-      tagColor: '#e11d48',
-      styleTitle: '25帧视线跟随 / 真实毛发质感',
-      desc: '资深宠物肖像画师，擅长猫咪狗狗眼神微动作追踪与毛流感精绘。鼠标晃到哪里，爱宠就机敏地看到哪里，神态栩栩如生。',
+      badge: '特邀主理',
+      badgeColor: '#e11d48',
+      role: '特邀定制主理人 · 真实毛发专精',
+      desc: '资深宠物肖像画师，擅长眼神微动作追踪与毛流感精绘。鼠标晃到哪里，爱宠就机敏地看到哪里。',
       tags: ['真实毛发', '25帧视线跟随', '微表情打呼噜', '猫犬专精'],
+      gradient: 'linear-gradient(135deg, #ff7f87, #e85f6d)',
+      ringColor: '#e85f6d',
       status: '● 开放约稿中（工期约 3~5 天）',
-      works: '代表作【麦脆角摇头猫】、【布偶猫雪球】',
+      cases: [
+        {
+          id: 'maicuijiao',
+          title: '田园橘猫 · 麦脆角',
+          img: `${import.meta.env.BASE_URL}pets/jiyi-action-waving.webp`,
+          sourceTag: '生活照阳台晒太阳',
+          resultTag: '25帧毛发微表情',
+          desc: '提取特征山字纹与琥珀色大眼，定制了视线跟随、趴睡发呆与按爪印 3 个动作。',
+          redeemCode: 'WPX-2026-JIYI',
+        },
+        {
+          id: 'snowball',
+          title: '纯种布偶 · 雪球',
+          img: `${import.meta.env.BASE_URL}pets/cat.png`,
+          sourceTag: '蓝眼大围脖照片',
+          resultTag: '视线跟随+呼噜踩奶',
+          desc: '抓取布偶猫标志性海双八字脸与蓬松围脖，跟随鼠标歪头眨眼，屏幕边缘伸懒腰踩奶。',
+          redeemCode: 'WPX-2026-CAT',
+        },
+      ],
     },
     {
       id: 'mino',
       name: '@米诺画画中',
+      shortName: '米诺',
       studio: '米诺治愈工坊',
       initial: '米',
-      gradient: 'linear-gradient(135deg, #00cec9, #81ecec)',
-      tagColor: '#0d9488',
-      styleTitle: '日系治愈 Q 版 / 软萌像素风',
-      desc: '重度猫狗铲屎官，擅长将现实宠物的憨态与花斑特征提取为极具治愈感的萌系形象。踩奶、伸懒腰、打瞌睡动作一应俱全。',
+      badge: '家宠写生',
+      badgeColor: '#2f9f93',
+      role: '独立家宠插画师 · 日系Q版/像素风',
+      desc: '重度猫狗双全铲屎官，擅长将宠物的憨态与花斑特征提取为极具治愈感的萌系形象。',
       tags: ['治愈Q版', '软萌像素', '踩奶互动', '异宠可接'],
+      gradient: 'linear-gradient(135deg, #2f9f93, #57c7b8)',
+      ringColor: '#2f9f93',
       status: '● 开放约稿中（工期约 2~4 天）',
-      works: '代表作【小柴犬阿黄】、【豚鼠布布】、【金渐层圆圆】',
+      cases: [
+        {
+          id: 'xiaochai',
+          title: '小柴犬 · 阿黄',
+          img: `${import.meta.env.BASE_URL}pets/xiaochai.png`,
+          sourceTag: '歪头杀正脸生活照',
+          resultTag: '摇尾巴+接飞盘逗弄',
+          desc: '还原标志性白肚皮与豆豆眉，加入点击欢快摇尾巴、丢飞盘互动与小憩打呼噜。',
+          redeemCode: 'WPX-2026-XIAOCHAI',
+        },
+        {
+          id: 'nuomi',
+          title: '垂耳兔 · 糯米团',
+          img: `${import.meta.env.BASE_URL}pets/dora-action-waving.webp`,
+          sourceTag: '灰白软糯生活照',
+          resultTag: '任务栏静音嚼胡萝卜',
+          desc: '高度还原灰白兔耳，双击投喂胡萝卜，常驻在屏幕任务栏右下角安静咀嚼。',
+          redeemCode: 'WPX-2026-DORA',
+        },
+      ],
     },
     {
       id: 'hoshino',
       name: '@星野光年漫研所',
+      shortName: '星野',
       studio: '星野创作组',
       initial: '星',
-      gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
-      tagColor: '#7c3aed',
-      styleTitle: '二次元拟人 / 专属连携演出',
-      desc: '脑洞大开的动漫社创作者，擅长把毛孩子打造成动漫伴侣！设计专属敲小鼓、弹吉他、或配合主人打字疯狂摇晃的魔性动作。',
+      badge: '动漫拟人',
+      badgeColor: '#fb7185',
+      role: '动漫概念插画师 · 二次元拟人伴侣',
+      desc: '把自家的毛孩子打造成动漫伴侣！设计专属敲小鼓、吉他伴奏或打字狂暴摇晃动作。',
       tags: ['动漫拟人', '连携乐器合奏', '打工怨种搭子', '限量接单'],
+      gradient: 'linear-gradient(135deg, #a78bfa, #fb7185)',
+      ringColor: '#a78bfa',
       status: '● 开放约稿中（每月限量 5 单）',
-      works: '代表作【猫耳少女萌化】、【魔性合奏乐手】',
+      cases: [
+        {
+          id: 'miaomiao',
+          title: '猫耳伴侣 · 喵喵',
+          img: `${import.meta.env.BASE_URL}pets/jiyi-action-concert.webp`,
+          sourceTag: '三花猫生活照拟人',
+          resultTag: '敲小鼓吉他合奏',
+          desc: '将自家三花猫花斑融入动漫猫耳少女，跟随键盘敲击节奏弹奏吉他，带来专属治愈 BGM。',
+          redeemCode: 'WPX-2026-MIAOMIAO',
+        },
+        {
+          id: 'foxboy',
+          title: '赤狐少年 · 小赤',
+          img: `${import.meta.env.BASE_URL}pets/fox-action-waving.webp`,
+          sourceTag: '赤狐抓拍生活图',
+          resultTag: '屏幕边沿探头挥手',
+          desc: '蓬松大尾巴随风轻晃，在任务栏上方露出半个小脑袋偷偷看你，点击害羞缩回再探出。',
+          redeemCode: 'WPX-2026-FOX',
+        },
+      ],
     },
     {
       id: 'memelab',
       name: '@整活大队 MemeLab',
+      shortName: 'MemeLab',
       studio: 'MemeLab 创意室',
       initial: 'M',
-      gradient: 'linear-gradient(135deg, #fdcb6e, #ffeaa7)',
-      tagColor: '#d35400',
-      styleTitle: '幽默沙雕表情包 / 狂暴打字搭子',
-      desc: '专治上班无聊！将爱宠的沙雕丑照与表情包制作成桌宠，陪你上班疯狂敲键盘或在屏幕边上发呆叹气，喜感直接拉满。',
+      badge: '趣味整活',
+      badgeColor: '#f59e0b',
+      role: '幽默动态设计师 · 狂暴打字/摸鱼搭子',
+      desc: '专治工位无聊！将爱宠的沙雕丑照与表情包制作成桌面搭子，陪你上班疯狂敲键盘。',
       tags: ['沙雕表情包', '狂暴敲键盘', '打工怨种', '随缘接单'],
+      gradient: 'linear-gradient(135deg, #fb923c, #f59e0b)',
+      ringColor: '#fb923c',
       status: '● 开放约稿中（随缘接单）',
-      works: '代表作【疯狂敲键盘猫】、【摸鱼怨种柴】',
-    },
-  ]
-
-  const showcaseCases = [
-    {
-      title: '田园橘猫 · 麦脆角',
-      artist: '@糖炒栗子',
-      img: `${import.meta.env.BASE_URL}pets/jiyi-action-waving.webp`,
-      desc: '主人提供 2 张阳台晒太阳生活照。提取了特征性的山字纹与琥珀色大眼睛，定制了鼠标跟随、趴睡发呆与按爪印 3 个动作。',
-      tag: '真实毛发定制',
-    },
-    {
-      title: '柴犬 · 阿黄',
-      artist: '@米诺画画中',
-      img: `${import.meta.env.BASE_URL}pets/fox-action-waving.webp`,
-      desc: '主人提供歪头杀正脸照。还原了标志性的豆豆眉和白胸脯，加入了点击摇尾巴、接飞盘和小憩 3 组互动。',
-      tag: '治愈手绘定制',
-    },
-    {
-      title: '垂耳兔 · 糯米团',
-      artist: '@米诺画画中',
-      img: `${import.meta.env.BASE_URL}pets/dora-action-waving.webp`,
-      desc: '还原灰白色软糯绒毛与大长耳朵。双击可喂食胡萝卜，在屏幕任务栏边缘趴着咀嚼，安静治愈不挡屏幕。',
-      tag: '软萌像素定制',
+      cases: [
+        {
+          id: 'salarycat',
+          title: '疯狂敲键盘猫',
+          img: `${import.meta.env.BASE_URL}pets/salary_cat.png`,
+          sourceTag: '打工怨种搞笑丑照',
+          resultTag: '超高速打字残影冒烟',
+          desc: '打工人专属解压！你打字越快它敲键盘越狠，键盘冒火星，还会随着按键抓狂拍桌。',
+          redeemCode: 'WPX-2026-SALARYCAT',
+        },
+        {
+          id: 'mochuchai',
+          title: '摸鱼怨种柴柴',
+          img: `${import.meta.env.BASE_URL}pets/fox.png`,
+          sourceTag: '翻白眼搞怪生活照',
+          resultTag: '任务栏打哈欠叹气',
+          desc: '趴在任务栏边沿不停打哈欠、叹气与翻白眼，完美化身工位精神状态代言人。',
+          redeemCode: 'WPX-2026-CHAI',
+        },
+      ],
     },
   ]
 
   const customFaqs = [
     {
       q: '定制我家毛孩子需要准备哪些资料？',
-      a: '只需准备 1~3 张爱宠在明亮光线下的清晰生活照（建议包含正面坐姿、站立或趴卧全身照），并简单告知画师毛孩子的名字、品种与平时最萌的标志性小动作（如爱歪头、爱踩奶、贪睡等）即可。',
+      a: '只需准备 1~3 张爱宠在充足光线下的清晰生活照（建议包含正面坐姿、站立或趴卧全身照），并简单告知画师毛孩子的名字、品种与平时最萌的标志性小动作（如爱歪头、爱踩奶、贪睡等）即可。',
     },
     {
       q: '定制的工期大概需要多久？流程是怎样的？',
@@ -135,6 +232,14 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
 
   return (
     <div className="page-view-pane">
+      {/* 浮动操作提示 */}
+      {toastMessage && (
+        <div className="gallery-toast-pill" role="status" aria-live="polite">
+          <Sparkles size={16} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       <div className="subpage-container">
         {/* 顶部 Hero */}
         <header className="subpage-hero">
@@ -194,6 +299,282 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
           </div>
         </header>
 
+        {/* 核心特色：像博主一样的圆圈链式展示（一个作者圆圈，下面圈一个，再下面圈一个） */}
+        <section style={{ marginBottom: '64px' }}>
+          <div className="subpage-section-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <span className="subpage-section-badge">
+                <Sparkles size={14} />
+                <span>AUTHOR CIRCLE & CASE CHAINS</span>
+              </span>
+              <h2>画师直约圈 · 定制案例环环相扣</h2>
+              <p>一个作者对应一个专属圈圈，下方垂直延伸定制案例圆环，真实还原自家毛孩子。</p>
+            </div>
+            <span style={{ fontSize: '0.84rem', color: '#e85f6d', background: 'rgba(232, 95, 109, 0.08)', padding: '5px 14px', borderRadius: '999px', fontWeight: 700, border: '1px solid rgba(232, 95, 109, 0.2)' }}>
+              画师直约 · 平台中立切帧打包
+            </span>
+          </div>
+
+          {/* 四大画师垂直圆圈链式网格 */}
+          <div className="circle-chains-grid">
+            {artistChains.map((artist) => (
+              <article className="subpage-card artist-circle-chain-card" key={artist.id}>
+                {/* 1. 顶部作者大圈 */}
+                <div className="chain-node author-circle-node">
+                  <div className="circle-ring-outer circle-ring-author" style={{ borderColor: artist.ringColor }}>
+                    <div className="circle-ring-inner-avatar" style={{ background: artist.gradient }}>
+                      <span>{artist.initial}</span>
+                    </div>
+                    <span className="circle-badge-pill" style={{ background: artist.badgeColor }}>
+                      {artist.badge}
+                    </span>
+                  </div>
+
+                  <div className="chain-author-meta">
+                    <strong className="chain-author-name">{artist.name}</strong>
+                    <span className="chain-author-role">{artist.role}</span>
+                    <p className="chain-author-desc">{artist.desc}</p>
+                    <div className="chain-tag-row">
+                      {artist.tags.map((tag) => (
+                        <span key={tag} className="chain-tag-pill">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 纵向连线下延至案例 1 */}
+                <div className="chain-connector-v">
+                  <div className="connector-v-line" style={{ borderColor: artist.ringColor }}></div>
+                  <div className="connector-v-dot" style={{ background: artist.ringColor }}></div>
+                </div>
+
+                {/* 2. 中间：定制案例圆圈 1 */}
+                <div className="chain-node case-circle-node">
+                  <div className="circle-ring-outer circle-ring-case" style={{ borderColor: artist.ringColor }}>
+                    <img
+                      src={artist.cases[0].img}
+                      alt={artist.cases[0].title}
+                      className="circle-ring-case-img"
+                      loading="lazy"
+                    />
+                    <span className="circle-step-badge">定制圈 01</span>
+                  </div>
+
+                  <div className="chain-case-meta">
+                    <h4>{artist.cases[0].title}</h4>
+                    <div className="chain-case-flow">
+                      <span className="flow-src">{artist.cases[0].sourceTag}</span>
+                      <span className="flow-arrow">➜</span>
+                      <span className="flow-dst">{artist.cases[0].resultTag}</span>
+                    </div>
+                    <p>{artist.cases[0].desc}</p>
+
+                    {/* 导入与识别码操作 */}
+                    <div className="chain-case-actions">
+                      <button
+                        type="button"
+                        className="chain-case-import-btn"
+                        onClick={() => handleDeepLink(artist.cases[0].redeemCode, artist.cases[0].title)}
+                        title="点击呼叫 WindowPet 桌面端直接导入"
+                      >
+                        <Zap size={13} />
+                        <span>一键直接导入</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="chain-case-copy-btn"
+                        onClick={() => handleCopyCode(artist.cases[0].redeemCode, artist.cases[0].title)}
+                        title="复制备用识别码"
+                      >
+                        {copiedCode === artist.cases[0].redeemCode ? <Check size={13} color="#059669" /> : <Copy size={13} />}
+                        <span>{copiedCode === artist.cases[0].redeemCode ? '已复制' : '备用码'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 纵向连线下延至案例 2 */}
+                <div className="chain-connector-v">
+                  <div className="connector-v-line" style={{ borderColor: artist.ringColor }}></div>
+                  <div className="connector-v-dot" style={{ background: artist.ringColor }}></div>
+                </div>
+
+                {/* 3. 底部：定制案例圆圈 2 */}
+                <div className="chain-node case-circle-node">
+                  <div className="circle-ring-outer circle-ring-case" style={{ borderColor: artist.ringColor }}>
+                    <img
+                      src={artist.cases[1].img}
+                      alt={artist.cases[1].title}
+                      className="circle-ring-case-img"
+                      loading="lazy"
+                    />
+                    <span className="circle-step-badge">定制圈 02</span>
+                  </div>
+
+                  <div className="chain-case-meta">
+                    <h4>{artist.cases[1].title}</h4>
+                    <div className="chain-case-flow">
+                      <span className="flow-src">{artist.cases[1].sourceTag}</span>
+                      <span className="flow-arrow">➜</span>
+                      <span className="flow-dst">{artist.cases[1].resultTag}</span>
+                    </div>
+                    <p>{artist.cases[1].desc}</p>
+
+                    {/* 导入与识别码操作 */}
+                    <div className="chain-case-actions">
+                      <button
+                        type="button"
+                        className="chain-case-import-btn"
+                        onClick={() => handleDeepLink(artist.cases[1].redeemCode, artist.cases[1].title)}
+                        title="点击呼叫 WindowPet 桌面端直接导入"
+                      >
+                        <Zap size={13} />
+                        <span>一键直接导入</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="chain-case-copy-btn"
+                        onClick={() => handleCopyCode(artist.cases[1].redeemCode, artist.cases[1].title)}
+                        title="复制备用识别码"
+                      >
+                        {copiedCode === artist.cases[1].redeemCode ? <Check size={13} color="#059669" /> : <Copy size={13} />}
+                        <span>{copiedCode === artist.cases[1].redeemCode ? '已复制' : '备用码'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 底部卡片预约直达 */}
+                <div className="chain-card-footer">
+                  <a
+                    href={qqGroupUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="chain-book-author-btn"
+                  >
+                    <HeartHandshake size={15} />
+                    <span>找【{artist.shortName}】约稿定制</span>
+                  </a>
+                  <span className="chain-status-badge">{artist.status}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* 作者入驻与免登录一键直接导入机制图解 */}
+        <section style={{ marginBottom: '64px' }}>
+          <div className="subpage-section-header">
+            <span className="subpage-section-badge">
+              <Zap size={14} />
+              <span>ZERO-LOGIN IMPORT & CREATOR ONBOARDING</span>
+            </span>
+            <h2>免登录直接导入 & 画师入驻机制图解</h2>
+            <p>
+              彻底免去繁琐的手机号注册与密码记忆！理解博主与主流桌面软件的“DeepLink 协议直接唤醒 + 备用识别码”双轨机制。
+            </p>
+          </div>
+
+          <div className="import-mechanisms-grid">
+            {/* 卡片 1：免登录直接导入与备用码原理 */}
+            <article className="subpage-card import-mech-card">
+              <div className="import-mech-head">
+                <div className="import-mech-icon-wrap" style={{ background: 'rgba(232, 95, 109, 0.12)', color: '#e85f6d' }}>
+                  <Laptop size={24} />
+                </div>
+                <div>
+                  <h3>网站如何直接把宠物导入本地软件？</h3>
+                  <small style={{ color: '#57c7b8', fontWeight: 700 }}>系统级 DeepLink 协议唤醒 + 备用口令码</small>
+                </div>
+              </div>
+
+              <div className="import-mech-steps">
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">1</div>
+                  <div>
+                    <strong>点导入自动唤醒（原生系统协议）</strong>
+                    <p>
+                      我们在 Windows 系统中注册了专属协议头 <code>windowpet://import</code>。当你在网页上点击【一键导入】时，Edge 或 Chrome 浏览器会自动弹出确认框：
+                      <span className="dialog-mockup">“是否打开 WindowPet？/ 在其他应用中打开”</span>
+                      点击【确定/允许】，本地软件立刻被唤醒并无感装载！
+                    </p>
+                  </div>
+                </div>
+
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">2</div>
+                  <div>
+                    <strong>0 账号登录负担，免去一切繁琐验证</strong>
+                    <p>
+                      无论是免费角色还是定制角色，购买/领取后自动生成对应识别码并与本地 Windows 设备绑定，
+                      不需要注册账号、不需要输入手机验证码，点开即用。
+                    </p>
+                  </div>
+                </div>
+
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">3</div>
+                  <div>
+                    <strong>备用识别码双轨保险（复制粘贴秒导）</strong>
+                    <p>
+                      如果用户的浏览器安全级别过高拦截了自动弹窗，网页会同步显示 12 位口令识别码（如 <code>WPX-2026-JIYI</code>）。
+                      只需在本地软件右键托盘 ➜ 选择【兑换/导入伙伴】粘贴该码，同样 1 秒完成下载装载，两套方案互为保险！
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            {/* 卡片 2：画师如何入驻与自动化打包 */}
+            <article className="subpage-card import-mech-card">
+              <div className="import-mech-head">
+                <div className="import-mech-icon-wrap" style={{ background: 'rgba(47, 159, 147, 0.12)', color: '#2f9f93' }}>
+                  <Palette size={24} />
+                </div>
+                <div>
+                  <h3>画师如何入驻？宠物如何传到软件里？</h3>
+                  <small style={{ color: '#e85f6d', fontWeight: 700 }}>画师只管画图，官方工具一键切帧打包</small>
+                </div>
+              </div>
+
+              <div className="import-mech-steps">
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">A</div>
+                  <div>
+                    <strong>画师零代码创作（提供 18 格主精灵图）</strong>
+                    <p>
+                      画师完全不需要懂编程！画师只需按官方规范画出待机（idle）、点击（click）、悬空拖拽（drag）共 18 格 PNG 切片或一张大图纸。
+                    </p>
+                  </div>
+                </div>
+
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">B</div>
+                  <div>
+                    <strong>官方自动化工具 1 秒切帧打包</strong>
+                    <p>
+                      使用项目中现成的 <code>build_character_from_sheet.py</code> 脚本，自动网格分割、去除纯色底、标准化尺寸并生成 <code>asset.json</code>，打包成几兆大小的 <code>.pet</code> 资源包。
+                    </p>
+                  </div>
+                </div>
+
+                <div className="import-mech-step-item">
+                  <div className="step-badge-num">C</div>
+                  <div>
+                    <strong>云端分发与作者专属展馆上架</strong>
+                    <p>
+                      将打包好的角色发布至静态资源库，系统自动分配专属兑换口令码，并生成画师的个人专属主页与作品集。
+                      用户一键点击即可秒速拉取并常驻桌面！
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
         {/* 四步极简定制流程 */}
         <section style={{ marginBottom: '56px' }}>
           <div className="subpage-section-header">
@@ -249,84 +630,6 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                 WindowPet 官方引擎技术打包，生成独一无二的专属安装程序及资源包。双击即刻召唤毛孩子常驻桌面，永久陪伴。
               </p>
             </article>
-          </div>
-        </section>
-
-        {/* 特邀驻站合作画师团 */}
-        <section style={{ marginBottom: '56px' }}>
-          <div className="subpage-section-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <span className="subpage-section-badge">
-                <ShieldCheck size={14} />
-                <span>INDEPENDENT CREATORS</span>
-              </span>
-              <h2>特邀驻站合作画师团 · 多元风格随心选</h2>
-              <p>平台特邀多位知名独立插画师与像素创作者，一对一承接生活照私宠约稿定制。</p>
-            </div>
-            <span style={{ fontSize: '0.82rem', color: '#126ad6', background: 'rgba(36, 119, 255, 0.08)', padding: '4px 12px', borderRadius: '999px', fontWeight: 650 }}>
-              画师直约 · 平台提供中立技术支持
-            </span>
-          </div>
-
-          <div className="custom-artists-grid">
-            {artists.map((artist) => (
-              <article className="subpage-card custom-artist-card" key={artist.id}>
-                <div className="custom-artist-head">
-                  <div className="custom-artist-avatar" style={{ background: artist.gradient }}>
-                    {artist.initial}
-                  </div>
-                  <div className="custom-artist-meta">
-                    <strong>{artist.name}</strong>
-                    <small style={{ color: artist.tagColor }}>{artist.styleTitle}</small>
-                  </div>
-                </div>
-
-                <p className="custom-artist-desc">{artist.desc}</p>
-
-                <div className="custom-artist-tags">
-                  {artist.tags.map((tag) => (
-                    <span className="custom-artist-tag" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="custom-artist-footer">
-                  <span className="custom-artist-status">{artist.status}</span>
-                  <small style={{ color: '#718ea8' }}>{artist.studio}</small>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* 经典案例预览 */}
-        <section style={{ marginBottom: '56px' }}>
-          <div className="subpage-section-header">
-            <span className="subpage-section-badge">
-              <CheckCircle2 size={14} />
-              <span>REAL SHOWCASE</span>
-            </span>
-            <h2>定制案例欣赏 · 从生活照到桌面伙伴</h2>
-            <p>看看其他宠友将自家毛孩子做进电脑桌面的真实效果。</p>
-          </div>
-
-          <div className="custom-showcase-grid">
-            {showcaseCases.map((item) => (
-              <article className="subpage-card custom-showcase-item" key={item.title}>
-                <img src={item.img} alt={item.title} className="custom-showcase-pet-img" />
-                <div className="custom-showcase-info">
-                  <h4>{item.title}</h4>
-                  <p>{item.desc}</p>
-                  <div className="custom-showcase-tags">
-                    <span style={{ color: '#126ad6', fontWeight: 700 }}>🎨 {item.artist}</span>
-                    <span style={{ color: '#059669', background: 'rgba(5, 150, 105, 0.1)', padding: '1px 6px', borderRadius: '4px' }}>
-                      {item.tag}
-                    </span>
-                  </div>
-                </div>
-              </article>
-            ))}
           </div>
         </section>
 
