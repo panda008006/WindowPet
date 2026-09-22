@@ -3,6 +3,7 @@ import {
   AlarmClock,
   Award,
   BellRing,
+  BookOpen,
   CalendarCheck,
   Camera,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   FileArchive,
   Gift,
   HeartHandshake,
+  HelpCircle,
   Home,
   LockKeyhole,
   MousePointerClick,
@@ -19,6 +21,7 @@ import {
   RotateCw,
   Settings2,
   Sparkles,
+  X,
 } from 'lucide-react'
 import './App.css'
 import './polish.css'
@@ -304,6 +307,18 @@ function App() {
     scrollToSection(0)
   }
 
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [showFaq, setShowFaq] = useState(false)
+  const [copiedQq, setCopiedQq] = useState(false)
+
+  const handleNavCustom = () => {
+    handleBackToHome()
+    const customIndex = sectionIds.indexOf('custom')
+    if (customIndex >= 0) {
+      setTimeout(() => scrollToSection(customIndex), 60)
+    }
+  }
+
   const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
   const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
   const [activeControlViewId, setActiveControlViewId] = useState<(typeof controlViews)[number]['id']>(
@@ -400,7 +415,7 @@ function App() {
         <nav aria-label="官网导航">
           <button
             type="button"
-            className={`nav-link-btn ${currentView === 'home' ? 'is-active' : ''}`}
+            className={`nav-link-btn ${currentView === 'home' && activeIndex === 0 ? 'is-active' : ''}`}
             onClick={handleNavHome}
           >
             <Home size={15} />
@@ -410,11 +425,38 @@ function App() {
             type="button"
             className={`nav-gallery-link nav-link-btn ${currentView === 'gallery' ? 'is-active' : ''}`}
             onClick={handleOpenGallery}
-            title="打开小鼻嘎展馆，查看全部 24 款萌宠"
+            title="打开小鼻嘎展馆，探索全部萌宠"
           >
             <Sparkles size={15} />
             <span>小鼻嘎展馆</span>
-            <span className="nav-gallery-tag">24款</span>
+            <span className="nav-heart-badge" title="超可爱">❤️</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-link-btn ${currentView === 'home' && activeIndex === 3 ? 'is-active' : ''}`}
+            onClick={handleNavCustom}
+            title="自家毛孩子专属桌宠定制"
+          >
+            <HeartHandshake size={15} />
+            <span>爱宠定制</span>
+          </button>
+          <button
+            type="button"
+            className="nav-link-btn"
+            onClick={() => setShowTutorial(true)}
+            title="查看新手使用与按键操作教程"
+          >
+            <BookOpen size={15} />
+            <span>使用教程</span>
+          </button>
+          <button
+            type="button"
+            className="nav-link-btn"
+            onClick={() => setShowFaq(true)}
+            title="常见问题 FAQ 与安全说明"
+          >
+            <HelpCircle size={15} />
+            <span>常见问题</span>
           </button>
         </nav>
 
@@ -424,11 +466,20 @@ function App() {
               href={qqGroupUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="nav-community-btn nav-community-btn--qq"
-              title="加入 WindowPet 官方 QQ 交流群：422616922"
+              className={`nav-community-btn nav-community-btn--qq ${copiedQq ? 'nav-community-btn--copied' : ''}`}
+              onClick={() => {
+                try {
+                  navigator.clipboard.writeText('422616922')
+                  setCopiedQq(true)
+                  setTimeout(() => setCopiedQq(false), 2200)
+                } catch {
+                  // ignore
+                }
+              }}
+              title="加入 WindowPet 官方 QQ 交流群：422616922（点击自动复制群号并唤起加群）"
             >
               <QqIcon size={15} />
-              <span>群: 422616922</span>
+              <span>{copiedQq ? '✓ 群号已复制！' : '群: 422616922'}</span>
             </a>
             <a
               href={bilibiliVideoUrl}
@@ -836,6 +887,108 @@ function App() {
     {currentView === 'gallery' && (
       <div className="gallery-view-pane">
         <PetGallery onBackToHome={handleBackToHome} />
+      </div>
+    )}
+
+    {/* 新手使用教程弹窗 */}
+    {showTutorial && (
+      <div className="wp-modal-overlay" onClick={() => setShowTutorial(false)}>
+        <div className="wp-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div className="wp-modal-header">
+            <h3>
+              <BookOpen size={20} color="#126ad6" />
+              <span>WindowPet 新手使用与操作指南</span>
+            </h3>
+            <button type="button" className="wp-modal-close-btn" onClick={() => setShowTutorial(false)} aria-label="关闭">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="wp-modal-body">
+            <div className="wp-guide-grid">
+              <div className="wp-guide-card">
+                <h4>🖱️ 桌面交互 & 自由拖拽</h4>
+                <p>鼠标左键按住萌宠即可随意拖动至屏幕任何位置；拖到屏幕边缘会自动停靠吸附，绝不遮挡正常办公区。</p>
+              </div>
+              <div className="wp-guide-card">
+                <h4>⚡ 全局防查/摸鱼快捷键</h4>
+                <p>随时按下 <code>Ctrl + Shift + P</code> 即可一键隐藏/重新唤醒桌面萌宠，老板或同事走近也不慌！</p>
+              </div>
+              <div className="wp-guide-card">
+                <h4>✨ 丰富互动 & 道具逗弄</h4>
+                <p>双击角色可触发专属互动动作（如挥手、开心跳跃、演奏等），右键调出工具箱还能拿出羽毛逗弄小宠物。</p>
+              </div>
+              <div className="wp-guide-card">
+                <h4>⏰ 备忘录 & 番茄闹钟</h4>
+                <p>日常待办随手记在屏幕边上；设置定时喝水、休息或会议提醒，到点萌宠会用活泼动作亲自提醒你！</p>
+              </div>
+            </div>
+          </div>
+          <div className="wp-modal-footer">
+            <span>💡 提示：在桌宠身上点击鼠标右键，即可打开主控制面板与全部功能设置。</span>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => setShowTutorial(false)}
+              style={{ padding: '6px 16px', fontSize: '13px' }}
+            >
+              我知道了
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 常见问题 FAQ 弹窗 */}
+    {showFaq && (
+      <div className="wp-modal-overlay" onClick={() => setShowFaq(false)}>
+        <div className="wp-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div className="wp-modal-header">
+            <h3>
+              <HelpCircle size={20} color="#126ad6" />
+              <span>常见问题 FAQ 与安全解答</span>
+            </h3>
+            <button type="button" className="wp-modal-close-btn" onClick={() => setShowFaq(false)} aria-label="关闭">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="wp-modal-body">
+            <div className="wp-faq-item">
+              <strong>🛡️ 为什么初次运行 Windows SmartScreen 会提示“未知发布者”？</strong>
+              <p>
+                属于正常 Windows 安全提示。个人独立开源项目未购买商业机构昂贵的 EV 企业代码签名证书。WindowPet 已在 GitHub 全量开源，绝无任何恶意后门或隐私收集。点击提示窗口上的【更多信息】并选择【仍要运行】即可正常开启，100% 绿色安全。
+              </p>
+            </div>
+            <div className="wp-faq-item">
+              <strong>⚡ 长期挂在桌面会卡顿或占用大量电脑内存吗？</strong>
+              <p>
+                完全不会！软件采用原生轻量化渲染引擎，空闲挂机时内存占用仅约 30MB~50MB，CPU 占用率低于 0.5%，在打游戏（《英雄联盟》《黑神话》《CS2》）或剪辑视频时均丝滑流畅无感。
+              </p>
+            </div>
+            <div className="wp-faq-item">
+              <strong>💻 支持哪些电脑操作系统？</strong>
+              <p>
+                目前完美支持 64 位 Windows 10 与 Windows 11 操作系统，已适配高分辨率屏 DPI 自动缩放与多显示器自由拖拽。
+              </p>
+            </div>
+            <div className="wp-faq-item">
+              <strong>🎨 怎样把自家的毛孩子（猫咪/狗狗）做成专属桌宠？</strong>
+              <p>
+                点击导航栏【爱宠定制】，只需提供 1~3 张爱宠清晰生活照，我们提供专属 AI 轮廓建模与个性动作定制，欢迎加入官方交流群（422616922）咨询预约专属服务！
+              </p>
+            </div>
+          </div>
+          <div className="wp-modal-footer">
+            <span>🐧 还有其他疑问？欢迎加入官方 QQ 交流群：422616922</span>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => setShowFaq(false)}
+              style={{ padding: '6px 16px', fontSize: '13px' }}
+            >
+              关闭
+            </button>
+          </div>
+        </div>
       </div>
     )}
   </div>
