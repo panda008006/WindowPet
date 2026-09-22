@@ -8,8 +8,8 @@ import {
   Heart,
   Home,
   Info,
+  MessageSquare,
   PawPrint,
-  QrCode,
   Search,
   Send,
   ShieldCheck,
@@ -20,6 +20,14 @@ import {
 } from 'lucide-react'
 import { galleryCategories, galleryPets, galleryAuthors, type GalleryPet, type PetAuthor } from './galleryData'
 import './gallery.css'
+
+function QqIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+      <path d="M824.8 613.2c-16-51.4-34.4-94.6-62.7-165.3C766.5 262.2 683.4 128 512 128s-254.5 134.2-250.1 319.9c-28.3 70.7-46.7 113.9-62.7 165.3-21.1 67.7-42 165.1 41.5 165.1 41.5 0 71.9-52.5 90.7-94.4 70.3 35.8 153.6 37.1 178.6 37.1 25 0 108.3-1.3 178.6-37.1 18.8 41.9 49.2 94.4 90.7 94.4 83.5 0 62.6-97.4 41.5-165.1z" />
+    </svg>
+  )
+}
 
 interface PetGalleryProps {
   onBackToHome?: () => void
@@ -57,9 +65,8 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
   const [selectedPet, setSelectedPet] = useState<GalleryPet | null>(null)
   const [selectedActionIndex, setSelectedActionIndex] = useState(0)
 
-  // 免登录即时扫码支付弹窗
-  const [payModalPet, setPayModalPet] = useState<GalleryPet | null>(null)
-  const [payMethod, setPayMethod] = useState<'wechat' | 'alipay'>('wechat')
+  // 1对1私聊画师联系卡弹窗 (免在线付费通道，直连画师与自行付款)
+  const [contactArtist, setContactArtist] = useState<PetAuthor | null>(null)
 
   // 家宠定制与创作者提交弹窗
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false)
@@ -87,16 +94,6 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
     }
   })
 
-  // 已解锁宠物状态 (免登录付费购买后持久化至本地存储，默认开通官方角色)
-  const [unlockedPetIds, setUnlockedPetIds] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('windowpet_unlocked_pets')
-      if (stored) {
-        return new Set(JSON.parse(stored))
-      }
-    } catch {}
-    return new Set(['jiyi', 'dora', 'fox', 'maicuijiao'])
-  })
 
   // 切换主题
   const handleThemeChange = (newTheme: string) => {
@@ -142,10 +139,8 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
     }
   }, [])
 
-  // 判断宠物是否已拥有 (价格为0或已购买解锁)
-  const isPetUnlocked = (pet: GalleryPet) => {
-    return pet.price === 0 || unlockedPetIds.has(pet.id)
-  }
+  // 全量在馆伙伴均直接免费开放导入
+  const isPetUnlocked = (_pet: GalleryPet) => true
 
   // 复制兑换码
   const handleCopyCode = (e: React.MouseEvent, code: string, petName: string) => {
@@ -163,21 +158,6 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
     window.open(deepLinkUrl, '_self')
     showToast(`🚀 正在呼叫 WindowPet 桌面客户端导入【${pet.name}】...`)
     navigator.clipboard.writeText(pet.redeemCode)
-  }
-
-  // 模拟免登录扫码支付成功 -> 立即授权并唤醒导入
-  const handleCompletePayment = (pet: GalleryPet) => {
-    setUnlockedPetIds((prev) => {
-      const next = new Set(prev)
-      next.add(pet.id)
-      localStorage.setItem('windowpet_unlocked_pets', JSON.stringify(Array.from(next)))
-      return next
-    })
-    setPayModalPet(null)
-    showToast(`🎉 付款成功！已永久授权【${pet.name}】，正在自动导入桌面...`)
-    setTimeout(() => {
-      handleDeepLinkImport(pet)
-    }, 600)
   }
 
   // 跳转进入作者专属独立展馆 (Level 3)
@@ -284,8 +264,8 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (payModalPet) {
-          setPayModalPet(null)
+        if (contactArtist) {
+          setContactArtist(null)
         } else if (selectedPet) {
           closePetDetail()
         } else if (isCustomModalOpen) {
@@ -299,7 +279,7 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [payModalPet, selectedPet, isCustomModalOpen, galleryView, handleClose])
+  }, [contactArtist, selectedPet, isCustomModalOpen, galleryView, handleClose])
 
   return (
     <div className="gallery-page-container" data-gallery-theme={theme}>
@@ -610,7 +590,7 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                 <div className="author-works-header">
                   <div>
                     <h3>{activeAuthor.name} 创作的全部伙伴 ({authorPets.length} 款)</h3>
-                    <p>免注册免登录，付款后自动永久授权，支持一键直接导入 WindowPet 桌面端</p>
+                    <p>全部伙伴免注册免登录，免费一键直接导入；如需专属定制，可直接私聊画师沟通与自行付款！</p>
                   </div>
                 </div>
 
@@ -717,10 +697,11 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                           <button
                             type="button"
                             className="gallery-producer-custom-tag"
-                            onClick={() => (onNavigateCustom ? onNavigateCustom() : setIsCustomModalOpen(true))}
+                            onClick={() => setContactArtist(author)}
+                            title={`私聊画师【${author.name}】沟通爱宠专属定制，双方自行付款`}
                           >
-                            <span>🎨 约 Ta 定制</span>
-                            <ArrowRight size={12} />
+                            <MessageSquare size={13} />
+                            <span>💬 私聊画师定制</span>
                           </button>
                         )}
                       </div>
@@ -846,8 +827,8 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                         />
                         <span>{favorites.has(selectedPet.id) ? '已收藏' : '收藏'}</span>
                       </button>
-                      <div className="detail-price-pill">
-                        {selectedPet.price === 0 ? '免费内置' : `￥${selectedPet.price.toFixed(1)}`}
+                      <div className="detail-price-pill" style={{ background: 'rgba(47, 159, 147, 0.1)', color: '#2f9f93', borderColor: 'rgba(47, 159, 147, 0.25)' }}>
+                        免费开放
                       </div>
                     </div>
                   </div>
@@ -907,8 +888,8 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                 <div className="gallery-modal-stats">
                   {selectedPet.stats.map(([val, lbl]) => (
                     <div key={lbl} className="gallery-stat-box">
-                      <strong>{val}</strong>
-                      <span>{lbl}</span>
+                      <strong>{val.startsWith('￥') || val.startsWith('¥') ? '免费开放' : val}</strong>
+                      <span>{val.startsWith('￥') || val.startsWith('¥') ? '开源畅享' : lbl}</span>
                     </div>
                   ))}
                 </div>
@@ -933,79 +914,67 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                   </div>
                 </div>
 
-                {/* 核心操作区：免费/已购买则一键导入，未购买则免登录扫码解锁 */}
+                {/* 核心操作区：全量伙伴免费开放，支持一键导入与私聊画师 */}
                 <div className="gallery-integration-panel">
                   <div className="gallery-integration-title">
                     <strong>
                       <Sparkles size={16} />
-                      {isPetUnlocked(selectedPet) ? '已拥有此伙伴 · 随时随地召唤' : `特邀伙伴授权 · ￥${selectedPet.price.toFixed(1)}`}
+                      全量在馆伙伴免费开放 · 免登录直接激活
                     </strong>
-                    <span className="gallery-card-en">免登录直接激活</span>
+                    <span className="gallery-card-en">100% 永久开源</span>
                   </div>
 
-                  {isPetUnlocked(selectedPet) ? (
-                    <>
-                      <div className="gallery-code-display">
-                        <span className="gallery-code-text">{selectedPet.redeemCode}</span>
-                        <button
-                          type="button"
-                          className="gallery-btn-sm"
-                          onClick={(e) => handleCopyCode(e, selectedPet.redeemCode, selectedPet.name)}
-                        >
-                          {copiedCode === selectedPet.redeemCode ? <Check size={14} /> : <Copy size={14} />}
-                          <span>{copiedCode === selectedPet.redeemCode ? '已复制' : '复制备用码'}</span>
-                        </button>
-                      </div>
+                  <div className="gallery-code-display">
+                    <span className="gallery-code-text">{selectedPet.redeemCode}</span>
+                    <button
+                      type="button"
+                      className="gallery-btn-sm"
+                      onClick={(e) => handleCopyCode(e, selectedPet.redeemCode, selectedPet.name)}
+                    >
+                      {copiedCode === selectedPet.redeemCode ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedCode === selectedPet.redeemCode ? '已复制' : '复制备用码'}</span>
+                    </button>
+                  </div>
 
-                      <div className="gallery-integration-buttons">
-                        <button
-                          type="button"
-                          className="gallery-cta-primary gallery-cta-unlocked"
-                          onClick={() => handleDeepLinkImport(selectedPet)}
-                          title="点击通过浏览器唤醒 Windows 客户端自动导入"
-                        >
-                          <Zap size={18} />
-                          <span>一键导入到桌面客户端</span>
-                        </button>
+                  <div className="gallery-integration-buttons">
+                    <button
+                      type="button"
+                      className="gallery-cta-primary gallery-cta-unlocked"
+                      onClick={() => handleDeepLinkImport(selectedPet)}
+                      title="点击通过浏览器唤醒 Windows 客户端自动导入"
+                    >
+                      <Zap size={18} />
+                      <span>一键导入到桌面客户端</span>
+                    </button>
 
-                        <button
-                          type="button"
-                          className="gallery-cta-secondary"
-                          onClick={(e) => handleCopyCode(e, selectedPet.redeemCode, selectedPet.name)}
-                        >
-                          <Copy size={16} />
-                          <span>复制兑换码</span>
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="gallery-integration-buttons">
+                    <button
+                      type="button"
+                      className="gallery-cta-secondary"
+                      onClick={(e) => handleCopyCode(e, selectedPet.redeemCode, selectedPet.name)}
+                    >
+                      <Copy size={16} />
+                      <span>复制离线识别码</span>
+                    </button>
+
+                    {selectedPet.authorId !== 'official' && (
                       <button
                         type="button"
-                        className="gallery-cta-primary gallery-cta-pay-btn"
-                        onClick={() => setPayModalPet(selectedPet)}
-                        title="免登录快捷扫码支付并直接唤醒导入"
+                        className="gallery-cta-chat-btn"
+                        onClick={() => {
+                          const author = galleryAuthors[selectedPet.authorId]
+                          if (author) setContactArtist(author)
+                        }}
+                        title="私聊画师沟通爱宠专属定制，双方自行协商付款"
                       >
-                        <QrCode size={18} />
-                        <span>￥{selectedPet.price.toFixed(1)} 免登录快捷购买并导入</span>
+                        <MessageSquare size={16} />
+                        <span>💬 私聊画师约稿 (自行付款)</span>
                       </button>
-
-                      <button
-                        type="button"
-                        className="gallery-cta-secondary"
-                        onClick={(e) => handleCopyCode(e, selectedPet.redeemCode, selectedPet.name)}
-                      >
-                        <Copy size={16} />
-                        <span>已有兑换码</span>
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <p className="gallery-integration-hint">
                     <Info size={14} />
-                    {isPetUnlocked(selectedPet)
-                      ? '桌面端打开【兑换角色】窗口，直接粘贴上述兑换码，也可直接离线激活！'
-                      : '扫码付款后即刻开通永久授权，无需填写手机号与密码，直接秒级唤醒桌面端加载！'}
+                    WindowPet 平台永久免费开源，不设任何在线付费门槛。如需爱宠专属定制请直接私聊画师 1 对 1 沟通，双方自行协商付款，透明无套路！
                   </p>
                 </div>
               </div>
@@ -1014,147 +983,110 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
         </div>
       )}
 
-      {/* ======================= 免登录即时扫码支付弹窗 (Direct Pay Modal) ======================= */}
-      {payModalPet && (
-        <div className="gallery-modal-backdrop" onClick={() => setPayModalPet(null)}>
-          <div className="gallery-modal pay-instant-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="gallery-modal-close" type="button" onClick={() => setPayModalPet(null)} title="关闭">
+      {/* ======================= 私聊画师联系卡 (Artist Direct Chat Modal) ======================= */}
+      {contactArtist && (
+        <div className="gallery-modal-backdrop" onClick={() => setContactArtist(null)}>
+          <div className="gallery-modal artist-contact-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="gallery-modal-close" type="button" onClick={() => setContactArtist(null)} title="关闭">
               <X size={18} />
             </button>
 
-            <div className="pay-modal-header">
-              <div className="pay-modal-badge">
-                <QrCode size={18} />
-                <span>极速免登录收银台</span>
+            <div className="artist-contact-header">
+              <div className="artist-contact-badge">
+                <MessageSquare size={15} />
+                <span>1 对 1 私聊沟通 · 平台零抽成</span>
               </div>
-              <h2>解锁桌面伙伴【{payModalPet.name}】</h2>
-              <p>无需注册任何账号，扫码即付，付款后系统自动永久授权并呼叫客户端一键导入桌面</p>
+              <h2>私聊画师【{contactArtist.name}】</h2>
+              <p>WindowPet 平台不设在线付费抽成。请直接与画师 1 对 1 私聊商议定制细节，双方自行商定付款！</p>
             </div>
 
-            <div className="pay-modal-body-layout">
-              {/* 左侧商品信息 */}
-              <div className="pay-goods-summary">
-                <div className="pay-goods-thumb-wrap">
-                  <img
-                    src={`${import.meta.env.BASE_URL}${payModalPet.image}`}
-                    alt={payModalPet.name}
-                    className="pay-goods-thumb"
-                  />
+            <div className="artist-contact-body">
+              <div className="artist-contact-card">
+                <div className="artist-contact-avatar-box" style={{ background: contactArtist.bannerGradient }}>
+                  <span>{contactArtist.initial}</span>
                 </div>
-                <div className="pay-goods-meta">
-                  <h3>{payModalPet.name}</h3>
-                  <span className="pay-goods-author">创作者：{payModalPet.authorName}</span>
-                  <span className="pay-goods-tag">{payModalPet.workType} · {payModalPet.actions.length} 组交互动作</span>
-                  <div className="pay-amount-box">
-                    <span>支付金额：</span>
-                    <strong>￥{payModalPet.price.toFixed(2)}</strong>
+                <div className="artist-contact-info">
+                  <div className="artist-name-row">
+                    <h3>{contactArtist.name}</h3>
+                    <span className="artist-handle-tag">{contactArtist.handle}</span>
+                  </div>
+                  <span className="artist-contact-role">{contactArtist.role}</span>
+                  <p className="artist-contact-bio">{contactArtist.bio}</p>
+                  <div className="artist-contact-tags">
+                    {contactArtist.tags.map((tag) => (
+                      <span key={tag} className="artist-contact-tag">#{tag}</span>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* 右侧支付方式与仿真二维码 */}
-              <div className="pay-checkout-section">
-                {/* 支付方式切换 */}
-                <div className="pay-method-tabs">
-                  <button
-                    type="button"
-                    className={`pay-method-tab ${payMethod === 'wechat' ? 'is-active is-wechat' : ''}`}
-                    onClick={() => setPayMethod('wechat')}
-                  >
-                    <span>微信支付</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`pay-method-tab ${payMethod === 'alipay' ? 'is-active is-alipay' : ''}`}
-                    onClick={() => setPayMethod('alipay')}
-                  >
-                    <span>支付宝</span>
-                  </button>
-                </div>
-
-                {/* 模拟收款二维码 */}
-                <div className="pay-qr-display-box">
-                  <div className={`pay-qr-code-frame ${payMethod === 'wechat' ? 'theme-wechat' : 'theme-alipay'}`}>
-                    <svg className="pay-qr-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="200" height="200" rx="12" fill="#ffffff" />
-                      {/* 外定位角点 左上 */}
-                      <rect x="20" y="20" width="48" height="48" rx="6" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-                      <rect x="26" y="26" width="36" height="36" rx="4" fill="#ffffff" />
-                      <rect x="34" y="34" width="20" height="20" rx="2" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-
-                      {/* 外定位角点 右上 */}
-                      <rect x="132" y="20" width="48" height="48" rx="6" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-                      <rect x="138" y="26" width="36" height="36" rx="4" fill="#ffffff" />
-                      <rect x="146" y="34" width="20" height="20" rx="2" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-
-                      {/* 外定位角点 左下 */}
-                      <rect x="20" y="132" width="48" height="48" rx="6" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-                      <rect x="26" y="138" width="36" height="36" rx="4" fill="#ffffff" />
-                      <rect x="34" y="146" width="20" height="20" rx="2" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-
-                      {/* 数据码块模拟 */}
-                      <rect x="76" y="22" width="10" height="10" rx="2" fill="#334155" />
-                      <rect x="94" y="22" width="10" height="10" rx="2" fill="#334155" />
-                      <rect x="112" y="22" width="10" height="10" rx="2" fill="#334155" />
-                      <rect x="76" y="40" width="20" height="10" rx="2" fill="#334155" />
-                      <rect x="104" y="40" width="18" height="10" rx="2" fill="#334155" />
-                      <rect x="20" y="76" width="16" height="10" rx="2" fill="#334155" />
-                      <rect x="44" y="76" width="24" height="10" rx="2" fill="#334155" />
-                      <rect x="76" y="76" width="14" height="14" rx="2" fill="#334155" />
-                      <rect x="98" y="76" width="28" height="12" rx="2" fill="#334155" />
-                      <rect x="134" y="76" width="16" height="10" rx="2" fill="#334155" />
-                      <rect x="158" y="76" width="22" height="10" rx="2" fill="#334155" />
-                      <rect x="20" y="94" width="20" height="14" rx="2" fill="#334155" />
-                      <rect x="48" y="94" width="20" height="12" rx="2" fill="#334155" />
-                      <rect x="134" y="94" width="20" height="14" rx="2" fill="#334155" />
-                      <rect x="162" y="94" width="18" height="12" rx="2" fill="#334155" />
-                      <rect x="20" y="116" width="28" height="10" rx="2" fill="#334155" />
-                      <rect x="56" y="116" width="12" height="10" rx="2" fill="#334155" />
-                      <rect x="76" y="116" width="48" height="12" rx="2" fill="#334155" />
-                      <rect x="132" y="116" width="48" height="10" rx="2" fill="#334155" />
-                      <rect x="76" y="136" width="16" height="18" rx="2" fill="#334155" />
-                      <rect x="100" y="136" width="24" height="18" rx="2" fill="#334155" />
-                      <rect x="132" y="136" width="16" height="18" rx="2" fill="#334155" />
-                      <rect x="156" y="136" width="24" height="18" rx="2" fill="#334155" />
-                      <rect x="76" y="162" width="30" height="18" rx="2" fill="#334155" />
-                      <rect x="114" y="162" width="66" height="18" rx="2" fill="#334155" />
-
-                      {/* 中心 LOGO 徽标 */}
-                      <circle cx="100" cy="100" r="18" fill="#ffffff" />
-                      <circle cx="100" cy="100" r="15" fill={payMethod === 'wechat' ? '#07c160' : '#1677ff'} />
-                      <text
-                        x="100"
-                        y="105"
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        fontSize="12"
-                        fontWeight="bold"
-                      >
-                        {payMethod === 'wechat' ? '微' : '支'}
-                      </text>
-                    </svg>
+              <div className="artist-contact-methods">
+                <div className="contact-method-item is-primary">
+                  <div className="contact-method-left">
+                    <div className="contact-method-icon">
+                      <QqIcon size={20} />
+                    </div>
+                    <div>
+                      <strong>官方定制联络群（找画师私聊）</strong>
+                      <span>进群可直接私聊【{contactArtist.name}】或 @画师 沟通定制细节与报价</span>
+                    </div>
                   </div>
-                  <div className="pay-qr-hint">
-                    <span>请使用手机【{payMethod === 'wechat' ? '微信' : '支付宝'}】扫一扫</span>
-                    <small>应付金额：￥{payModalPet.price.toFixed(2)} 元</small>
+                  <div className="contact-method-actions">
+                    <button
+                      type="button"
+                      className="contact-copy-btn"
+                      onClick={() => {
+                        navigator.clipboard.writeText('422616922')
+                        showToast(`已复制官方群号 422616922！进群直接私聊【${contactArtist.name}】`)
+                      }}
+                    >
+                      <Copy size={14} />
+                      <span>复制群号 422616922</span>
+                    </button>
+                    <a
+                      href="https://qm.qq.com/q/cYlRBbvuda"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="contact-direct-link"
+                    >
+                      <span>一键进群私聊</span>
+                    </a>
                   </div>
                 </div>
 
-                {/* 模拟支付成功触发按钮 */}
-                <div className="pay-action-row">
-                  <button
-                    type="button"
-                    className="pay-confirm-cta-btn"
-                    onClick={() => handleCompletePayment(payModalPet)}
-                  >
-                    <Check size={18} />
-                    <span>模拟付款成功 · 立即授权并导入桌面</span>
-                  </button>
-                  <p className="pay-test-note">
-                    💡 演示模式提示：点击上方按钮即可直接模拟完成扫码支付，永久授权该伙伴并自动唤醒桌面端导入！
-                  </p>
+                <div className="contact-tips-box">
+                  <strong>💡 双方私聊定制流程与付款提示：</strong>
+                  <ul>
+                    <li>1. 准备 1~3 张爱宠清晰生活照（坐姿、站姿或趴卧全身照最佳）；</li>
+                    <li>2. 告诉画师爱宠名字与特征小神态（如歪头、踩奶、打哈欠、看鼠标视线跟随）；</li>
+                    <li>3. <strong>双方自行商议工期与付款</strong>（微信/支付宝等直接转账给画师，无平台抽成差价）；</li>
+                    <li>4. 画师交付后由官方引擎一键封装，终身永久拥有唯一角色安装包！</li>
+                  </ul>
                 </div>
               </div>
+            </div>
+
+            <div className="artist-contact-footer">
+              <button
+                type="button"
+                className="gallery-btn-secondary"
+                onClick={() => setContactArtist(null)}
+              >
+                关闭
+              </button>
+              {onNavigateCustom && (
+                <button
+                  type="button"
+                  className="gallery-btn-primary"
+                  onClick={() => {
+                    setContactArtist(null)
+                    onNavigateCustom()
+                  }}
+                >
+                  <span>前往爱宠定制工坊查看案例</span>
+                  <ArrowRight size={14} />
+                </button>
+              )}
             </div>
           </div>
         </div>

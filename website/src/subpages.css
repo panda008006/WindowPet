@@ -834,3 +834,32 @@
     margin-top: 8px;
   }
 }
+
+/* 画师私聊与约稿直通操作栏 */
+.producer-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.producer-direct-chat-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(232, 95, 109, 0.25);
+  transition: all 0.16s ease;
+}
+
+.producer-direct-chat-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(232, 95, 109, 0.35);
+  color: #ffffff;
+}
+

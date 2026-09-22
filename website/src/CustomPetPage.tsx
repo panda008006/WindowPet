@@ -12,6 +12,7 @@ import {
   Check,
   Zap,
   Laptop,
+  MessageSquare,
 } from 'lucide-react'
 import './subpages.css'
 
@@ -216,6 +217,10 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       q: '画师直约与官方平台之间是什么关系？会公开我的爱宠吗？',
       a: '默认交付为 100% 私人专享，绝不未经允许公开给任何第三方下载！平台提供中立的轻量运行引擎支持与动作标准规范，画师团队一对一为宠友绘制，透明安全。',
     },
+    {
+      q: '定制费用如何支付？平台会抽取中介提成吗？',
+      a: '平台 100% 永久免费开源，绝不收取任何中介抽成！用户与画师直接 1 对 1 私聊沟通定制细节与工期，双方自行协商付款（微信/支付宝等直接转账给画师）。平台只提供中立的切帧与技术封装支持，零差价、零套路！',
+    },
   ]
 
   return (
@@ -316,15 +321,29 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                     <span className="gallery-producer-subtitle">{artist.role} · {artist.status}</span>
                   </div>
 
-                  <a
-                    href={qqGroupUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="gallery-producer-custom-tag"
-                  >
-                    <HeartHandshake size={14} />
-                    <span>找 Ta 约稿定制</span>
-                  </a>
+                  <div className="producer-action-group">
+                    <button
+                      type="button"
+                      className="gallery-producer-custom-tag"
+                      onClick={() => {
+                        handleCopyQq()
+                        showToast(`已复制官方群号 422616922！进群可直接私聊【${artist.name}】沟通定制与自行付款~`)
+                      }}
+                      title="私聊画师沟通爱宠定制，双方自行付款"
+                    >
+                      <MessageSquare size={13} />
+                      <span>💬 私聊画师 (自行付款)</span>
+                    </button>
+                    <a
+                      href={qqGroupUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="producer-direct-chat-link"
+                      title="一键进群私聊画师"
+                    >
+                      进群私聊
+                    </a>
+                  </div>
                 </div>
 
                 {/* 极简宠物卡片网格：只放宠物动效 + 名称 + 动作 */}
@@ -404,8 +423,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                   <div>
                     <strong>0 账号登录负担，免去一切繁琐验证</strong>
                     <p>
-                      无论是免费角色还是定制角色，购买/领取后自动生成对应识别码并与本地 Windows 设备绑定，
-                      不需要注册账号、不需要输入手机验证码，点开即用。
+                      无论是展馆中的公共伙伴还是画师定制交付的专属角色，一律免注册账号、免手机验证码，点开即刻直接导入桌面，离线永久使用！
                     </p>
                   </div>
                 </div>

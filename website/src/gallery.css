@@ -2323,13 +2323,28 @@ body:has(.pet-gallery) .site-icp-filing,
   background: linear-gradient(135deg, #42b7a7 0%, #25877c 100%) !important;
 }
 
-.gallery-cta-pay-btn {
-  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%) !important;
-  box-shadow: 0 4px 12px -2px rgba(232, 95, 109, 0.4) !important;
+.gallery-cta-chat-btn {
+  background: rgba(232, 95, 109, 0.1) !important;
+  color: #e85f6d !important;
+  border: 1.5px solid rgba(232, 95, 109, 0.28) !important;
+  box-shadow: 0 4px 12px -2px rgba(232, 95, 109, 0.12) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 750;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.gallery-cta-pay-btn:hover {
-  background: linear-gradient(135deg, #ff6b74 0%, #d34a58 100%) !important;
+.gallery-cta-chat-btn:hover {
+  background: #e85f6d !important;
+  color: #ffffff !important;
+  border-color: #e85f6d !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -2px rgba(232, 95, 109, 0.35) !important;
 }
 
 /* ==========================================================================
@@ -2609,270 +2624,294 @@ body:has(.pet-gallery) .site-icp-filing,
 }
 
 /* ==========================================================================
-   免登录即时扫码支付弹窗 (Direct Pay Modal)
+   私聊画师联系卡弹窗 (Artist Contact Modal - 无平台付费，私聊直连)
    ========================================================================== */
 
-.pay-instant-modal {
-  max-width: 620px !important;
+.artist-contact-modal {
+  max-width: 640px !important;
   background: #ffffff;
-  border-radius: 24px;
-  padding: 24px;
+  border-radius: 26px;
+  padding: 26px 28px;
   border: 1px solid rgba(232, 95, 109, 0.18);
   box-shadow: 0 24px 60px rgba(71, 51, 63, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.pay-modal-header {
+.artist-contact-header {
   text-align: center;
-  margin-bottom: 20px;
 }
 
-.pay-modal-badge {
+.artist-contact-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  background: rgba(255, 127, 135, 0.12);
+  padding: 4px 14px;
+  background: rgba(232, 95, 109, 0.1);
   color: #e85f6d;
-  border: 1px solid rgba(255, 127, 135, 0.25);
+  border: 1px solid rgba(232, 95, 109, 0.25);
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 750;
   margin-bottom: 8px;
 }
 
-.pay-modal-header h2 {
+.artist-contact-header h2 {
   margin: 0 0 6px 0;
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--gallery-text-main);
+  font-size: 1.4rem;
+  font-weight: 850;
+  color: #08233f;
 }
 
-.pay-modal-header p {
+.artist-contact-header p {
   margin: 0 auto;
-  font-size: 0.82rem;
-  color: var(--gallery-text-muted);
-  max-width: 480px;
-  line-height: 1.5;
+  font-size: 0.84rem;
+  color: #557595;
+  max-width: 500px;
+  line-height: 1.55;
 }
 
-.pay-modal-body-layout {
-  display: grid;
-  grid-template-columns: 210px 1fr;
-  gap: 20px;
-  background: var(--gallery-surface-subtle);
-  border: 1px solid var(--gallery-border);
-  border-radius: 14px;
-  padding: 18px;
-}
-
-/* 左侧商品预览 */
-.pay-goods-summary {
+.artist-contact-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  border-right: 1px solid var(--gallery-border);
-  padding-right: 18px;
+  gap: 16px;
 }
 
-.pay-goods-thumb-wrap {
-  width: 110px;
-  height: 110px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 127, 135, 0.15) 0%, transparent 70%),
-    radial-gradient(circle at 70% 70%, rgba(87, 199, 184, 0.15) 0%, transparent 70%),
-    #fffcf9;
-  border-radius: 14px;
-  border: 1px solid rgba(232, 95, 109, 0.2);
+.artist-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  padding: 16px 20px;
+}
+
+.artist-contact-avatar-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.pay-goods-thumb {
-  max-width: 80px;
-  max-height: 80px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12));
+.artist-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
-.pay-goods-meta h3 {
-  margin: 0 0 4px 0;
+.artist-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.artist-name-row h3 {
+  margin: 0;
   font-size: 1.05rem;
-  color: var(--gallery-text-main);
+  font-weight: 850;
+  color: #08233f;
 }
 
-.pay-goods-author {
+.artist-handle-tag {
+  font-size: 0.72rem;
+  color: #2f9f93;
+  font-weight: 700;
+  background: rgba(47, 159, 147, 0.1);
+  padding: 1px 7px;
+  border-radius: 4px;
+}
+
+.artist-contact-role {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.artist-contact-bio {
+  margin: 4px 0 6px 0;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.artist-contact-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.artist-contact-tag {
+  font-size: 0.7rem;
+  color: #e85f6d;
+  background: rgba(232, 95, 109, 0.08);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.artist-contact-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-method-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.contact-method-item.is-primary {
+  border-color: rgba(232, 95, 109, 0.3);
+  background: linear-gradient(135deg, rgba(255, 245, 246, 0.8) 0%, #ffffff 100%);
+}
+
+.contact-method-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contact-method-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(232, 95, 109, 0.12);
+  color: #e85f6d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-method-left strong {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #08233f;
+}
+
+.contact-method-left span {
   display: block;
   font-size: 0.75rem;
-  color: var(--gallery-text-muted);
-  margin-bottom: 4px;
+  color: #64748b;
+  margin-top: 2px;
 }
 
-.pay-goods-tag {
-  display: inline-block;
-  font-size: 0.7rem;
-  color: #2f9f93;
-  background: rgba(87, 199, 184, 0.12);
-  padding: 1px 6px;
-  border-radius: 4px;
-  margin-bottom: 12px;
+.contact-method-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.pay-amount-box {
+.contact-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
   background: #ffffff;
-  border: 1px solid var(--gallery-border);
-  padding: 6px 12px;
-  border-radius: 8px;
-  width: 100%;
+  color: #08233f;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.18s ease;
 }
 
-.pay-amount-box span {
-  font-size: 0.75rem;
-  color: var(--gallery-text-muted);
-}
-
-.pay-amount-box strong {
-  font-size: 1.25rem;
-  font-weight: 900;
+.contact-copy-btn:hover {
+  background: #f8fafc;
+  border-color: #e85f6d;
   color: #e85f6d;
 }
 
-/* 右侧收银支付区 */
-.pay-checkout-section {
-  display: flex;
-  flex-direction: column;
+.contact-direct-link {
+  display: inline-flex;
   align-items: center;
-}
-
-.pay-method-tabs {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: 12px;
-}
-
-.pay-method-tab {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid var(--gallery-border);
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gallery-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: center;
-}
-
-.pay-method-tab.is-active.is-wechat {
-  border-color: #07c160;
-  background: rgba(7, 193, 96, 0.08);
-  color: #07c160;
-}
-
-.pay-method-tab.is-active.is-alipay {
-  border-color: #1677ff;
-  background: rgba(22, 119, 255, 0.08);
-  color: #1677ff;
-}
-
-.pay-qr-display-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.pay-qr-code-frame {
-  width: 160px;
-  height: 160px;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 8px;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.pay-qr-code-frame.theme-wechat {
-  border-color: #07c160;
-}
-
-.pay-qr-code-frame.theme-alipay {
-  border-color: #1677ff;
-}
-
-.pay-qr-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.pay-qr-hint {
-  text-align: center;
-  margin-top: 8px;
-}
-
-.pay-qr-hint span {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 650;
-  color: var(--gallery-text-main);
-}
-
-.pay-qr-hint small {
-  font-size: 0.7rem;
-  color: var(--gallery-text-muted);
-}
-
-.pay-action-row {
-  width: 100%;
-  margin-top: auto;
-}
-
-.pay-confirm-cta-btn {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #57c7b8 0%, #2f9f93 100%);
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.92rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
   font-weight: 750;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(232, 95, 109, 0.25);
+  transition: all 0.18s ease;
+}
+
+.contact-direct-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(232, 95, 109, 0.35);
+}
+
+.contact-tips-box {
+  background: rgba(240, 253, 250, 0.7);
+  border: 1px solid rgba(47, 159, 147, 0.22);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.contact-tips-box strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #115e59;
+  margin-bottom: 6px;
+}
+
+.contact-tips-box ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-tips-box li {
+  font-size: 0.76rem;
+  color: #134e4a;
+  line-height: 1.45;
+}
+
+.artist-contact-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(47, 159, 147, 0.35);
-  transition: all 0.16s ease;
-}
-
-.pay-confirm-cta-btn:hover {
-  background: linear-gradient(135deg, #42b7a7 0%, #25877c 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(47, 159, 147, 0.45);
-}
-
-.pay-test-note {
-  margin: 8px 0 0 0;
-  font-size: 0.72rem;
-  color: #64748b;
-  text-align: center;
-  line-height: 1.4;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(226, 232, 240, 0.8);
 }
 
 @media (max-width: 680px) {
-  .pay-modal-body-layout {
-    grid-template-columns: 1fr;
+  .artist-contact-modal {
+    padding: 20px 18px;
   }
-  .pay-goods-summary {
-    border-right: none;
-    border-bottom: 1px solid var(--gallery-border);
-    padding-right: 0;
-    padding-bottom: 14px;
+  .contact-method-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .contact-method-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
