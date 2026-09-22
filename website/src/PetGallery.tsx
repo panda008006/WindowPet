@@ -165,16 +165,6 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
     navigator.clipboard.writeText(pet.redeemCode)
   }
 
-  // 点击【购买】或【导入】主入口
-  const handleUnlockOrImport = (e: React.MouseEvent, pet: GalleryPet) => {
-    e.stopPropagation()
-    if (isPetUnlocked(pet)) {
-      handleDeepLinkImport(pet)
-    } else {
-      setPayModalPet(pet)
-    }
-  }
-
   // 模拟免登录扫码支付成功 -> 立即授权并唤醒导入
   const handleCompletePayment = (pet: GalleryPet) => {
     setUnlockedPetIds((prev) => {
@@ -248,6 +238,22 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
       )
     })
   }, [searchQuery, selectedCategory, favorites])
+
+  const producerOrder = ['official', 'chestnut', 'mino', 'hoshino', 'wildspirit', 'memelab'] as const
+
+  // 按制作人直接分栏编组
+  const groupedPetsByProducer = useMemo(() => {
+    const groups: { author: PetAuthor; pets: GalleryPet[] }[] = []
+    for (const authorId of producerOrder) {
+      const author = galleryAuthors[authorId]
+      if (!author) continue
+      const pets = filteredPets.filter((p) => p.authorId === authorId)
+      if (pets.length > 0) {
+        groups.push({ author, pets })
+      }
+    }
+    return groups
+  }, [filteredPets])
 
   // 家宠定制模拟上传
   const handlePhotoUploadMock = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -615,104 +621,38 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                     <p>新角色正在切帧打磨中，敬请期待！</p>
                   </div>
                 ) : (
-                  <div className="gallery-grid">
+                  <div className="gallery-minimal-grid">
                     {authorPets.map((pet) => {
-                      const isFav = favorites.has(pet.id)
                       const unlocked = isPetUnlocked(pet)
                       return (
                         <article
                           key={pet.id}
-                          className="gallery-card"
+                          className="gallery-minimal-card"
                           onClick={() => openPetDetail(pet)}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => e.key === 'Enter' && openPetDetail(pet)}
+                          title={`点击查看【${pet.name}】的详细动作与导入`}
                         >
-                          <div className="gallery-card-header">
-                            <div className="gallery-card-title-group">
-                              <h3>
-                                <span>{pet.name}</span>
-                                <span className="gallery-worktype-tag">{pet.workType}</span>
-                              </h3>
-                              <div className="gallery-card-meta-line">
-                                <span className="gallery-card-en">{pet.enName}</span>
-                                <span className="gallery-author-pill">🎨 {pet.authorName}</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className={`gallery-fav-btn ${isFav ? 'is-fav' : ''}`}
-                              onClick={(e) => toggleFavorite(e, pet.id)}
-                              title={isFav ? '已收藏' : '收藏'}
-                            >
-                              <Heart size={18} fill={isFav ? '#ef4444' : 'none'} color={isFav ? '#ef4444' : 'currentColor'} />
-                            </button>
-                          </div>
-
-                          <blockquote className="gallery-card-quote">
-                            {pet.tagline}
-                          </blockquote>
-
-                          <div className="gallery-card-preview">
+                          <div className="minimal-card-stage">
                             <img
-                              src={`${import.meta.env.BASE_URL}${pet.image}`}
+                              src={`${import.meta.env.BASE_URL}${pet.animatedWebp || pet.image}`}
                               alt={pet.name}
-                              className="gallery-card-img"
+                              className="minimal-card-img"
                               loading="lazy"
                             />
-                          </div>
-
-                          <div className="gallery-card-tags">
-                            {pet.traits.slice(0, 3).map((t) => (
-                              <span key={t} className="gallery-card-tag">
-                                {t}
+                            {unlocked && (
+                              <span className="minimal-card-unlocked-dot" title="已拥有">
+                                ✓
                               </span>
-                            ))}
+                            )}
                           </div>
 
-                          {/* 底部价格与操作 */}
-                          <div className="gallery-card-footer">
-                            <div className="gallery-price-block">
-                              {pet.price === 0 ? (
-                                <span className="pet-price-badge is-free">免费内置</span>
-                              ) : (
-                                <span className="pet-price-badge is-paid">
-                                  <strong>￥{pet.price.toFixed(1)}</strong>
-                                  <small>已售 {pet.salesCount}+</small>
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="gallery-card-actions">
-                              {unlocked ? (
-                                <button
-                                  type="button"
-                                  className="gallery-btn-sm gallery-btn-unlocked"
-                                  onClick={(e) => handleUnlockOrImport(e, pet)}
-                                  title="已永久拥有，点击直接唤醒桌面端导入"
-                                >
-                                  <Zap size={13} />
-                                  <span>一键导入</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="gallery-btn-sm gallery-btn-buy"
-                                  onClick={(e) => handleUnlockOrImport(e, pet)}
-                                  title="免登录快捷扫码购买并自动导入"
-                                >
-                                  <span>￥{pet.price.toFixed(1)} 解锁</span>
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                className="gallery-btn-sm gallery-btn-primary-sm"
-                                onClick={() => openPetDetail(pet)}
-                              >
-                                <span>档案</span>
-                              </button>
-                            </div>
+                          <div className="minimal-card-info">
+                            <span className="minimal-card-name">{pet.name}</span>
+                            <span className="minimal-card-action">
+                              动作：{pet.actions[0]?.label || '专属动作'}
+                            </span>
                           </div>
                         </article>
                       )
@@ -734,12 +674,12 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                 </div>
                 <div className="gallery-hero-badge-strip">
                   <div className="gallery-hero-metric">
-                    <strong>21</strong>
+                    <strong>{galleryPets.length}</strong>
                     <span>在馆伙伴</span>
                   </div>
                   <div className="gallery-hero-metric">
                     <strong>6 位</strong>
-                    <span>特邀创作者</span>
+                    <span>特邀制作人</span>
                   </div>
                   <div className="gallery-hero-metric">
                     <strong>免登录</strong>
@@ -748,132 +688,85 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                 </div>
               </section>
 
-              {/* 角色卡片网格 */}
-              {filteredPets.length === 0 ? (
+              {/* 制作人分类区块列表 */}
+              {groupedPetsByProducer.length === 0 ? (
                 <div className="gallery-empty">
                   <Info size={40} />
-                  <h3>没有找到符合条件的小鼻嘎</h3>
+                  <h3>没有找到符合条件的角色</h3>
                   <p>换个关键词试试，或者切换到【全部作品】专区。</p>
                 </div>
               ) : (
-                <div className="gallery-grid">
-                  {filteredPets.map((pet) => {
-                    const isFav = favorites.has(pet.id)
-                    const unlocked = isPetUnlocked(pet)
-                    return (
-                      <article
-                        key={pet.id}
-                        className="gallery-card"
-                        onClick={() => openPetDetail(pet)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && openPetDetail(pet)}
-                      >
-                        {/* 卡片头部 */}
-                        <div className="gallery-card-header">
-                          <div className="gallery-card-title-group">
-                            <h3>
-                              <span>{pet.name}</span>
-                              <span className="gallery-worktype-tag">{pet.workType}</span>
-                            </h3>
-                            <div className="gallery-card-meta-line">
-                              <span className="gallery-card-en">{pet.enName}</span>
-                              {/* 可点击的作者药丸标签：点击直达作者个人主页 */}
-                              <button
-                                type="button"
-                                className="gallery-author-pill-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  openAuthorProfile(pet.authorId)
-                                }}
-                                title={`点击查看【${pet.authorName}】的个人独立展馆`}
-                              >
-                                <span>🎨 {pet.authorName}</span>
-                                <ArrowRight size={11} className="author-pill-arrow" />
-                              </button>
-                            </div>
+                <div className="gallery-producers-stream">
+                  {groupedPetsByProducer.map(({ author, pets }) => (
+                    <section className="gallery-producer-section" key={author.id}>
+                      {/* 制作人标题栏：直接写“制作人：XXX”，排版简约横排 */}
+                      <div className="gallery-producer-header">
+                        <div className="gallery-producer-avatar" style={{ background: author.badgeColor }}>
+                          {author.initial}
+                        </div>
+                        <div className="gallery-producer-title-wrap">
+                          <div className="gallery-producer-main-title">
+                            <h2>制作人：{author.name}</h2>
+                            <span className="gallery-producer-badge" style={{ borderColor: author.badgeColor, color: author.badgeColor }}>
+                              {author.badge}
+                            </span>
                           </div>
+                          <span className="gallery-producer-subtitle">{author.role} · {pets.length} 款角色</span>
+                        </div>
+                        {author.acceptCustom && (
                           <button
                             type="button"
-                            className={`gallery-fav-btn ${isFav ? 'is-fav' : ''}`}
-                            onClick={(e) => toggleFavorite(e, pet.id)}
-                            title={isFav ? '已收藏' : '收藏'}
+                            className="gallery-producer-custom-tag"
+                            onClick={() => (onNavigateCustom ? onNavigateCustom() : setIsCustomModalOpen(true))}
                           >
-                            <Heart size={18} fill={isFav ? '#ef4444' : 'none'} color={isFav ? '#ef4444' : 'currentColor'} />
+                            <span>🎨 约 Ta 定制</span>
+                            <ArrowRight size={12} />
                           </button>
-                        </div>
+                        )}
+                      </div>
 
-                        {/* 台词金句 */}
-                        <blockquote className="gallery-card-quote">
-                          {pet.tagline}
-                        </blockquote>
-
-                        {/* 动效预览区 */}
-                        <div className="gallery-card-preview">
-                          <img
-                            src={`${import.meta.env.BASE_URL}${pet.image}`}
-                            alt={pet.name}
-                            className="gallery-card-img"
-                            loading="lazy"
-                          />
-                        </div>
-
-                        {/* 标签 */}
-                        <div className="gallery-card-tags">
-                          {pet.traits.slice(0, 3).map((t) => (
-                            <span key={t} className="gallery-card-tag">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* 底部价格与操作 */}
-                        <div className="gallery-card-footer">
-                          <div className="gallery-price-block">
-                            {pet.price === 0 ? (
-                              <span className="pet-price-badge is-free">免费内置</span>
-                            ) : (
-                              <span className="pet-price-badge is-paid">
-                                <strong>￥{pet.price.toFixed(1)}</strong>
-                                <small>已售 {pet.salesCount}+</small>
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="gallery-card-actions">
-                            {unlocked ? (
-                              <button
-                                type="button"
-                                className="gallery-btn-sm gallery-btn-unlocked"
-                                onClick={(e) => handleUnlockOrImport(e, pet)}
-                                title="已永久拥有，点击直接唤醒桌面端导入"
-                              >
-                                <Zap size={13} />
-                                <span>一键导入</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="gallery-btn-sm gallery-btn-buy"
-                                onClick={(e) => handleUnlockOrImport(e, pet)}
-                                title="免登录快捷扫码购买并自动导入"
-                              >
-                                <span>￥{pet.price.toFixed(1)} 解锁</span>
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              className="gallery-btn-sm gallery-btn-primary-sm"
+                      {/* 极简宠物卡片网格：只放宠物动效 + 名称 + 动作 */}
+                      <div className="gallery-minimal-grid">
+                        {pets.map((pet) => {
+                          const unlocked = isPetUnlocked(pet)
+                          return (
+                            <article
+                              key={pet.id}
+                              className="gallery-minimal-card"
                               onClick={() => openPetDetail(pet)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => e.key === 'Enter' && openPetDetail(pet)}
+                              title={`点击查看【${pet.name}】的详细动作与导入`}
                             >
-                              <span>档案</span>
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    )
-                  })}
+                              {/* 宠物动效展示区 */}
+                              <div className="minimal-card-stage">
+                                <img
+                                  src={`${import.meta.env.BASE_URL}${pet.animatedWebp || pet.image}`}
+                                  alt={pet.name}
+                                  className="minimal-card-img"
+                                  loading="lazy"
+                                />
+                                {unlocked && (
+                                  <span className="minimal-card-unlocked-dot" title="已拥有">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* 极简文字：名称 + 动作 */}
+                              <div className="minimal-card-info">
+                                <span className="minimal-card-name">{pet.name}</span>
+                                <span className="minimal-card-action">
+                                  动作：{pet.actions[0]?.label || '专属动作'}
+                                </span>
+                              </div>
+                            </article>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               )}
             </>
@@ -926,8 +819,36 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
                       <span className="gallery-card-en">{selectedPet.enName}</span>
                       <span className="gallery-worktype-tag">{selectedPet.workType}</span>
                     </h2>
-                    <div className="detail-price-pill">
-                      {selectedPet.price === 0 ? '免费内置' : `￥${selectedPet.price.toFixed(1)}`}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className={`gallery-fav-btn ${favorites.has(selectedPet.id) ? 'active' : ''}`}
+                        onClick={(e) => toggleFavorite(e, selectedPet.id)}
+                        title={favorites.has(selectedPet.id) ? '取消收藏' : '加入我的最爱'}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.08)',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer',
+                          color: favorites.has(selectedPet.id) ? '#ef4444' : '#64748b',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Heart
+                          size={15}
+                          fill={favorites.has(selectedPet.id) ? '#ef4444' : 'none'}
+                          color={favorites.has(selectedPet.id) ? '#ef4444' : 'currentColor'}
+                        />
+                        <span>{favorites.has(selectedPet.id) ? '已收藏' : '收藏'}</span>
+                      </button>
+                      <div className="detail-price-pill">
+                        {selectedPet.price === 0 ? '免费内置' : `￥${selectedPet.price.toFixed(1)}`}
+                      </div>
                     </div>
                   </div>
 

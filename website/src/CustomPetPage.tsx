@@ -25,7 +25,6 @@ const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProps) {
   const [copiedQq, setCopiedQq] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -40,17 +39,6 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       setCopiedQq(true)
       showToast('官方定制直通群号 422616922 已复制到剪贴板！')
       setTimeout(() => setCopiedQq(false), 2400)
-    } catch {
-      // ignore
-    }
-  }
-
-  const handleCopyCode = (code: string, petName: string) => {
-    try {
-      navigator.clipboard.writeText(code)
-      setCopiedCode(code)
-      showToast(`🎉 备用识别码 ${code} 已复制！在桌面端粘贴即可装载【${petName}】`)
-      setTimeout(() => setCopiedCode(null), 2500)
     } catch {
       // ignore
     }
@@ -299,167 +287,75 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
           </div>
         </header>
 
-        {/* 核心特色：像博主一样的圆圈链式展示（一个作者圆圈，下面圈一个，再下面圈一个） */}
+        {/* 核心特色：制作人横向分栏，直接写“制作人”，下面接着写他的角色 */}
         <section style={{ marginBottom: '64px' }}>
-          <div className="subpage-section-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <span className="subpage-section-badge">
-                <Sparkles size={14} />
-                <span>AUTHOR CIRCLE & CASE CHAINS</span>
-              </span>
-              <h2>画师直约圈 · 定制案例环环相扣</h2>
-              <p>一个作者对应一个专属圈圈，下方垂直延伸定制案例圆环，真实还原自家毛孩子。</p>
-            </div>
-            <span style={{ fontSize: '0.84rem', color: '#e85f6d', background: 'rgba(232, 95, 109, 0.08)', padding: '5px 14px', borderRadius: '999px', fontWeight: 700, border: '1px solid rgba(232, 95, 109, 0.2)' }}>
-              画师直约 · 平台中立切帧打包
+          <div className="subpage-section-header">
+            <span className="subpage-section-badge">
+              <Sparkles size={14} />
+              <span>CUSTOM CREATORS & PETS</span>
             </span>
+            <h2>制作人专属定制案例</h2>
+            <p>简约浏览体验：按制作人分栏呈现，外部仅展示宠物与动作，清爽直观。</p>
           </div>
 
-          {/* 四大画师垂直圆圈链式网格 */}
-          <div className="circle-chains-grid">
+          <div className="gallery-producers-stream">
             {artistChains.map((artist) => (
-              <article className="subpage-card artist-circle-chain-card" key={artist.id}>
-                {/* 1. 顶部作者大圈 */}
-                <div className="chain-node author-circle-node">
-                  <div className="circle-ring-outer circle-ring-author" style={{ borderColor: artist.ringColor }}>
-                    <div className="circle-ring-inner-avatar" style={{ background: artist.gradient }}>
-                      <span>{artist.initial}</span>
+              <section className="gallery-producer-section" key={artist.id}>
+                {/* 制作人标题栏：直接写“制作人：XXX” */}
+                <div className="gallery-producer-header">
+                  <div className="gallery-producer-avatar" style={{ background: artist.gradient }}>
+                    {artist.initial}
+                  </div>
+                  <div className="gallery-producer-title-wrap">
+                    <div className="gallery-producer-main-title">
+                      <h2>制作人：{artist.name}</h2>
+                      <span className="gallery-producer-badge" style={{ borderColor: artist.ringColor, color: artist.ringColor }}>
+                        {artist.badge}
+                      </span>
                     </div>
-                    <span className="circle-badge-pill" style={{ background: artist.badgeColor }}>
-                      {artist.badge}
-                    </span>
+                    <span className="gallery-producer-subtitle">{artist.role} · {artist.status}</span>
                   </div>
 
-                  <div className="chain-author-meta">
-                    <strong className="chain-author-name">{artist.name}</strong>
-                    <span className="chain-author-role">{artist.role}</span>
-                    <p className="chain-author-desc">{artist.desc}</p>
-                    <div className="chain-tag-row">
-                      {artist.tags.map((tag) => (
-                        <span key={tag} className="chain-tag-pill">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 纵向连线下延至案例 1 */}
-                <div className="chain-connector-v">
-                  <div className="connector-v-line" style={{ borderColor: artist.ringColor }}></div>
-                  <div className="connector-v-dot" style={{ background: artist.ringColor }}></div>
-                </div>
-
-                {/* 2. 中间：定制案例圆圈 1 */}
-                <div className="chain-node case-circle-node">
-                  <div className="circle-ring-outer circle-ring-case" style={{ borderColor: artist.ringColor }}>
-                    <img
-                      src={artist.cases[0].img}
-                      alt={artist.cases[0].title}
-                      className="circle-ring-case-img"
-                      loading="lazy"
-                    />
-                    <span className="circle-step-badge">定制圈 01</span>
-                  </div>
-
-                  <div className="chain-case-meta">
-                    <h4>{artist.cases[0].title}</h4>
-                    <div className="chain-case-flow">
-                      <span className="flow-src">{artist.cases[0].sourceTag}</span>
-                      <span className="flow-arrow">➜</span>
-                      <span className="flow-dst">{artist.cases[0].resultTag}</span>
-                    </div>
-                    <p>{artist.cases[0].desc}</p>
-
-                    {/* 导入与识别码操作 */}
-                    <div className="chain-case-actions">
-                      <button
-                        type="button"
-                        className="chain-case-import-btn"
-                        onClick={() => handleDeepLink(artist.cases[0].redeemCode, artist.cases[0].title)}
-                        title="点击呼叫 WindowPet 桌面端直接导入"
-                      >
-                        <Zap size={13} />
-                        <span>一键直接导入</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="chain-case-copy-btn"
-                        onClick={() => handleCopyCode(artist.cases[0].redeemCode, artist.cases[0].title)}
-                        title="复制备用识别码"
-                      >
-                        {copiedCode === artist.cases[0].redeemCode ? <Check size={13} color="#059669" /> : <Copy size={13} />}
-                        <span>{copiedCode === artist.cases[0].redeemCode ? '已复制' : '备用码'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 纵向连线下延至案例 2 */}
-                <div className="chain-connector-v">
-                  <div className="connector-v-line" style={{ borderColor: artist.ringColor }}></div>
-                  <div className="connector-v-dot" style={{ background: artist.ringColor }}></div>
-                </div>
-
-                {/* 3. 底部：定制案例圆圈 2 */}
-                <div className="chain-node case-circle-node">
-                  <div className="circle-ring-outer circle-ring-case" style={{ borderColor: artist.ringColor }}>
-                    <img
-                      src={artist.cases[1].img}
-                      alt={artist.cases[1].title}
-                      className="circle-ring-case-img"
-                      loading="lazy"
-                    />
-                    <span className="circle-step-badge">定制圈 02</span>
-                  </div>
-
-                  <div className="chain-case-meta">
-                    <h4>{artist.cases[1].title}</h4>
-                    <div className="chain-case-flow">
-                      <span className="flow-src">{artist.cases[1].sourceTag}</span>
-                      <span className="flow-arrow">➜</span>
-                      <span className="flow-dst">{artist.cases[1].resultTag}</span>
-                    </div>
-                    <p>{artist.cases[1].desc}</p>
-
-                    {/* 导入与识别码操作 */}
-                    <div className="chain-case-actions">
-                      <button
-                        type="button"
-                        className="chain-case-import-btn"
-                        onClick={() => handleDeepLink(artist.cases[1].redeemCode, artist.cases[1].title)}
-                        title="点击呼叫 WindowPet 桌面端直接导入"
-                      >
-                        <Zap size={13} />
-                        <span>一键直接导入</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="chain-case-copy-btn"
-                        onClick={() => handleCopyCode(artist.cases[1].redeemCode, artist.cases[1].title)}
-                        title="复制备用识别码"
-                      >
-                        {copiedCode === artist.cases[1].redeemCode ? <Check size={13} color="#059669" /> : <Copy size={13} />}
-                        <span>{copiedCode === artist.cases[1].redeemCode ? '已复制' : '备用码'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 底部卡片预约直达 */}
-                <div className="chain-card-footer">
                   <a
                     href={qqGroupUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="chain-book-author-btn"
+                    className="gallery-producer-custom-tag"
                   >
-                    <HeartHandshake size={15} />
-                    <span>找【{artist.shortName}】约稿定制</span>
+                    <HeartHandshake size={14} />
+                    <span>找 Ta 约稿定制</span>
                   </a>
-                  <span className="chain-status-badge">{artist.status}</span>
                 </div>
-              </article>
+
+                {/* 极简宠物卡片网格：只放宠物动效 + 名称 + 动作 */}
+                <div className="gallery-minimal-grid">
+                  {artist.cases.map((c) => (
+                    <article
+                      key={c.id}
+                      className="gallery-minimal-card"
+                      onClick={() => handleDeepLink(c.redeemCode, c.title)}
+                      role="button"
+                      tabIndex={0}
+                      title={`点击通过桌面端一键导入【${c.title}】`}
+                    >
+                      <div className="minimal-card-stage">
+                        <img
+                          src={c.img}
+                          alt={c.title}
+                          className="minimal-card-img"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="minimal-card-info">
+                        <span className="minimal-card-name">{c.title}</span>
+                        <span className="minimal-card-action">
+                          动作：{c.resultTag}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </section>

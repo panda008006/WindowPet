@@ -546,6 +546,210 @@
   gap: 20px;
 }
 
+/* ==========================================================================
+   极简制作人分栏与极简宠物卡片 (直接写“制作人：XXX”，下面紧接着角色，仅展示宠物+名称+动作)
+   ========================================================================== */
+.gallery-producers-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 12px;
+}
+
+.gallery-producer-section {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(235, 218, 210, 0.85);
+  border-radius: 20px;
+  padding: 22px 24px 24px;
+  box-shadow: 0 4px 18px rgba(83, 67, 77, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.gallery-producer-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(235, 218, 210, 0.7);
+  flex-wrap: wrap;
+}
+
+.gallery-producer-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  font-weight: 850;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.gallery-producer-title-wrap {
+  flex: 1;
+  min-width: 200px;
+}
+
+.gallery-producer-main-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gallery-producer-main-title h2 {
+  margin: 0;
+  font-size: 1.22rem;
+  font-weight: 850;
+  color: #08233f;
+  letter-spacing: -0.01em;
+}
+
+.gallery-producer-badge {
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.gallery-producer-subtitle {
+  display: block;
+  font-size: 0.82rem;
+  color: #557595;
+  margin-top: 3px;
+}
+
+.gallery-producer-custom-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(232, 95, 109, 0.08);
+  color: #e85f6d;
+  border: 1px solid rgba(232, 95, 109, 0.25);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.gallery-producer-custom-tag:hover {
+  background: #e85f6d;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* 极简网格：紧凑、清爽、容纳更多角色 */
+.gallery-minimal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 16px;
+}
+
+/* 单个极简宠物卡片：只有宠物 + 名称 + 动作 */
+.gallery-minimal-card {
+  background: #ffffff;
+  border: 1px solid rgba(235, 218, 210, 0.8);
+  border-radius: 16px;
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(83, 67, 77, 0.04);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  position: relative;
+  user-select: none;
+}
+
+.gallery-minimal-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 95, 109, 0.45);
+  box-shadow: 0 12px 26px rgba(232, 95, 109, 0.12), 0 3px 8px rgba(47, 159, 147, 0.06);
+}
+
+/* 宠物展示台：居中纯净，背景浅淡柔和 */
+.minimal-card-stage {
+  width: 100%;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: radial-gradient(circle at center, rgba(255, 246, 242, 0.6) 0%, rgba(244, 252, 249, 0.4) 100%);
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 10px;
+}
+
+.minimal-card-img {
+  max-width: 90px;
+  max-height: 90px;
+  object-fit: contain;
+  transition: transform 0.22s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
+}
+
+.gallery-minimal-card:hover .minimal-card-img {
+  transform: scale(1.1);
+}
+
+.minimal-card-unlocked-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #059669;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
+}
+
+/* 极简文本区 */
+.minimal-card-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.minimal-card-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #08233f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.minimal-card-action {
+  font-size: 0.72rem;
+  color: #2f9f93;
+  background: rgba(87, 199, 184, 0.12);
+  border: 1px solid rgba(87, 199, 184, 0.24);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* 单个宠物卡片 (仿 VibeHub 术语卡片) */
 .gallery-card {
   background: rgba(255, 255, 255, 0.88);
