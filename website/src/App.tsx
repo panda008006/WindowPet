@@ -5,28 +5,28 @@ import {
   BellRing,
   BookOpen,
   CalendarCheck,
-  Camera,
   CheckCircle2,
   ChevronDown,
   Download,
   EyeOff,
   FileArchive,
-  Gift,
   HeartHandshake,
   HelpCircle,
   Home,
   LockKeyhole,
   MousePointerClick,
-  Palette,
   PawPrint,
   RotateCw,
   Settings2,
   Sparkles,
-  X,
 } from 'lucide-react'
 import './App.css'
 import './polish.css'
+import './subpages.css'
 import { PetGallery } from './PetGallery'
+import { CustomPetPage } from './CustomPetPage'
+import { TutorialPage } from './TutorialPage'
+import { FaqPage } from './FaqPage'
 
 function QqIcon({ size = 15 }: { size?: number }) {
   return (
@@ -59,13 +59,12 @@ const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 const bilibiliVideoUrl = 'https://www.bilibili.com/video/BV1E2eb6PE5Q/'
 const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
-const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
+const sectionIds = ['home', 'pets', 'features', 'control'] as const
 
 const sectionDots = [
   { id: 'home', label: '首页' },
   { id: 'pets', label: '角色' },
   { id: 'features', label: '功能' },
-  { id: 'custom', label: '爱宠定制' },
   { id: 'control', label: '下载' },
 ] as const
 
@@ -274,15 +273,30 @@ function petAsset(fileName: string) {
   return `${import.meta.env.BASE_URL}pets/${fileName}`
 }
 
+export type ViewMode = 'home' | 'gallery' | 'custom' | 'tutorial' | 'faq'
+
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'gallery'>(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#/gallery' ? 'gallery' : 'home'
+  const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'home'
+    const hash = window.location.hash
+    if (hash === '#/gallery') return 'gallery'
+    if (hash === '#/custom') return 'custom'
+    if (hash === '#/tutorial') return 'tutorial'
+    if (hash === '#/faq') return 'faq'
+    return 'home'
   })
 
   useEffect(() => {
     const handleHash = () => {
-      if (window.location.hash === '#/gallery') {
+      const hash = window.location.hash
+      if (hash === '#/gallery') {
         setCurrentView('gallery')
+      } else if (hash === '#/custom') {
+        setCurrentView('custom')
+      } else if (hash === '#/tutorial') {
+        setCurrentView('tutorial')
+      } else if (hash === '#/faq') {
+        setCurrentView('faq')
       } else {
         setCurrentView('home')
       }
@@ -291,34 +305,21 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
-  const handleOpenGallery = () => {
-    setCurrentView('gallery')
-    window.location.hash = '#/gallery'
-  }
-
-  const handleBackToHome = () => {
-    setCurrentView('home')
-    if (window.location.hash === '#/gallery') {
-      history.replaceState(null, '', window.location.pathname + window.location.search)
+  const navigateTo = (view: ViewMode) => {
+    setCurrentView(view)
+    if (view === 'home') {
+      if (window.location.hash && window.location.hash !== '#/') {
+        history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+      if (currentView === 'home') {
+        scrollToSection(0)
+      }
+    } else {
+      window.location.hash = `#/${view}`
     }
   }
 
-  const handleNavHome = () => {
-    handleBackToHome()
-    scrollToSection(0)
-  }
-
-  const [showTutorial, setShowTutorial] = useState(false)
-  const [showFaq, setShowFaq] = useState(false)
   const [copiedQq, setCopiedQq] = useState(false)
-
-  const handleNavCustom = () => {
-    handleBackToHome()
-    const customIndex = sectionIds.indexOf('custom')
-    if (customIndex >= 0) {
-      setTimeout(() => scrollToSection(customIndex), 60)
-    }
-  }
 
   const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
   const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
@@ -403,7 +404,7 @@ function App() {
   return (
     <div className="site-wrapper">
       <header className="site-nav">
-        <button className="brand-lockup" type="button" onClick={handleNavHome} aria-label="返回首页">
+        <button className="brand-lockup" type="button" onClick={() => navigateTo('home')} aria-label="返回首页">
           <span className="brand-symbol">
             <img src={`${import.meta.env.BASE_URL}apple-touch-icon.png`} alt="" />
           </span>
@@ -416,8 +417,8 @@ function App() {
         <nav aria-label="官网导航">
           <button
             type="button"
-            className={`nav-link-btn ${currentView === 'home' && activeIndex === 0 ? 'is-active' : ''}`}
-            onClick={handleNavHome}
+            className={`nav-link-btn ${currentView === 'home' ? 'is-active' : ''}`}
+            onClick={() => navigateTo('home')}
           >
             <Home size={15} />
             <span>首页</span>
@@ -425,7 +426,7 @@ function App() {
           <button
             type="button"
             className={`nav-gallery-link nav-link-btn ${currentView === 'gallery' ? 'is-active' : ''}`}
-            onClick={handleOpenGallery}
+            onClick={() => navigateTo('gallery')}
             title="打开小鼻嘎展馆，探索全部萌宠"
           >
             <Sparkles size={15} />
@@ -434,8 +435,8 @@ function App() {
           </button>
           <button
             type="button"
-            className={`nav-link-btn ${currentView === 'home' && activeIndex === 3 ? 'is-active' : ''}`}
-            onClick={handleNavCustom}
+            className={`nav-link-btn ${currentView === 'custom' ? 'is-active' : ''}`}
+            onClick={() => navigateTo('custom')}
             title="自家毛孩子专属桌宠定制"
           >
             <HeartHandshake size={15} />
@@ -443,8 +444,8 @@ function App() {
           </button>
           <button
             type="button"
-            className="nav-link-btn"
-            onClick={() => setShowTutorial(true)}
+            className={`nav-link-btn ${currentView === 'tutorial' ? 'is-active' : ''}`}
+            onClick={() => navigateTo('tutorial')}
             title="查看新手使用与按键操作教程"
           >
             <BookOpen size={15} />
@@ -452,8 +453,8 @@ function App() {
           </button>
           <button
             type="button"
-            className="nav-link-btn"
-            onClick={() => setShowFaq(true)}
+            className={`nav-link-btn ${currentView === 'faq' ? 'is-active' : ''}`}
+            onClick={() => navigateTo('faq')}
             title="常见问题 FAQ 与安全说明"
           >
             <HelpCircle size={15} />
@@ -589,7 +590,7 @@ function App() {
               <button
                 type="button"
                 className="section-heading-gallery-link"
-                onClick={handleOpenGallery}
+                onClick={() => navigateTo('gallery')}
                 title="打开小鼻嘎展馆，探索全部 24 款萌宠"
               >
                 <Sparkles size={14} />
@@ -729,124 +730,6 @@ function App() {
         </div>
       </section>
 
-      <section className="snap-section custom-page" id="custom" aria-label="自家爱宠专属定制">
-        <div className="section-inner custom-layout">
-          <div className="section-heading">
-            <p className="eyebrow">CUSTOM PET STUDIO</p>
-            <h2>把自家毛孩子，做进电脑桌面陪伴你</h2>
-            <p>
-              不只是现成动漫角色！提供 1~3 张爱宠生活照（猫咪、狗狗、龙猫、鹦鹉），
-              AI 风格化提取 + 专业动作设计，生成专属陪伴桌宠。每一次敲键盘、看屏幕，爱宠都在身边。
-            </p>
-          </div>
-
-          <div className="custom-funnel-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', margin: '32px 0' }}>
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Camera size={28} color="var(--wp-coral-deep)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>01. 提供生活照</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>准备 1~3 张爱宠清晰的全身照（站立、坐姿或趴卧正面），AI 将自动提取外观花色特征与轮廓。</p>
-            </article>
-
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Sparkles size={28} color="var(--wp-mint-deep)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>02. 动作与性格定制</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>可自由挑选动作风格：日常发呆、桌面散步、打瞌睡、敲键盘陪加班，甚至专属小玩具互动。</p>
-            </article>
-
-            <article className="feature-card" style={{ padding: '24px', background: 'var(--wp-surface)', borderRadius: '20px', border: '1px solid var(--wp-line)' }}>
-              <Gift size={28} color="var(--wp-coral)" />
-              <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>03. 专属安装包交付</h3>
-              <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>生成独一无二的专属角色包，双击即可召唤自家的毛孩子常驻桌面，永久陪伴。</p>
-            </article>
-          </div>
-
-          {/* 特邀驻站合作画师团 (仿博主模式，明确第三方合作约稿机制，规避版权风险) */}
-          <div className="custom-artists-showcase" style={{ margin: '20px 0 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div>
-                <strong style={{ fontSize: '1.08rem', color: 'var(--wp-ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Palette size={18} color="var(--wp-coral-deep)" />
-                  <span>特邀驻站合作画师团 · 多元风格随心选</span>
-                </strong>
-                <span style={{ fontSize: '0.84rem', color: 'var(--wp-muted)' }}>
-                  平台特邀多位知名独立插画师与像素创作者，一对一承接生活照私宠约稿定制
-                </span>
-              </div>
-              <span style={{ fontSize: '0.78rem', color: '#1677ff', background: '#e6f4ff', padding: '3px 10px', borderRadius: '999px', fontWeight: 600 }}>
-                画师直约 · 平台中立技术支持
-              </span>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
-              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #ff7675, #fab1a0)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>栗</div>
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@糖炒栗子</strong>
-                    <small style={{ color: '#e11d48', fontSize: '0.75rem', fontWeight: 600 }}>25帧视线跟随 / 真实毛发</small>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>擅长家猫家犬微表情与眼神追踪，代表作【麦脆角摇头猫】。</p>
-                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（约3~5工期）</div>
-              </div>
-
-              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #00cec9, #81ecec)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>米</div>
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@米诺画画中</strong>
-                    <small style={{ color: '#0d9488', fontSize: '0.75rem', fontWeight: 600 }}>治愈手绘 / 软萌像素风</small>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>重度猫狗铲屎官，擅长Q版治愈手绘，代表作【小柴犬】【布布鼠】。</p>
-                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（约2~4工期）</div>
-              </div>
-
-              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>星</div>
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@星野同人漫研社</strong>
-                    <small style={{ color: '#7c3aed', fontSize: '0.75rem', fontWeight: 600 }}>二次元拟人 / 专属动作连携</small>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>给毛孩子设计动漫拟人造型与合奏动画，魔性有趣。</p>
-                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（限量接单）</div>
-              </div>
-
-              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #fdcb6e, #ffeaa7)', display: 'grid', placeItems: 'center', color: '#d35400', fontWeight: 800, fontSize: '15px' }}>M</div>
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@整活大队 MemeLab</strong>
-                    <small style={{ color: '#ea580c', fontSize: '0.75rem', fontWeight: 600 }}>幽默表情包 / 怨种打工魂</small>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>把毛孩子做成陪你上班疯狂敲键盘的怨种搭子，喜感拉满。</p>
-                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（随缘接单）</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="custom-cta-card" style={{ padding: '24px 32px', background: 'linear-gradient(135deg, rgba(255, 231, 234, 0.7) 0%, rgba(220, 247, 241, 0.7) 100%)', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <strong style={{ fontSize: '1.15rem', display: 'block', color: 'var(--wp-ink)' }}>想给自家宠物定制独一无二的专属桌宠？</strong>
-              <span style={{ color: 'var(--wp-muted)', fontSize: '0.9rem' }}>官方交流群现已开放预约，透明进度，支持验收满意后再交付。</span>
-            </div>
-            <a
-              className="primary-download"
-              href="https://qm.qq.com/q/cYlRBbvuda"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', textDecoration: 'none' }}
-            >
-              <HeartHandshake size={18} />
-              立即预约爱宠定制 / 进群交流
-            </a>
-          </div>
-        </div>
-      </section>
-
       <section className="snap-section control-page" id="control" aria-label="控制台和下载">
         <div className="section-inner control-layout">
           <div className="section-heading">
@@ -952,113 +835,40 @@ function App() {
       </section>
     </main>
 
-    {/* 小鼻嘎展馆：顶部导航栏保持不变，展馆呈现在下方的独立展示界面 */}
+    {/* 小鼻嘎展馆独立展示界面 */}
     {currentView === 'gallery' && (
       <div className="gallery-view-pane">
-        <PetGallery onBackToHome={handleBackToHome} />
+        <PetGallery
+          onBackToHome={() => navigateTo('home')}
+          onNavigateCustom={() => navigateTo('custom')}
+        />
       </div>
     )}
 
-    {/* 新手使用教程弹窗 */}
-    {showTutorial && (
-      <div className="wp-modal-overlay" onClick={() => setShowTutorial(false)}>
-        <div className="wp-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-          <div className="wp-modal-header">
-            <h3>
-              <BookOpen size={20} color="#126ad6" />
-              <span>WindowPet 新手使用与操作指南</span>
-            </h3>
-            <button type="button" className="wp-modal-close-btn" onClick={() => setShowTutorial(false)} aria-label="关闭">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="wp-modal-body">
-            <div className="wp-guide-grid">
-              <div className="wp-guide-card">
-                <h4>🖱️ 桌面交互 & 自由拖拽</h4>
-                <p>鼠标左键按住萌宠即可随意拖动至屏幕任何位置；拖到屏幕边缘会自动停靠吸附，绝不遮挡正常办公区。</p>
-              </div>
-              <div className="wp-guide-card">
-                <h4>⚡ 全局防查/摸鱼快捷键</h4>
-                <p>随时按下 <code>Ctrl + Shift + P</code> 即可一键隐藏/重新唤醒桌面萌宠，老板或同事走近也不慌！</p>
-              </div>
-              <div className="wp-guide-card">
-                <h4>✨ 丰富互动 & 道具逗弄</h4>
-                <p>双击角色可触发专属互动动作（如挥手、开心跳跃、演奏等），右键调出工具箱还能拿出羽毛逗弄小宠物。</p>
-              </div>
-              <div className="wp-guide-card">
-                <h4>⏰ 备忘录 & 番茄闹钟</h4>
-                <p>日常待办随手记在屏幕边上；设置定时喝水、休息或会议提醒，到点萌宠会用活泼动作亲自提醒你！</p>
-              </div>
-            </div>
-          </div>
-          <div className="wp-modal-footer">
-            <span>💡 提示：在桌宠身上点击鼠标右键，即可打开主控制面板与全部功能设置。</span>
-            <button
-              type="button"
-              className="secondary-action"
-              onClick={() => setShowTutorial(false)}
-              style={{ padding: '6px 16px', fontSize: '13px' }}
-            >
-              我知道了
-            </button>
-          </div>
-        </div>
-      </div>
+    {/* 爱宠定制独立专属页面 */}
+    {currentView === 'custom' && (
+      <CustomPetPage
+        onBackToHome={() => navigateTo('home')}
+        onOpenGallery={() => navigateTo('gallery')}
+      />
     )}
 
-    {/* 常见问题 FAQ 弹窗 */}
-    {showFaq && (
-      <div className="wp-modal-overlay" onClick={() => setShowFaq(false)}>
-        <div className="wp-modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-          <div className="wp-modal-header">
-            <h3>
-              <HelpCircle size={20} color="#126ad6" />
-              <span>常见问题 FAQ 与安全解答</span>
-            </h3>
-            <button type="button" className="wp-modal-close-btn" onClick={() => setShowFaq(false)} aria-label="关闭">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="wp-modal-body">
-            <div className="wp-faq-item">
-              <strong>🛡️ 为什么初次运行 Windows SmartScreen 会提示“未知发布者”？</strong>
-              <p>
-                属于正常 Windows 安全提示。个人独立开源项目未购买商业机构昂贵的 EV 企业代码签名证书。WindowPet 已在 GitHub 全量开源，绝无任何恶意后门或隐私收集。点击提示窗口上的【更多信息】并选择【仍要运行】即可正常开启，100% 绿色安全。
-              </p>
-            </div>
-            <div className="wp-faq-item">
-              <strong>⚡ 长期挂在桌面会卡顿或占用大量电脑内存吗？</strong>
-              <p>
-                完全不会！软件采用原生轻量化渲染引擎，空闲挂机时内存占用仅约 30MB~50MB，CPU 占用率低于 0.5%，在打游戏（《英雄联盟》《黑神话》《CS2》）或剪辑视频时均丝滑流畅无感。
-              </p>
-            </div>
-            <div className="wp-faq-item">
-              <strong>💻 支持哪些电脑操作系统？</strong>
-              <p>
-                目前完美支持 64 位 Windows 10 与 Windows 11 操作系统，已适配高分辨率屏 DPI 自动缩放与多显示器自由拖拽。
-              </p>
-            </div>
-            <div className="wp-faq-item">
-              <strong>🎨 怎样把自家的毛孩子（猫咪/狗狗）做成专属桌宠？</strong>
-              <p>
-                点击导航栏【爱宠定制】，只需提供 1~3 张爱宠清晰生活照，我们提供专属 AI 轮廓建模与个性动作定制，欢迎加入官方交流群（422616922）咨询预约专属服务！
-              </p>
-            </div>
-          </div>
-          <div className="wp-modal-footer">
-            <span>🐧 还有其他疑问？欢迎加入官方 QQ 交流群：422616922</span>
-            <button
-              type="button"
-              className="secondary-action"
-              onClick={() => setShowFaq(false)}
-              style={{ padding: '6px 16px', fontSize: '13px' }}
-            >
-              关闭
-            </button>
-          </div>
-        </div>
-      </div>
+    {/* 使用教程独立专属页面 */}
+    {currentView === 'tutorial' && (
+      <TutorialPage
+        onBackToHome={() => navigateTo('home')}
+        onOpenGallery={() => navigateTo('gallery')}
+        onOpenFaq={() => navigateTo('faq')}
+      />
+    )}
+
+    {/* 常见问题 FAQ 独立专属页面 */}
+    {currentView === 'faq' && (
+      <FaqPage
+        onBackToHome={() => navigateTo('home')}
+        onOpenCustom={() => navigateTo('custom')}
+        onOpenGallery={() => navigateTo('gallery')}
+      />
     )}
   </div>
   )

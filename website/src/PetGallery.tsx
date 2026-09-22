@@ -24,6 +24,7 @@ import './gallery.css'
 interface PetGalleryProps {
   onBackToHome?: () => void
   onClose?: () => void
+  onNavigateCustom?: () => void
 }
 
 const themeOptions = [
@@ -43,7 +44,7 @@ function generateOrderNumber() {
   return `WP-PET-2026-${nextOrderSeq}`
 }
 
-export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
+export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalleryProps) {
   const handleClose = onClose || onBackToHome
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -289,8 +290,12 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
             type="button"
             className="gallery-nav-action-btn gallery-nav-custom-btn"
             onClick={() => {
-              setSelectedCategory('home')
-              setIsCustomModalOpen(true)
+              if (onNavigateCustom) {
+                onNavigateCustom()
+              } else {
+                setSelectedCategory('home')
+                setIsCustomModalOpen(true)
+              }
             }}
             title="定制自家的猫猫狗狗等毛孩子到电脑桌面"
           >
@@ -423,8 +428,12 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
               type="button"
               className="gallery-sidebar-action-card custom-action-card"
               onClick={() => {
-                setSelectedCategory('home')
-                setIsCustomModalOpen(true)
+                if (onNavigateCustom) {
+                  onNavigateCustom()
+                } else {
+                  setSelectedCategory('home')
+                  setIsCustomModalOpen(true)
+                }
               }}
             >
               <div className="sidebar-action-icon">
