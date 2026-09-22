@@ -204,7 +204,8 @@ button.brand-lockup:focus-visible {
   color: #0c56be;
 }
 
-.gallery-view-pane {
+.gallery-view-pane,
+.wanted-view-pane {
   position: fixed;
   top: 72px;
   left: 0;

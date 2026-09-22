@@ -6,7 +6,6 @@ import {
   BookOpen,
   CalendarCheck,
   CheckCircle2,
-  ChevronDown,
   Download,
   EyeOff,
   FileArchive,
@@ -24,13 +23,13 @@ import './App.css'
 import './polish.css'
 import './subpages.css'
 import './community.css'
+import './wanted.css'
 import { PetGallery } from './PetGallery'
 import { CustomPetPage } from './CustomPetPage'
+import { WantedPetPage } from './WantedPetPage'
 import { TutorialPage } from './TutorialPage'
 import { FaqPage } from './FaqPage'
 import { AgentLightDemo } from './AgentLightDemo'
-import { WishBubbleWall } from './WishBubbleWall'
-import { MasterCreatorSection } from './MasterCreatorSection'
 
 function QqIcon({ size = 15 }: { size?: number }) {
   return (
@@ -63,14 +62,13 @@ const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 const bilibiliVideoUrl = 'https://www.bilibili.com/video/BV1E2eb6PE5Q/'
 const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
-const sectionIds = ['home', 'community', 'pets', 'features', 'control'] as const
+const sectionIds = ['home', 'pets', 'features', 'control'] as const
 
 const sectionDots = [
   { id: 'home', label: '首页' },
-  { id: 'community', label: '主理人与心愿' },
-  { id: 'pets', label: '角色' },
-  { id: 'features', label: '功能' },
-  { id: 'control', label: '下载' },
+  { id: 'pets', label: '精选角色' },
+  { id: 'features', label: '实用功能' },
+  { id: 'control', label: '极速下载' },
 ] as const
 
 const pets = [
@@ -278,13 +276,14 @@ function petAsset(fileName: string) {
   return `${import.meta.env.BASE_URL}pets/${fileName}`
 }
 
-export type ViewMode = 'home' | 'gallery' | 'custom' | 'tutorial' | 'faq'
+export type ViewMode = 'home' | 'gallery' | 'wanted' | 'custom' | 'tutorial' | 'faq'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'home'
     const hash = window.location.hash
     if (hash === '#/gallery') return 'gallery'
+    if (hash === '#/wanted') return 'wanted'
     if (hash === '#/custom') return 'custom'
     if (hash === '#/tutorial') return 'tutorial'
     if (hash === '#/faq') return 'faq'
@@ -296,6 +295,8 @@ function App() {
       const hash = window.location.hash
       if (hash === '#/gallery') {
         setCurrentView('gallery')
+      } else if (hash === '#/wanted') {
+        setCurrentView('wanted')
       } else if (hash === '#/custom') {
         setCurrentView('custom')
       } else if (hash === '#/tutorial') {
@@ -440,6 +441,16 @@ function App() {
           </button>
           <button
             type="button"
+            className={`nav-link-btn ${currentView === 'wanted' ? 'is-active' : ''}`}
+            onClick={() => navigateTo('wanted')}
+            title="打开想要角色心愿海，打字让它冒出来"
+          >
+            <Sparkles size={15} />
+            <span>想要角色</span>
+            <span className="nav-heart-badge" title="灵感许愿" style={{ background: 'rgba(232, 95, 109, 0.12)', color: '#e85f6d' }}>🫧</span>
+          </button>
+          <button
+            type="button"
             className={`nav-link-btn ${currentView === 'custom' ? 'is-active' : ''}`}
             onClick={() => navigateTo('custom')}
             title="自家毛孩子专属桌宠定制"
@@ -542,23 +553,23 @@ function App() {
             <p className="eyebrow">WINDOWS DESKTOP COMPANION</p>
             <h1>让桌面多一个会回应你的伙伴</h1>
             <p className="hero-subtitle">
-              Window Pet 把可爱的角色、日常提醒和轻量桌面工具放在一起。下载后，选择喜欢的伙伴，让它陪你工作、休息和记录琐事。
+              让桌面多一个会回应你的轻量萌宠伙伴，随时陪你工作、学习与摸鱼。
             </p>
             <div className="hero-actions">
               <a className="primary-download" href={releaseInstallerHref} download={releaseInstallerName}>
                 <Download size={21} />
                 下载 Windows 安装包 (仅 50MB)
               </a>
-              <button className="secondary-action" type="button" onClick={() => scrollToSection(1)}>
-                主理人专栏 & 心愿池
-                <ChevronDown size={18} />
+              <button className="secondary-action" type="button" onClick={() => navigateTo('gallery')}>
+                探索全部萌宠
+                <Sparkles size={16} />
               </button>
             </div>
             <div className="hero-meta" aria-label="版本信息">
-              <span>v{releaseVersion} 正式版</span>
-              <span>仅 50MB 极速秒开</span>
-              <span>24 款全套萌宠</span>
-              <span>100% 永久免费开源</span>
+              <span>⚡ 仅 50MB 极速秒开</span>
+              <span>💻 Windows 10/11 原生</span>
+              <span>🎨 24+ 款全套萌宠</span>
+              <span>🛡️ 100% 永久免费开源</span>
             </div>
             <AgentLightDemo />
           </div>
@@ -583,18 +594,6 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="snap-section community-page" id="community" aria-label="官方主理人与心愿池">
-        <div className="community-layout-inner">
-          <MasterCreatorSection
-            onNavigateCustom={() => navigateTo('custom')}
-            onNavigateGallery={() => navigateTo('gallery')}
-          />
-          <WishBubbleWall
-            onNavigateCustom={() => navigateTo('custom')}
-          />
         </div>
       </section>
 
@@ -859,6 +858,17 @@ function App() {
         <PetGallery
           onBackToHome={() => navigateTo('home')}
           onNavigateCustom={() => navigateTo('custom')}
+        />
+      </div>
+    )}
+
+    {/* 想要角色独立专属页面 */}
+    {currentView === 'wanted' && (
+      <div className="wanted-view-pane">
+        <WantedPetPage
+          onBackToHome={() => navigateTo('home')}
+          onOpenGallery={() => navigateTo('gallery')}
+          onOpenCustom={() => navigateTo('custom')}
         />
       </div>
     )}

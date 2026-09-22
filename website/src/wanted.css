@@ -1,0 +1,646 @@
+/* =========================================================================
+   WantedPetPage - 想要角色独立心愿海与 Codex/Anti-gravity 底部居中悬浮输入框样式
+   ========================================================================= */
+
+.wanted-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255, 230, 235, 0.55) 0%, transparent 26rem),
+    radial-gradient(circle at 85% 20%, rgba(204, 251, 241, 0.5) 0%, transparent 24rem),
+    radial-gradient(circle at 50% 80%, rgba(254, 243, 199, 0.45) 0%, transparent 28rem),
+    linear-gradient(180deg, #fafbfc 0%, #f4f7f9 100%);
+  color: #08233f;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 180px; /* 为正中下方悬浮条预留充足呼吸空间 */
+}
+
+/* 顶部轻量极简面包屑与快捷导航 */
+.wanted-topbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.wanted-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(241, 245, 249, 0.85);
+  border: 1px solid rgba(203, 213, 225, 0.7);
+  border-radius: 999px;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wanted-back-btn:hover {
+  background: #ffffff;
+  color: #e85f6d;
+  border-color: #e85f6d;
+  transform: translateX(-2px);
+}
+
+.wanted-topbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(241, 245, 249, 0.75);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.wanted-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wanted-filter-pill:hover {
+  color: #08233f;
+}
+
+.wanted-filter-pill.is-active {
+  background: #ffffff;
+  color: #08233f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.wanted-ghost-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(232, 95, 109, 0.08);
+  border: 1px solid rgba(232, 95, 109, 0.25);
+  border-radius: 999px;
+  color: #e85f6d;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wanted-ghost-link:hover {
+  background: #e85f6d;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Toast 气泡提醒 */
+.wanted-toast-pill {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: #08233f;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 750;
+  border-radius: 999px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  animation: wantedToastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes wantedToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+/* 主舞台 */
+.wanted-main-stage {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px 24px 220px;
+}
+
+.wanted-hero-header {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 22px;
+}
+
+.wanted-badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.wanted-eyebrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(232, 95, 109, 0.1);
+  color: #e85f6d;
+  font-size: 0.76rem;
+  font-weight: 800;
+  border-radius: 999px;
+}
+
+.wanted-online-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  font-size: 0.76rem;
+  font-weight: 750;
+  border-radius: 999px;
+}
+
+.wanted-green-dot {
+  width: 7px;
+  height: 7px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulseDot 1.8s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+.wanted-page-title {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 850;
+  color: #08233f;
+  letter-spacing: -0.02em;
+}
+
+.wanted-page-subtitle {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #557595;
+  line-height: 1.55;
+}
+
+/* 气泡海洋 Stage */
+.wanted-bubbles-ocean {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px 16px;
+  min-height: 420px;
+  margin-bottom: 24px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 238, 240, 0.75) 0%, transparent 20rem),
+    radial-gradient(circle at 90% 80%, rgba(204, 251, 241, 0.75) 0%, transparent 22rem),
+    rgba(255, 255, 255, 0.7);
+  border: 1.5px dashed rgba(232, 95, 109, 0.25);
+  border-radius: 28px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.ocean-bubble-node {
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
+  position: relative;
+}
+
+.ocean-bubble-node:hover {
+  transform: scale(1.14) translateY(-8px) !important;
+  z-index: 15;
+}
+
+.ocean-bubble-node.is-heart-bouncing {
+  animation: heartBouncePop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes heartBouncePop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28) rotate(-4deg); }
+  75% { transform: scale(0.94) rotate(2deg); }
+  100% { transform: scale(1); }
+}
+
+.ocean-hot-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+  animation: hotPulse 1.6s infinite ease-in-out;
+}
+
+@keyframes hotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+.ocean-bubble-title {
+  font-size: 0.88rem;
+  font-weight: 850;
+  line-height: 1.25;
+  margin-bottom: 4px;
+  max-width: 90%;
+  word-break: break-word;
+}
+
+.ocean-bubble-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.ocean-claimed-tag {
+  margin-top: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: #10b981;
+  color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+/* 6 种不同频率与相位的轻缓随风飘动效果 */
+.bubble-float-drift-1 { animation: floatDrift1 4.2s infinite ease-in-out; }
+.bubble-float-drift-2 { animation: floatDrift2 5.0s infinite ease-in-out; }
+.bubble-float-drift-3 { animation: floatDrift3 4.6s infinite ease-in-out; }
+.bubble-float-drift-4 { animation: floatDrift4 5.4s infinite ease-in-out; }
+.bubble-float-drift-5 { animation: floatDrift5 4.8s infinite ease-in-out; }
+.bubble-float-drift-6 { animation: floatDrift6 5.2s infinite ease-in-out; }
+
+@keyframes floatDrift1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1.5deg); }
+}
+@keyframes floatDrift2 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-1.5deg); }
+}
+@keyframes floatDrift3 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+@keyframes floatDrift4 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-9px) rotate(-2deg); }
+}
+@keyframes floatDrift5 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-11px) rotate(2deg); }
+}
+@keyframes floatDrift6 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-1deg); }
+}
+
+/* 底部防刷说明与画师认领 */
+.wanted-artist-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+}
+
+.callout-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.callout-artist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(47, 159, 147, 0.35);
+  background: rgba(47, 159, 147, 0.08);
+  color: #115e59;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.callout-artist-btn:hover {
+  background: #2f9f93;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+   核心亮点：升腾冒起泡泡 (物理飞升动画并飞入上方心愿池填充)
+   ========================================================================= */
+
+.ascending-bubble-actor {
+  position: fixed;
+  bottom: 86px;
+  left: 50%;
+  z-index: 150;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  pointer-events: none;
+  animation: ascendFlyUpAndFill 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ascendFlyUpAndFill {
+  0% {
+    transform: translate(-50%, 0) scale(0.55);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 12px rgba(232, 95, 109, 0.5));
+  }
+  30% {
+    transform: translate(-48%, -150px) scale(1.08) rotate(4deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 32px rgba(232, 95, 109, 0.85));
+  }
+  65% {
+    transform: translate(-52%, -330px) scale(1.25) rotate(-3deg);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 40px rgba(94, 234, 212, 0.9));
+  }
+  100% {
+    transform: translate(-50%, -480px) scale(1.4) rotate(0deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 60px #ffffff);
+  }
+}
+
+.ascending-bubble-text {
+  font-size: 0.92rem;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.ascending-bubble-meta {
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+.ascending-bubble-glow-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+  animation: rotateRing 1.6s linear infinite;
+}
+
+@keyframes rotateRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================================
+   核心亮点：Codex / Anti-gravity 风格正中下方悬浮输入对话框
+   ========================================================================= */
+
+.codex-floating-dock-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 720px;
+  max-width: calc(100vw - 36px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* 快捷灵感芯片 */
+.codex-dock-prompt-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.chips-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #718096;
+}
+
+.codex-prompt-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.codex-prompt-chip-btn:hover {
+  background: #ffffff;
+  color: #e85f6d;
+  border-color: #e85f6d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(232, 95, 109, 0.15);
+}
+
+/* 悬浮对话框输入条 */
+.codex-floating-dialog-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(232, 95, 109, 0.3);
+  border-radius: 999px;
+  padding: 6px 8px 6px 18px;
+  box-shadow:
+    0 16px 48px rgba(83, 67, 77, 0.12),
+    0 4px 16px rgba(47, 159, 147, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.codex-floating-dialog-bar:focus-within {
+  background: #ffffff;
+  border-color: #e85f6d;
+  box-shadow:
+    0 0 0 4px rgba(232, 95, 109, 0.16),
+    0 20px 52px rgba(83, 67, 77, 0.16);
+  transform: translateY(-2px);
+}
+
+.dialog-left-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.codex-dialog-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.94rem;
+  color: #08233f;
+  font-weight: 600;
+}
+
+.codex-dialog-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.codex-dialog-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(203, 213, 225, 0.6);
+  color: #64748b;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: not-allowed;
+  transition: all 0.22s ease;
+  flex-shrink: 0;
+}
+
+.codex-dialog-send-btn.is-active {
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(232, 95, 109, 0.35);
+}
+
+.codex-dialog-send-btn.is-active:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(232, 95, 109, 0.45);
+}
+
+.codex-dock-footnote {
+  font-size: 0.72rem;
+  color: #718096;
+  text-align: center;
+}
+
+/* 移动端与小屏幕适配 */
+@media (max-width: 768px) {
+  .wanted-topbar {
+    padding: 0 16px;
+  }
+  .wanted-topbar-tabs {
+    display: none;
+  }
+  .wanted-page-title {
+    font-size: 1.6rem;
+  }
+  .codex-floating-dock-container {
+    width: calc(100vw - 24px);
+    bottom: 16px;
+  }
+  .codex-dock-prompt-chips {
+    display: none;
+  }
+  .wanted-bubbles-ocean {
+    padding: 16px 8px;
+    gap: 12px;
+  }
+}
