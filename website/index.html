@@ -9,6 +9,12 @@
     <meta name="theme-color" content="#fffaf5" />
     <meta name="description" content="Window Pet 桌面萌宠：静态陪伴、轻量互动与日常提醒。" />
     <title>Window Pet 桌面萌宠官方下载</title>
+    <script>
+      // 修复访问 /WindowPet 缺少尾随斜线导致的相对静态资源 404
+      if (location.pathname === '/WindowPet' || location.pathname.endsWith('/WindowPet')) {
+        location.replace(location.pathname + '/' + location.search + location.hash);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
