@@ -15,6 +15,7 @@ import {
   Download,
   Heart,
   Award,
+  ShieldCheck,
 } from 'lucide-react'
 import './subpages.css'
 
@@ -230,6 +231,10 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       q: '定制费用如何支付？平台会抽取中介提成吗？',
       a: '平台 100% 永久免费开源，绝不收取任何中介抽成！用户与画师直接 1 对 1 私聊沟通定制细节与工期，双方自行协商付款（微信/支付宝等直接转账给画师）。平台只提供中立的切帧与技术封装支持，零差价、零套路！',
     },
+    {
+      q: '《小汪生》是完全开源免费商用的吗？我可以在其他商业项目中使用它吗？',
+      a: '不可以用于私人或商业项目。《小汪生》是作者为自家族宠纯手工实拍切帧研制的专属示范角色，承载独家家庭情感。该角色【仅限公共个人在 WindowPet 官方桌面客户端内免费下载与日常陪伴】，严禁任何第三方擅自将切帧素材、动画或音源用于商业牟利、付费转卖、或私自二次打包分发。保护原创与真实爱宠肖像权，感谢大家的喜爱与理解！',
+    },
   ]
 
   return (
@@ -245,9 +250,15 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       <div className="subpage-container">
         {/* 顶部 Hero */}
         <header className="subpage-hero">
-          <span className="eyebrow pink-eyebrow">
-            <Sparkles size={14} />
-            <span>CUSTOM PET STUDIO · 真实毛孩子专属定制</span>
+          <span className="eyebrow pink-eyebrow custom-eyebrow-with-avatar">
+            <span className="custom-hero-avatar-badge" title="小汪生">
+              <img
+                src={`${import.meta.env.BASE_URL}pets/xiaowang-avatar.png`}
+                alt="小汪"
+                className="custom-hero-avatar-img"
+              />
+            </span>
+            <span>CUSTOM PET STUDIO · 真实毛孩子专属定制 · 小汪生示范</span>
           </span>
           <h1>把自家的毛孩子，做进电脑桌面陪伴你</h1>
           <p className="subpage-lead">
@@ -427,6 +438,35 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
               <div className="stage-current-action-tip">
                 <strong>当前播放动作细节：</strong>
                 <span>{xiaoWangActions[activeXiaoWangAction].desc}</span>
+              </div>
+
+              {/* 小汪生版权与公共使用规范说明卡片 */}
+              <div className="xiaowang-license-notice-box">
+                <div className="license-notice-header">
+                  <ShieldCheck size={16} color="#ff4757" />
+                  <strong>关于《小汪生》的授权与使用说明：</strong>
+                  <span className="license-notice-badge">非完全开源 · 专属爱宠</span>
+                </div>
+                <div className="license-notice-content">
+                  <div className="license-point-item is-allow">
+                    <span className="license-icon-check">✅</span>
+                    <div>
+                      <strong>公共免费使用（开放）：</strong>
+                      <span>
+                        作为官方示范看板，《小汪生》面向所有个人用户<strong>永久免费开放</strong>！大家均可在 WindowPet 官方桌面端内免费下载、长期陪伴、日常互动或截图录屏分享。
+                      </span>
+                    </div>
+                  </div>
+                  <div className="license-point-item is-restrict">
+                    <span className="license-icon-cross">🚫</span>
+                    <div>
+                      <strong>私人商业禁止（严禁私用商用）：</strong>
+                      <span>
+                        《小汪生》是作者自家族宠纯手工实拍切帧的专属心血，承载家庭真实情感，<strong>版权与肖像权归原作者唯一所有</strong>。严禁任何第三方擅自将其切帧图片、动画、音源用于任何商业牟利、付费售卖、外包变现，或私自二次打包发布为商业衍生品。
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* 核心操作按钮组 */}

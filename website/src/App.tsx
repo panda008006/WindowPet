@@ -443,20 +443,23 @@ function App() {
             type="button"
             className={`nav-link-btn ${currentView === 'wanted' ? 'is-active' : ''}`}
             onClick={() => navigateTo('wanted')}
-            title="打开想要角色心愿海，打字让它冒出来"
+            title="打开许愿角色心愿海，打字让它冒出来"
           >
             <Sparkles size={15} />
-            <span>想要角色</span>
+            <span>许愿角色</span>
             <span className="nav-heart-badge" title="灵感许愿" style={{ background: 'rgba(232, 95, 109, 0.12)', color: '#e85f6d' }}>🫧</span>
           </button>
           <button
             type="button"
             className={`nav-link-btn ${currentView === 'custom' ? 'is-active' : ''}`}
             onClick={() => navigateTo('custom')}
-            title="自家毛孩子专属桌宠定制"
+            title="自家毛孩子专属桌宠定制（小汪生示范）"
           >
             <HeartHandshake size={15} />
             <span>爱宠定制</span>
+            <span className="nav-pet-avatar-badge" title="小汪生">
+              <img src={`${import.meta.env.BASE_URL}pets/xiaowang-avatar.png`} alt="小汪" className="nav-xiaowang-mini-avatar" />
+            </span>
           </button>
           <button
             type="button"

@@ -473,7 +473,7 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
           <div className="wanted-badge-row">
             <span className="wanted-eyebrow-badge">
               <Sparkles size={14} />
-              <span>COMMUNITY LIVE WISH OCEAN · 想要角色心愿海</span>
+              <span>COMMUNITY LIVE WISH OCEAN · 许愿角色心愿海</span>
             </span>
             <span className="wanted-online-pill">
               <span className="wanted-green-dot" />
@@ -481,7 +481,7 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
             </span>
           </div>
 
-          <h1 className="wanted-page-title">想要什么角色住进桌面？打字让它冒出来！</h1>
+          <h1 className="wanted-page-title">许愿什么角色住进桌面？打字让它冒出来！</h1>
           <p className="wanted-page-subtitle">
             输入任意你想在电脑桌面上见到的角色。谁的呼声高，谁的泡泡就膨胀得最大！
             入驻画师与主理人会根据心愿海的泡泡热度，优先切帧制作并免费上线~
