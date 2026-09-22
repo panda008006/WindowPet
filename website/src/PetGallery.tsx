@@ -13,11 +13,12 @@ import {
   PawPrint,
   Search,
   Send,
+  ShieldCheck,
   Sparkles,
   Upload,
   X,
 } from 'lucide-react'
-import { galleryCategories, galleryPets, type GalleryPet } from './galleryData'
+import { galleryCategories, galleryPets, galleryAuthors, type GalleryPet } from './galleryData'
 import './gallery.css'
 
 interface PetGalleryProps {
@@ -46,6 +47,7 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
   const handleClose = onClose || onBackToHome
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedAuthor, setSelectedAuthor] = useState<string>('all')
   const [selectedPet, setSelectedPet] = useState<GalleryPet | null>(null)
   const [selectedActionIndex, setSelectedActionIndex] = useState(0)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -162,16 +164,23 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
         selectedCategory === 'all' ||
         (selectedCategory === 'favorite' ? favorites.has(pet.id) : pet.category === selectedCategory)
       if (!matchCat) return false
+
+      const matchAuthor = selectedAuthor === 'all' || pet.authorId === selectedAuthor
+      if (!matchAuthor) return false
+
       if (!q) return true
       return (
         pet.name.toLowerCase().includes(q) ||
         pet.enName.toLowerCase().includes(q) ||
+        pet.authorName.toLowerCase().includes(q) ||
+        pet.authorHandle.toLowerCase().includes(q) ||
+        pet.workType.toLowerCase().includes(q) ||
         pet.folderName.toLowerCase().includes(q) ||
         pet.traits.some((t) => t.toLowerCase().includes(q)) ||
         pet.tagline.toLowerCase().includes(q)
       )
     })
-  }, [searchQuery, selectedCategory, favorites])
+  }, [searchQuery, selectedCategory, selectedAuthor, favorites])
 
   // 打开详情
   const openPetDetail = (pet: GalleryPet) => {
@@ -343,13 +352,18 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
                     key={cat.id}
                     type="button"
                     className={`gallery-cat-chip ${isActive ? 'is-active' : ''}`}
-                    onClick={() => setSelectedCategory(cat.id)}
+                    onClick={() => {
+                      setSelectedCategory(cat.id)
+                      setSelectedAuthor('all')
+                    }}
                   >
                     <span className="gallery-cat-chip-icon">
-                      {cat.id === 'home' && <Home size={15} />}
                       {cat.id === 'all' && <PawPrint size={15} />}
-                      {cat.id === 'popular' && <Sparkles size={15} />}
-                      {cat.id === 'healing' && <Heart size={15} />}
+                      {cat.id === 'official' && <Sparkles size={15} />}
+                      {cat.id === 'home' && <Home size={15} />}
+                      {cat.id === 'anime' && <Heart size={15} />}
+                      {cat.id === 'nature' && <PawPrint size={15} />}
+                      {cat.id === 'fun' && <Sparkles size={15} />}
                     </span>
                     <span>{cat.label}</span>
                     <span className="gallery-cat-count">{cat.count}</span>
@@ -360,7 +374,10 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
               <button
                 type="button"
                 className={`gallery-cat-chip ${selectedCategory === 'favorite' ? 'is-active' : ''}`}
-                onClick={() => setSelectedCategory('favorite')}
+                onClick={() => {
+                  setSelectedCategory('favorite')
+                  setSelectedAuthor('all')
+                }}
               >
                 <span className="gallery-cat-chip-icon">
                   <Heart size={15} fill={selectedCategory === 'favorite' ? 'currentColor' : 'none'} />
@@ -368,6 +385,37 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
                 <span>我的收藏</span>
                 <span className="gallery-cat-count">{favorites.size}</span>
               </button>
+            </div>
+
+            {/* 创作者筛选专栏 */}
+            <div className="gallery-author-filter-wrap">
+              <div className="gallery-sidebar-title" style={{ marginTop: '16px', marginBottom: '8px' }}>
+                创作者专栏
+              </div>
+              <div className="gallery-author-chips-wrap">
+                <button
+                  type="button"
+                  className={`gallery-author-chip ${selectedAuthor === 'all' ? 'is-active' : ''}`}
+                  onClick={() => setSelectedAuthor('all')}
+                >
+                  <span>全部创作者</span>
+                </button>
+                {Object.values(galleryAuthors).map((auth) => (
+                  <button
+                    key={auth.id}
+                    type="button"
+                    className={`gallery-author-chip ${selectedAuthor === auth.id ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setSelectedAuthor(auth.id)
+                      setSelectedCategory('all')
+                    }}
+                    title={auth.bio}
+                  >
+                    <span className="author-chip-name">{auth.name}</span>
+                    <small className="author-chip-badge">{auth.badge}</small>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* 侧边栏功能入口卡片：家宠专属定制 */}
@@ -513,7 +561,6 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
             <div className="gallery-grid">
               {filteredPets.map((pet) => {
                 const isFav = favorites.has(pet.id)
-                const rarityClass = `rarity-${pet.rarity.toLowerCase()}`
                 const isHomePet = pet.category === 'home'
                 return (
                   <article
@@ -529,10 +576,12 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
                       <div className="gallery-card-title-group">
                         <h3>
                           <span>{pet.name}</span>
-                          <span className={`gallery-rarity-pill ${rarityClass}`}>{pet.rarity}</span>
-                          {isHomePet && <span className="gallery-home-badge">家宠案例</span>}
+                          <span className="gallery-worktype-tag">{pet.workType}</span>
                         </h3>
-                        <span className="gallery-card-en">{pet.enName}</span>
+                        <div className="gallery-card-meta-line">
+                          <span className="gallery-card-en">{pet.enName}</span>
+                          <span className="gallery-author-pill">🎨 {pet.authorName}</span>
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -648,13 +697,14 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
                   <h2>
                     <span>{selectedPet.name}</span>
                     <span className="gallery-card-en">{selectedPet.enName}</span>
-                    <span className={`gallery-rarity-pill rarity-${selectedPet.rarity.toLowerCase()}`}>
-                      {selectedPet.rarity}
-                    </span>
-                    {selectedPet.category === 'home' && (
-                      <span className="gallery-home-badge">真实家宠定制</span>
-                    )}
+                    <span className="gallery-worktype-tag">{selectedPet.workType}</span>
                   </h2>
+                  <div className="gallery-author-box">
+                    <span className="gallery-author-label">创作者：</span>
+                    <strong className="gallery-author-name">{selectedPet.authorName}</strong>
+                    <span className="gallery-author-handle">{selectedPet.authorHandle}</span>
+                    <span className="gallery-license-tag">协议：{selectedPet.license}</span>
+                  </div>
                   <div className="gallery-info-tagline">{selectedPet.tagline}</div>
                 </div>
 
@@ -676,6 +726,17 @@ export function PetGallery({ onBackToHome, onClose }: PetGalleryProps) {
                       <span>{lbl}</span>
                     </div>
                   ))}
+                </div>
+
+                {/* 社区创作与避风港保护原则免责说明 */}
+                <div className="gallery-copyright-notice">
+                  <ShieldCheck size={18} color="#2563eb" />
+                  <div>
+                    <strong>社区创作与避风港保护原则：</strong>
+                    <span>
+                      本形象属于【{selectedPet.workType}】，由民间创作者自发上传分享，遵循《{selectedPet.license}》。仅供个人非商用桌面美化与技术交流，非 WindowPet 官方商业角色。若权利人认为本作品侵犯了您的合法权益，请联系我们（邮箱/QQ群），核实后将在 24 小时内即刻执行下架处理。
+                    </span>
+                  </div>
                 </div>
 
                 {/* 增删无忧机制提示 */}

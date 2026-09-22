@@ -17,6 +17,7 @@ import {
   Home,
   LockKeyhole,
   MousePointerClick,
+  Palette,
   PawPrint,
   RotateCw,
   Settings2,
@@ -757,6 +758,74 @@ function App() {
               <h3 style={{ margin: '14px 0 8px', fontSize: '1.2rem' }}>03. 专属安装包交付</h3>
               <p style={{ color: 'var(--wp-muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>生成独一无二的专属角色包，双击即可召唤自家的毛孩子常驻桌面，永久陪伴。</p>
             </article>
+          </div>
+
+          {/* 特邀驻站合作画师团 (仿博主模式，明确第三方合作约稿机制，规避版权风险) */}
+          <div className="custom-artists-showcase" style={{ margin: '20px 0 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <strong style={{ fontSize: '1.08rem', color: 'var(--wp-ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Palette size={18} color="var(--wp-coral-deep)" />
+                  <span>特邀驻站合作画师团 · 多元风格随心选</span>
+                </strong>
+                <span style={{ fontSize: '0.84rem', color: 'var(--wp-muted)' }}>
+                  平台特邀多位知名独立插画师与像素创作者，一对一承接生活照私宠约稿定制
+                </span>
+              </div>
+              <span style={{ fontSize: '0.78rem', color: '#1677ff', background: '#e6f4ff', padding: '3px 10px', borderRadius: '999px', fontWeight: 600 }}>
+                画师直约 · 平台中立技术支持
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
+              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #ff7675, #fab1a0)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>栗</div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@糖炒栗子</strong>
+                    <small style={{ color: '#e11d48', fontSize: '0.75rem', fontWeight: 600 }}>25帧视线跟随 / 真实毛发</small>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>擅长家猫家犬微表情与眼神追踪，代表作【麦脆角摇头猫】。</p>
+                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（约3~5工期）</div>
+              </div>
+
+              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #00cec9, #81ecec)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>米</div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@米诺画画中</strong>
+                    <small style={{ color: '#0d9488', fontSize: '0.75rem', fontWeight: 600 }}>治愈手绘 / 软萌像素风</small>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>重度猫狗铲屎官，擅长Q版治愈手绘，代表作【小柴犬】【布布鼠】。</p>
+                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（约2~4工期）</div>
+              </div>
+
+              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '15px' }}>星</div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@星野同人漫研社</strong>
+                    <small style={{ color: '#7c3aed', fontSize: '0.75rem', fontWeight: 600 }}>二次元拟人 / 专属动作连携</small>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>给毛孩子设计动漫拟人造型与合奏动画，魔性有趣。</p>
+                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（限量接单）</div>
+              </div>
+
+              <div className="artist-card" style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.85)', borderRadius: '16px', border: '1px solid rgba(143,191,235,0.3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #fdcb6e, #ffeaa7)', display: 'grid', placeItems: 'center', color: '#d35400', fontWeight: 800, fontSize: '15px' }}>M</div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0c3156' }}>@整活大队 MemeLab</strong>
+                    <small style={{ color: '#ea580c', fontSize: '0.75rem', fontWeight: 600 }}>幽默表情包 / 怨种打工魂</small>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#557595', lineHeight: '1.5' }}>把毛孩子做成陪你上班疯狂敲键盘的怨种搭子，喜感拉满。</p>
+                <div style={{ marginTop: 'auto', paddingTop: '4px', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>● 开放约稿中（随缘接单）</div>
+              </div>
+            </div>
           </div>
 
           <div className="custom-cta-card" style={{ padding: '24px 32px', background: 'linear-gradient(135deg, rgba(255, 231, 234, 0.7) 0%, rgba(220, 247, 241, 0.7) 100%)', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
