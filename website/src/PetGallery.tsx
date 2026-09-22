@@ -28,14 +28,12 @@ interface PetGalleryProps {
 }
 
 const themeOptions = [
-  { id: 'klein', name: '靛蓝', color: '#3559d8' },
-  { id: 'violet', name: '紫罗兰', color: '#7c3aed' },
-  { id: 'teal', name: '黛绿', color: '#0d9488' },
-  { id: 'amber', name: '蜜橙', color: '#ea580c' },
-  { id: 'rose', name: '玫红', color: '#e11d48' },
-  { id: 'pink', name: '樱粉', color: '#db2777' },
-  { id: 'yellow', name: '赤金', color: '#d97706' },
-  { id: 'zinc', name: '石墨', color: '#27272a' },
+  { id: 'coral-mint', name: '珊瑚薄荷', color: '#ff7f87' },
+  { id: 'mint', name: '薄荷海青', color: '#2f9f93' },
+  { id: 'coral', name: '暖珊瑚红', color: '#e85f6d' },
+  { id: 'peach', name: '蜜桃暖杏', color: '#fb923c' },
+  { id: 'violet', name: '梦幻粉紫', color: '#a78bfa' },
+  { id: 'sky', name: '晴空冰蓝', color: '#38bdf8' },
 ] as const
 
 let nextOrderSeq = 1001
@@ -78,7 +76,7 @@ export function PetGallery({ onBackToHome, onClose, onNavigateCustom }: PetGalle
 
   // 主题与收藏持久化
   const [theme, setTheme] = useState<string>(() => {
-    return localStorage.getItem('windowpet-gallery-theme') || 'klein'
+    return localStorage.getItem('windowpet-gallery-theme') || 'coral-mint'
   })
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {

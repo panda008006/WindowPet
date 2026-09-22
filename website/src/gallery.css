@@ -1,87 +1,101 @@
 /* WindowPet 小鼻嘎展馆 - 像素级参考 VibeHub (vibe-hub.org) 视觉系统 */
 
 :root {
-  --brand: #3559d8;
-  --brand-hover: #2a46b4;
-  --accent: #7b93ea;
-  --brand-light: #eff3fe;
-  --brand-light-border: #dbe4fd;
-  --accent-light: #f5f8ff;
-  --gallery-bg: #f8fafc;
+  --wp-coral: #ff7f87;
+  --wp-coral-deep: #e85f6d;
+  --wp-coral-soft: #ffe7ea;
+  --wp-mint: #57c7b8;
+  --wp-mint-deep: #2f9f93;
+  --wp-mint-soft: #dcf7f1;
+  --wp-cream: #fffaf5;
+  --wp-ink: #08233f;
+  --wp-muted: #557595;
+  --wp-line: rgba(235, 218, 210, 0.85);
+
+  --brand: #e85f6d;
+  --brand-hover: #d34a58;
+  --accent: #2f9f93;
+  --accent-hover: #268076;
+  --brand-light: #fff0f2;
+  --brand-light-border: #ffd6dc;
+  --accent-light: #e6faf6;
+  --accent-light-border: #bbf0e7;
+
+  --gallery-bg: #fffaf5;
   --gallery-surface: #ffffff;
-  --gallery-surface-subtle: #f1f5f9;
-  --gallery-border: #e2e8f0;
-  --gallery-border-hover: #cbd5e1;
-  --gallery-text-main: #0f172a;
-  --gallery-text-muted: #64748b;
-  --gallery-text-light: #94a3b8;
-  --gallery-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --gallery-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --gallery-shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
-  --gallery-shadow-xl: 0 20px 32px -6px rgba(15, 23, 42, 0.12), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+  --gallery-surface-subtle: #fffcf8;
+  --gallery-border: #f0e6dd;
+  --gallery-border-hover: #e2d2c3;
+  --gallery-text-main: #08233f;
+  --gallery-text-muted: #557595;
+  --gallery-text-light: #8fa0b5;
+  --gallery-shadow-sm: 0 2px 4px 0 rgba(180, 140, 150, 0.05);
+  --gallery-shadow-md: 0 6px 16px -2px rgba(180, 140, 150, 0.09), 0 2px 6px -2px rgba(180, 140, 150, 0.04);
+  --gallery-shadow-lg: 0 16px 32px -4px rgba(160, 120, 130, 0.12), 0 6px 12px -2px rgba(160, 120, 130, 0.05);
+  --gallery-shadow-xl: 0 24px 48px -6px rgba(160, 120, 130, 0.15), 0 10px 20px -4px rgba(160, 120, 130, 0.06);
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
   --radius-full: 9999px;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* 主题色方案 */
-[data-gallery-theme="klein"] {
-  --brand: #3559d8;
-  --brand-hover: #2a46b4;
-  --accent: #7b93ea;
-  --brand-light: #eff3fe;
-  --brand-light-border: #dbe4fd;
+/* 主题色方案 (以珊瑚暖红与薄荷蓝绿为核心基调) */
+[data-gallery-theme="coral-mint"] {
+  --brand: #e85f6d;
+  --brand-hover: #d34a58;
+  --accent: #2f9f93;
+  --brand-light: #fff0f2;
+  --brand-light-border: #ffd6dc;
+}
+[data-gallery-theme="mint"] {
+  --brand: #2f9f93;
+  --brand-hover: #258277;
+  --accent: #ff7f87;
+  --brand-light: #e6faf6;
+  --brand-light-border: #bbf0e7;
+}
+[data-gallery-theme="coral"] {
+  --brand: #ff7f87;
+  --brand-hover: #e85f6d;
+  --accent: #57c7b8;
+  --brand-light: #ffecee;
+  --brand-light-border: #ffd3d7;
+}
+[data-gallery-theme="peach"] {
+  --brand: #ea580c;
+  --brand-hover: #c2410c;
+  --accent: #2f9f93;
+  --brand-light: #fff7ed;
+  --brand-light-border: #fed7aa;
 }
 [data-gallery-theme="violet"] {
-  --brand: #7c3aed;
-  --brand-hover: #6d28d9;
-  --accent: #a78bfa;
+  --brand: #8b5cf6;
+  --brand-hover: #7c3aed;
+  --accent: #ec4899;
   --brand-light: #f5f3ff;
   --brand-light-border: #ddd6fe;
 }
-[data-gallery-theme="teal"] {
-  --brand: #0d9488;
-  --brand-hover: #0f766e;
-  --accent: #2dd4bf;
-  --brand-light: #f0fdfa;
-  --brand-light-border: #ccfbf1;
+[data-gallery-theme="sky"] {
+  --brand: #0284c7;
+  --brand-hover: #0369a1;
+  --accent: #ff7f87;
+  --brand-light: #f0f9ff;
+  --brand-light-border: #bae6fd;
 }
-[data-gallery-theme="amber"] {
-  --brand: #ea580c;
-  --brand-hover: #c2410c;
-  --accent: #fb923c;
-  --brand-light: #fff7ed;
-  --brand-light-border: #ffedd5;
-}
-[data-gallery-theme="rose"] {
-  --brand: #e11d48;
-  --brand-hover: #be123c;
-  --accent: #fb7185;
-  --brand-light: #fff1f2;
-  --brand-light-border: #ffe4e6;
-}
-[data-gallery-theme="pink"] {
-  --brand: #db2777;
-  --brand-hover: #be185d;
-  --accent: #f472b6;
-  --brand-light: #fdf2f8;
-  --brand-light-border: #fce7f3;
-}
-[data-gallery-theme="yellow"] {
-  --brand: #d97706;
-  --brand-hover: #b45309;
-  --accent: #fbbf24;
-  --brand-light: #fffbeb;
-  --brand-light-border: #fef3c7;
-}
+/* 向下兼容历史主题 ID，统一映射至温暖粉彩基调 */
+[data-gallery-theme="klein"],
+[data-gallery-theme="teal"],
+[data-gallery-theme="amber"],
+[data-gallery-theme="rose"],
+[data-gallery-theme="pink"],
+[data-gallery-theme="yellow"],
 [data-gallery-theme="zinc"] {
-  --brand: #27272a;
-  --brand-hover: #18181b;
-  --accent: #71717a;
-  --brand-light: #f4f4f5;
-  --brand-light-border: #e4e4e7;
+  --brand: #e85f6d;
+  --brand-hover: #d34a58;
+  --accent: #2f9f93;
+  --brand-light: #fff0f2;
+  --brand-light-border: #ffd6dc;
 }
 
 /* 小鼻嘎展馆全屏毛玻璃浮层 (Lightbox Modal Overlay) */
@@ -92,7 +106,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 22, 44, 0.48);
+  background: rgba(14, 25, 40, 0.48);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   padding: 24px;
@@ -111,12 +125,12 @@
 .gallery-lightbox-card {
   width: min(1380px, 96vw);
   height: min(92vh, 920px);
-  background-color: var(--gallery-bg, #ffffff);
-  border-radius: 20px;
+  background-color: var(--gallery-bg, #fffaf5);
+  border-radius: 24px;
   box-shadow:
-    0 30px 80px -15px rgba(5, 18, 38, 0.42),
-    0 0 0 1px rgba(255, 255, 255, 0.75) inset,
-    0 0 0 1px rgba(18, 75, 140, 0.12);
+    0 30px 80px -15px rgba(50, 25, 35, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+    0 0 0 1px rgba(232, 95, 109, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -157,9 +171,9 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  color: #1e293b;
+  background: rgba(255, 240, 242, 0.85);
+  border: 1px solid rgba(255, 127, 135, 0.25);
+  color: #c94050;
   font-size: 13px;
   font-weight: 600;
   border-radius: 999px;
@@ -170,10 +184,11 @@
 }
 
 .gallery-lightbox-close-btn:hover {
-  background: #0f172a;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: #e85f6d;
   transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(232, 95, 109, 0.3);
 }
 
 @media (max-width: 860px) {
@@ -192,7 +207,13 @@
 
 .gallery-page-container {
   min-height: 100vh;
-  background-color: var(--gallery-bg);
+  background:
+    radial-gradient(circle at 11% 14%, rgba(255, 198, 204, 0.38), transparent 28rem),
+    radial-gradient(circle at 88% 18%, rgba(133, 221, 207, 0.32), transparent 30rem),
+    radial-gradient(circle at 50% 85%, rgba(255, 231, 234, 0.28), transparent 26rem),
+    linear-gradient(145deg, #fffaf5 0%, #fffefb 46%, #f4fcf9 100%),
+    repeating-linear-gradient(90deg, rgba(232, 95, 109, 0.035) 0 1px, transparent 1px 54px),
+    repeating-linear-gradient(180deg, rgba(47, 159, 147, 0.035) 0 1px, transparent 1px 54px);
   color: var(--gallery-text-main);
   font-family: var(--font-sans);
   position: relative;
@@ -205,17 +226,17 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 252, 247, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--gallery-border);
+  border-bottom: 1px solid rgba(232, 95, 109, 0.12);
   padding: 0 24px;
-  height: 64px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: var(--gallery-shadow-sm);
+  box-shadow: 0 4px 20px rgba(83, 67, 77, 0.05);
 }
 
 .gallery-header-left {
@@ -235,13 +256,13 @@
 }
 
 .gallery-logo-badge {
-  background: var(--brand-light);
+  background: linear-gradient(135deg, rgba(255, 240, 242, 0.95), rgba(230, 250, 246, 0.95));
   color: var(--brand);
-  border: 1px solid var(--brand-light-border);
+  border: 1px solid rgba(232, 95, 109, 0.2);
   font-size: 0.72rem;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .gallery-header-right {
@@ -262,7 +283,7 @@
   padding: 0 36px 0 36px;
   border-radius: var(--radius-full);
   border: 1px solid var(--gallery-border);
-  background: #f8fafc;
+  background: #fffcf8;
   color: var(--gallery-text-main);
   font-size: 0.875rem;
   transition: all 0.2s ease;
@@ -272,7 +293,7 @@
 .gallery-search-input:focus {
   background: #ffffff;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-light);
+  box-shadow: 0 0 0 3px rgba(232, 95, 109, 0.15);
 }
 
 .gallery-search-icon {
@@ -352,7 +373,7 @@
 
 .gallery-back-btn:hover {
   background: var(--brand-light);
-  border-color: var(--brand-light-border);
+  border-color: rgba(232, 95, 109, 0.3);
   color: var(--brand);
 }
 
@@ -415,11 +436,11 @@
 }
 
 .gallery-cat-chip.is-active {
-  background: var(--brand);
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 12px -2px rgba(53, 89, 216, 0.35);
-  border-color: var(--brand);
+  box-shadow: 0 4px 12px -2px rgba(232, 95, 109, 0.35);
+  border-color: #e85f6d;
 }
 
 .gallery-cat-count {
@@ -440,11 +461,11 @@
   margin-top: 24px;
   padding: 16px;
   border-radius: var(--radius-md);
-  background: var(--brand-light);
-  border: 1px solid var(--brand-light-border);
+  background: linear-gradient(135deg, #fff0f2 0%, #f4fcf9 100%);
+  border: 1px solid rgba(232, 95, 109, 0.2);
   font-size: 0.82rem;
   line-height: 1.5;
-  color: var(--brand-hover);
+  color: #557595;
 }
 
 .gallery-sidebar-banner strong {
@@ -464,9 +485,13 @@
 .gallery-hero-banner {
   margin-bottom: 24px;
   padding: 24px 28px;
-  background: linear-gradient(135deg, var(--brand-light) 0%, #ffffff 100%);
-  border: 1px solid var(--brand-light-border);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 127, 135, 0.12), transparent 16rem),
+    radial-gradient(circle at 90% 80%, rgba(87, 199, 184, 0.14), transparent 18rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 250, 246, 0.9) 100%);
+  border: 1px solid rgba(255, 127, 135, 0.22);
   border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(232, 95, 109, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -523,8 +548,8 @@
 
 /* 单个宠物卡片 (仿 VibeHub 术语卡片) */
 .gallery-card {
-  background: var(--gallery-surface);
-  border: 1px solid var(--gallery-border);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(235, 218, 210, 0.85);
   border-radius: var(--radius-lg);
   padding: 20px;
   display: flex;
@@ -534,12 +559,16 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .gallery-card:hover {
   transform: translateY(-4px);
-  border-color: var(--brand);
-  box-shadow: 0 16px 28px -6px rgba(53, 89, 216, 0.12), var(--gallery-shadow-md);
+  border-color: rgba(232, 95, 109, 0.45);
+  box-shadow:
+    0 16px 30px -6px rgba(232, 95, 109, 0.12),
+    0 4px 12px rgba(47, 159, 147, 0.08);
 }
 
 /* 卡片头部 */
@@ -572,9 +601,9 @@
   font-weight: 750;
   padding: 2px 7px;
   border-radius: var(--radius-full);
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  background: rgba(87, 199, 184, 0.12);
+  color: #248b80;
+  border: 1px solid rgba(87, 199, 184, 0.3);
   letter-spacing: 0.02em;
 }
 
@@ -589,9 +618,9 @@
 .gallery-author-pill {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #475569;
-  background: rgba(100, 116, 139, 0.08);
-  border: 1px solid rgba(100, 116, 139, 0.16);
+  color: #2f9f93;
+  background: rgba(87, 199, 184, 0.1);
+  border: 1px solid rgba(87, 199, 184, 0.24);
   padding: 1px 7px;
   border-radius: 6px;
 }
@@ -615,7 +644,7 @@
 }
 
 .gallery-author-handle {
-  color: #2563eb;
+  color: #e85f6d;
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -636,11 +665,11 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  background: rgba(239, 246, 255, 0.8);
-  border: 1px solid rgba(191, 219, 254, 0.8);
+  background: rgba(255, 240, 242, 0.85);
+  border: 1px solid rgba(255, 180, 190, 0.85);
   border-radius: 12px;
   font-size: 0.8rem;
-  color: #1e40af;
+  color: #c94050;
   line-height: 1.55;
   margin: 12px 0 6px;
 }
@@ -688,13 +717,13 @@
 
 .gallery-author-chip:hover {
   background: var(--gallery-surface-subtle);
-  color: #2563eb;
+  color: #e85f6d;
 }
 
 .gallery-author-chip.is-active {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(232, 95, 109, 0.1);
+  color: #e85f6d;
+  border-color: rgba(232, 95, 109, 0.28);
   font-weight: 750;
 }
 
@@ -715,7 +744,7 @@
 }
 
 .gallery-author-chip.is-active .author-chip-badge {
-  background: #2563eb;
+  background: #e85f6d;
   color: #ffffff;
 }
 
@@ -759,7 +788,10 @@
 
 /* 动效预览区 (Demo) */
 .gallery-card-preview {
-  background: radial-gradient(circle, var(--brand-light) 0%, var(--gallery-surface-subtle) 100%);
+  background:
+    radial-gradient(circle at 25% 25%, rgba(255, 127, 135, 0.14) 0%, transparent 65%),
+    radial-gradient(circle at 75% 75%, rgba(87, 199, 184, 0.16) 0%, transparent 65%),
+    linear-gradient(135deg, #fffcf9 0%, #f7fbf9 100%);
   border-radius: var(--radius-md);
   height: 150px;
   display: flex;
@@ -768,7 +800,7 @@
   position: relative;
   overflow: hidden;
   margin-bottom: 16px;
-  border: 1px solid var(--gallery-border);
+  border: 1px solid rgba(235, 220, 212, 0.75);
 }
 
 .gallery-card-img {
@@ -819,8 +851,8 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--brand);
-  background: var(--brand-light);
-  border: 1px dashed var(--brand-light-border);
+  background: rgba(255, 127, 135, 0.1);
+  border: 1px dashed rgba(255, 127, 135, 0.35);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
 }
@@ -924,7 +956,10 @@
 
 /* 弹窗左侧大展示台 */
 .gallery-modal-stage {
-  background: linear-gradient(180deg, var(--brand-light) 0%, #f8fafc 100%);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 198, 204, 0.28) 0%, transparent 70%),
+    radial-gradient(circle at 50% 85%, rgba(133, 221, 207, 0.24) 0%, transparent 70%),
+    linear-gradient(180deg, #fffaf5 0%, #f4fcf9 100%);
   padding: 32px 24px;
   border-right: 1px solid var(--gallery-border);
   display: flex;
@@ -981,10 +1016,10 @@
 }
 
 .gallery-action-chip.is-active {
-  background: var(--brand);
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
-  border-color: var(--brand);
-  box-shadow: 0 2px 6px rgba(53, 89, 216, 0.25);
+  border-color: #e85f6d;
+  box-shadow: 0 2px 6px rgba(232, 95, 109, 0.35);
 }
 
 /* 弹窗右侧详细档案 */
@@ -1048,8 +1083,8 @@
 
 /* 核心行动区：一键导入与兑换 */
 .gallery-integration-panel {
-  background: var(--brand-light);
-  border: 1px solid var(--brand-light-border);
+  background: linear-gradient(135deg, rgba(255, 240, 242, 0.9) 0%, rgba(230, 250, 246, 0.9) 100%);
+  border: 1px solid rgba(255, 180, 190, 0.5);
   border-radius: var(--radius-lg);
   padding: 18px;
   display: flex;
@@ -1099,7 +1134,7 @@
 .gallery-cta-primary {
   padding: 12px 18px;
   border-radius: var(--radius-md);
-  background: var(--brand);
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
   border: none;
   font-weight: 700;
@@ -1109,14 +1144,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 12px -2px rgba(53, 89, 216, 0.4);
+  box-shadow: 0 4px 14px -2px rgba(232, 95, 109, 0.45);
   transition: all 0.18s ease;
 }
 
 .gallery-cta-primary:hover {
-  background: var(--brand-hover);
+  background: linear-gradient(135deg, #ff6b74 0%, #d34a58 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px -2px rgba(53, 89, 216, 0.5);
+  box-shadow: 0 6px 18px -2px rgba(232, 95, 109, 0.55);
 }
 
 .gallery-cta-secondary {
@@ -1873,9 +1908,9 @@ body:has(.pet-gallery) .site-icp-filing,
   gap: 4px;
   font-size: 0.73rem;
   font-weight: 650;
-  color: #334155;
-  background: rgba(100, 116, 139, 0.08);
-  border: 1px solid rgba(100, 116, 139, 0.18);
+  color: #20877c;
+  background: rgba(87, 199, 184, 0.12);
+  border: 1px solid rgba(87, 199, 184, 0.28);
   padding: 2px 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -1883,9 +1918,9 @@ body:has(.pet-gallery) .site-icp-filing,
 }
 
 .gallery-author-pill-btn:hover {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.35);
-  color: #2563eb;
+  background: rgba(255, 127, 135, 0.15);
+  border-color: rgba(255, 127, 135, 0.4);
+  color: #e85f6d;
   transform: translateX(1px);
 }
 
@@ -1916,22 +1951,22 @@ body:has(.pet-gallery) .site-icp-filing,
 }
 
 .pet-price-badge.is-free {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: rgba(87, 199, 184, 0.14);
+  color: #20877c;
+  border: 1px solid rgba(87, 199, 184, 0.32);
   font-weight: 750;
 }
 
 .pet-price-badge.is-paid {
-  background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: rgba(255, 127, 135, 0.12);
+  color: #c94050;
+  border: 1px solid rgba(255, 127, 135, 0.28);
 }
 
 .pet-price-badge.is-paid strong {
   font-size: 0.88rem;
   font-weight: 800;
-  color: #d97706;
+  color: #e85f6d;
 }
 
 .pet-price-badge.is-paid small {
@@ -1942,28 +1977,31 @@ body:has(.pet-gallery) .site-icp-filing,
 
 /* 卡片按钮变体 */
 .gallery-btn-unlocked {
-  background: #10b981 !important;
+  background: linear-gradient(135deg, #57c7b8 0%, #2f9f93 100%) !important;
   color: #ffffff !important;
-  border-color: #10b981 !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(47, 159, 147, 0.28) !important;
 }
 
 .gallery-btn-unlocked:hover {
-  background: #059669 !important;
-  border-color: #059669 !important;
+  background: linear-gradient(135deg, #42b7a7 0%, #25877c 100%) !important;
+  border-color: transparent !important;
   color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(47, 159, 147, 0.38) !important;
 }
 
 .gallery-btn-buy {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%) !important;
   color: #ffffff !important;
   border: none !important;
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(232, 95, 109, 0.3) !important;
 }
 
 .gallery-btn-buy:hover {
-  background: linear-gradient(135deg, #d97706 0%, #c2410c 100%) !important;
+  background: linear-gradient(135deg, #ff6b74 0%, #d34a58 100%) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(232, 95, 109, 0.42) !important;
 }
 
 /* 详情弹窗中的价格与作者名片 */
@@ -1978,9 +2016,9 @@ body:has(.pet-gallery) .site-icp-filing,
 .detail-price-pill {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #d97706;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #e85f6d;
+  background: rgba(255, 127, 135, 0.12);
+  border: 1px solid rgba(255, 127, 135, 0.3);
   padding: 4px 12px;
   border-radius: 999px;
   flex-shrink: 0;
@@ -2000,8 +2038,8 @@ body:has(.pet-gallery) .site-icp-filing,
 }
 
 .detail-author-interactive-card:hover {
-  border-color: var(--brand);
-  background: rgba(53, 89, 216, 0.04);
+  border-color: rgba(232, 95, 109, 0.4);
+  background: rgba(255, 240, 242, 0.6);
 }
 
 .detail-author-card-left {
@@ -2054,9 +2092,9 @@ body:has(.pet-gallery) .site-icp-filing,
   gap: 4px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--brand);
+  color: #e85f6d;
   background: #ffffff;
-  border: 1px solid var(--brand-light-border);
+  border: 1px solid rgba(232, 95, 109, 0.28);
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -2065,28 +2103,29 @@ body:has(.pet-gallery) .site-icp-filing,
 }
 
 .detail-author-jump-btn:hover {
-  background: var(--brand);
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
-  border-color: var(--brand);
+  border-color: #e85f6d;
   transform: translateX(2px);
+  box-shadow: 0 3px 8px rgba(232, 95, 109, 0.28);
 }
 
 .gallery-cta-unlocked {
-  background: #10b981 !important;
-  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(135deg, #57c7b8 0%, #2f9f93 100%) !important;
+  box-shadow: 0 4px 12px -2px rgba(47, 159, 147, 0.4) !important;
 }
 
 .gallery-cta-unlocked:hover {
-  background: #059669 !important;
+  background: linear-gradient(135deg, #42b7a7 0%, #25877c 100%) !important;
 }
 
 .gallery-cta-pay-btn {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
-  box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.4) !important;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%) !important;
+  box-shadow: 0 4px 12px -2px rgba(232, 95, 109, 0.4) !important;
 }
 
 .gallery-cta-pay-btn:hover {
-  background: linear-gradient(135deg, #d97706 0%, #c2410c 100%) !important;
+  background: linear-gradient(135deg, #ff6b74 0%, #d34a58 100%) !important;
 }
 
 /* ==========================================================================
@@ -2330,7 +2369,7 @@ body:has(.pet-gallery) .site-icp-filing,
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #ea580c;
+  background: linear-gradient(135deg, #ff7f87 0%, #e85f6d 100%);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -2339,11 +2378,13 @@ body:has(.pet-gallery) .site-icp-filing,
   cursor: pointer;
   transition: all 0.16s ease;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(232, 95, 109, 0.28);
 }
 
 .commission-callout-btn:hover {
-  background: #c2410c;
+  background: linear-gradient(135deg, #ff6b74 0%, #d34a58 100%);
   transform: translateX(2px);
+  box-shadow: 0 5px 12px rgba(232, 95, 109, 0.38);
 }
 
 .author-works-header {
@@ -2370,8 +2411,10 @@ body:has(.pet-gallery) .site-icp-filing,
 .pay-instant-modal {
   max-width: 620px !important;
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 24px;
+  border: 1px solid rgba(232, 95, 109, 0.18);
+  box-shadow: 0 24px 60px rgba(71, 51, 63, 0.22);
 }
 
 .pay-modal-header {
@@ -2384,8 +2427,9 @@ body:has(.pet-gallery) .site-icp-filing,
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: rgba(255, 127, 135, 0.12);
+  color: #e85f6d;
+  border: 1px solid rgba(255, 127, 135, 0.25);
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 750;
@@ -2430,9 +2474,12 @@ body:has(.pet-gallery) .site-icp-filing,
 .pay-goods-thumb-wrap {
   width: 110px;
   height: 110px;
-  background: radial-gradient(circle, #eff3fe 0%, #ffffff 100%);
-  border-radius: 12px;
-  border: 1px solid var(--brand-light-border);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 127, 135, 0.15) 0%, transparent 70%),
+    radial-gradient(circle at 70% 70%, rgba(87, 199, 184, 0.15) 0%, transparent 70%),
+    #fffcf9;
+  border-radius: 14px;
+  border: 1px solid rgba(232, 95, 109, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2462,8 +2509,8 @@ body:has(.pet-gallery) .site-icp-filing,
 .pay-goods-tag {
   display: inline-block;
   font-size: 0.7rem;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
+  color: #2f9f93;
+  background: rgba(87, 199, 184, 0.12);
   padding: 1px 6px;
   border-radius: 4px;
   margin-bottom: 12px;
@@ -2485,7 +2532,7 @@ body:has(.pet-gallery) .site-icp-filing,
 .pay-amount-box strong {
   font-size: 1.25rem;
   font-weight: 900;
-  color: #ea580c;
+  color: #e85f6d;
 }
 
 /* 右侧收银支付区 */
@@ -2583,26 +2630,26 @@ body:has(.pet-gallery) .site-icp-filing,
 
 .pay-confirm-cta-btn {
   width: 100%;
-  padding: 11px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  padding: 12px;
+  background: linear-gradient(135deg, #57c7b8 0%, #2f9f93 100%);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  font-size: 0.88rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
   font-weight: 750;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 14px rgba(47, 159, 147, 0.35);
   transition: all 0.16s ease;
 }
 
 .pay-confirm-cta-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #42b7a7 0%, #25877c 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 6px 18px rgba(47, 159, 147, 0.45);
 }
 
 .pay-test-note {
