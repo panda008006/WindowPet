@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   Camera,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   Download,
   EyeOff,
@@ -23,19 +22,22 @@ import {
 import './App.css'
 import './polish.css'
 import { PetGallery } from './PetGallery'
+import { CustomPetStudio } from './CustomPetStudio'
 
 const releaseVersion = '1.0.32'
 const releaseInstallerName = `WindowPet_Setup_v${releaseVersion}.exe`
 const releaseInstallerHref = `https://github.com/panda008006/WindowPet/releases/download/v${releaseVersion}/${releaseInstallerName}`
 const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
 
-const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
+type TabId = 'home' | 'models' | 'custom'
+
+const homeSectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
 
 const navItems = [
   { id: 'home', label: '首页' },
-  { id: 'pets', label: '模型库' },
-  { id: 'features', label: '功能' },
+  { id: 'models', label: '模型库' },
   { id: 'custom', label: '爱宠定制' },
+  { id: 'features', label: '功能' },
   { id: 'control', label: '下载' },
 ] as const
 
@@ -245,59 +247,27 @@ function petAsset(fileName: string) {
 }
 
 function App() {
-  const [isGalleryOpen, setIsGalleryOpen] = useState(() => {
-    return typeof window !== 'undefined' && window.location.hash === '#/gallery'
-  })
-
-  useEffect(() => {
-    const handleHash = () => {
-      if (window.location.hash === '#/gallery') {
-        setIsGalleryOpen(true)
-      }
-    }
-    window.addEventListener('hashchange', handleHash)
-    return () => window.removeEventListener('hashchange', handleHash)
-  }, [])
-
-  const handleOpenGallery = () => {
-    setIsGalleryOpen(true)
-  }
-
-  const handleCloseGallery = () => {
-    setIsGalleryOpen(false)
-    if (window.location.hash === '#/gallery') {
-      history.replaceState(null, '', window.location.pathname + window.location.search)
-    }
-  }
-
-  useEffect(() => {
-    if (isGalleryOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isGalleryOpen])
-
   const [selectedPetId, setSelectedPetId] = useState(pets[0].id)
   const [selectedActionId, setSelectedActionId] = useState(pets[0].actions[0].id)
   const [activeControlViewId, setActiveControlViewId] = useState<(typeof controlViews)[number]['id']>(
     controlViews[0].id,
   )
-  const [activeIndex, setActiveIndex] = useState(() => {
+
+  // 顶层 Tab 状态: 'home' (主页) | 'models' (模型库/小鼻嘎展馆) | 'custom' (爱宠定制工坊)
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '')
-      const found = sectionIds.indexOf(hash as (typeof sectionIds)[number])
-      if (found >= 0) return found
+      if (hash === 'models' || hash === 'gallery' || hash === '/gallery') return 'models'
+      if (hash === 'custom' || hash === 'custom-studio') return 'custom'
     }
-    return 0
+    return 'home'
   })
-  const activeIndexRef = useRef(activeIndex)
+
+  // 主页内纵向 5 屏定位
+  const [activeHomeSection, setActiveHomeSection] = useState(0)
+  const activeHomeSectionRef = useRef(0)
+  const homeScrollRef = useRef<HTMLDivElement | null>(null)
   const wheelLockRef = useRef(false)
-  const touchStartXRef = useRef<number | null>(null)
-  const touchStartYRef = useRef<number | null>(null)
 
   const selectedPet = useMemo(() => pets.find((pet) => pet.id === selectedPetId) ?? pets[0], [selectedPetId])
   const selectedPetAction = useMemo(
@@ -310,108 +280,130 @@ function App() {
   )
 
   useEffect(() => {
-    activeIndexRef.current = activeIndex
-  }, [activeIndex])
+    activeHomeSectionRef.current = activeHomeSection
+  }, [activeHomeSection])
 
-  const goToSection = (index: number) => {
-    const nextIndex = Math.max(0, Math.min(sectionIds.length - 1, index))
-    activeIndexRef.current = nextIndex
-    setActiveIndex(nextIndex)
-    if (typeof window !== 'undefined') {
-      history.replaceState(null, '', '#' + sectionIds[nextIndex])
-    }
+  // 主页内部纵向滚动
+  const scrollHomeToSection = (index: number) => {
+    const root = homeScrollRef.current
+    const nextIndex = Math.max(0, Math.min(homeSectionIds.length - 1, index))
+    const target = document.getElementById(homeSectionIds[nextIndex])
+    if (!root || !target) return
+
+    activeHomeSectionRef.current = nextIndex
+    setActiveHomeSection(nextIndex)
+    root.scrollTo({ top: target.offsetTop, behavior: 'smooth' })
   }
 
+  // 监听主页内纵向吸附位置变化
+  useEffect(() => {
+    if (activeTab !== 'home') return
+    const root = homeScrollRef.current
+    if (!root) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const bestEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+        if (!bestEntry) return
+
+        const nextIndex = homeSectionIds.indexOf(bestEntry.target.id as (typeof homeSectionIds)[number])
+        if (nextIndex >= 0) {
+          setActiveHomeSection(nextIndex)
+        }
+      },
+      { root, threshold: [0.35, 0.55, 0.75] },
+    )
+
+    homeSectionIds.forEach((id) => {
+      const section = document.getElementById(id)
+      if (section) observer.observe(section)
+    })
+
+    return () => observer.disconnect()
+  }, [activeTab])
+
+  // Hash 改变同步
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash === '#/gallery') return
       const hash = window.location.hash.replace('#', '')
-      const found = sectionIds.indexOf(hash as (typeof sectionIds)[number])
-      if (found >= 0 && found !== activeIndexRef.current) {
-        setActiveIndex(found)
-        activeIndexRef.current = found
+      if (hash === 'models' || hash === 'gallery' || hash === '/gallery') {
+        setActiveTab('models')
+      } else if (hash === 'custom' || hash === 'custom-studio') {
+        setActiveTab('custom')
+      } else {
+        setActiveTab('home')
+        const found = homeSectionIds.indexOf(hash as (typeof homeSectionIds)[number])
+        if (found >= 0) {
+          scrollHomeToSection(found)
+        }
       }
     }
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isGalleryOpen) return
-      const target = event.target as HTMLElement | null
-      const tagName = target?.tagName
-      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable) return
+  // 主页鼠标滚轮事件处理 (原版 5 屏单屏滚轮吸附: 滚一下翻一屏)
+  const handleHomeWheel: WheelEventHandler<HTMLElement> = (event) => {
+    if (activeTab !== 'home') return
+    if (window.matchMedia('(max-width: 860px)').matches || Math.abs(event.deltaY) < 18) return
 
-      if (event.key === 'ArrowRight' || event.key === 'PageDown') {
-        event.preventDefault()
-        goToSection(activeIndexRef.current + 1)
-      } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-        event.preventDefault()
-        goToSection(activeIndexRef.current - 1)
-      } else if (event.key === 'Home') {
-        event.preventDefault()
-        goToSection(0)
-      } else if (event.key === 'End') {
-        event.preventDefault()
-        goToSection(sectionIds.length - 1)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isGalleryOpen])
-
-  const handleWheel: WheelEventHandler<HTMLElement> = (event) => {
-    if (isGalleryOpen) return
+    event.preventDefault()
     if (wheelLockRef.current) return
 
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
-    if (Math.abs(delta) < 22) return
-
-    const direction = delta > 0 ? 1 : -1
-    const nextIndex = Math.max(0, Math.min(sectionIds.length - 1, activeIndexRef.current + direction))
-    if (nextIndex === activeIndexRef.current) return
+    const direction = event.deltaY > 0 ? 1 : -1
+    const nextIndex = Math.max(0, Math.min(homeSectionIds.length - 1, activeHomeSectionRef.current + direction))
+    if (nextIndex === activeHomeSectionRef.current) return
 
     wheelLockRef.current = true
-    goToSection(nextIndex)
+    scrollHomeToSection(nextIndex)
     window.setTimeout(() => {
       wheelLockRef.current = false
-    }, 650)
+    }, 720)
   }
 
-  const handleTouchStart = (event: React.TouchEvent) => {
-    if (isGalleryOpen) return
-    touchStartXRef.current = event.touches[0].clientX
-    touchStartYRef.current = event.touches[0].clientY
-  }
-
-  const handleTouchEnd = (event: React.TouchEvent) => {
-    if (isGalleryOpen) return
-    if (touchStartXRef.current === null || touchStartYRef.current === null) return
-    const deltaX = event.changedTouches[0].clientX - touchStartXRef.current
-    const deltaY = event.changedTouches[0].clientY - touchStartYRef.current
-    touchStartXRef.current = null
-    touchStartYRef.current = null
-
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 45) {
-      if (deltaX < 0) {
-        goToSection(activeIndexRef.current + 1)
-      } else {
-        goToSection(activeIndexRef.current - 1)
-      }
+  // 导航栏点击逻辑
+  const handleNavClick = (id: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    if (id === 'home') {
+      setActiveTab('home')
+      scrollHomeToSection(0)
+    } else if (id === 'models') {
+      setActiveTab('models')
+    } else if (id === 'custom') {
+      setActiveTab('custom')
+    } else if (id === 'features') {
+      setActiveTab('home')
+      setTimeout(() => scrollHomeToSection(2), 50)
+    } else if (id === 'control') {
+      setActiveTab('home')
+      setTimeout(() => scrollHomeToSection(4), 50)
     }
+  }
+
+  const isNavActive = (id: string) => {
+    if (id === 'home') return activeTab === 'home' && activeHomeSection === 0
+    if (id === 'models') return activeTab === 'models'
+    if (id === 'custom') return activeTab === 'custom'
+    if (id === 'features') return activeTab === 'home' && activeHomeSection === 2
+    if (id === 'control') return activeTab === 'home' && activeHomeSection === 4
+    return false
   }
 
   return (
-    <main
-      className="fullpage-site"
-      onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <main className="fullpage-site">
+      {/* 顶部常驻导航栏 - 恒定固定在最顶部不变 */}
       <header className="site-nav">
-        <button className="brand-lockup" type="button" onClick={() => goToSection(0)} aria-label="返回首页">
+        <button
+          className="brand-lockup"
+          type="button"
+          onClick={() => {
+            setActiveTab('home')
+            scrollHomeToSection(0)
+          }}
+          aria-label="返回首页"
+        >
           <span className="brand-symbol">
             <img src={`${import.meta.env.BASE_URL}apple-touch-icon.png`} alt="" />
           </span>
@@ -422,28 +414,17 @@ function App() {
         </button>
 
         <nav aria-label="官网导航">
-          {navItems.map((item, index) => (
+          {navItems.map((item) => (
             <a
-              className={activeIndex === index ? 'is-active' : undefined}
+              className={isNavActive(item.id) ? 'is-active' : undefined}
               href={`#${item.id}`}
               key={item.id}
-              onClick={(event) => {
-                event.preventDefault()
-                goToSection(index)
-              }}
+              onClick={(e) => handleNavClick(item.id, e)}
             >
               {item.label}
+              {item.id === 'models' && <span className="nav-gallery-tag">24款</span>}
             </a>
           ))}
-          <button
-            type="button"
-            className="nav-gallery-link"
-            onClick={handleOpenGallery}
-            title="打开小鼻嘎展馆，查看全部 24 款萌宠"
-          >
-            小鼻嘎展馆
-            <span className="nav-gallery-tag">NEW</span>
-          </button>
           <a
             className="nav-github-link"
             href={githubRepoUrl}
@@ -461,66 +442,57 @@ function App() {
         </a>
       </header>
 
-      {/* 悬浮左右切换箭头 */}
-      {activeIndex > 0 && (
-        <button
-          type="button"
-          className="slider-arrow slider-arrow-left"
-          onClick={() => goToSection(activeIndex - 1)}
-          aria-label="向左返回上一页"
-          title="向左滑回上一页 (快捷键: ←)"
-        >
-          <ChevronLeft size={24} />
-        </button>
+      {/* 主页纵向滚动 5 屏指示点 (仅在主页显示) */}
+      {activeTab === 'home' && (
+        <aside className="section-dots" aria-label="主页进度">
+          {homeSectionIds.map((id, index) => (
+            <button
+              aria-label={`跳转到第 ${index + 1} 屏`}
+              className={activeHomeSection === index ? 'is-active' : undefined}
+              key={id}
+              type="button"
+              onClick={() => scrollHomeToSection(index)}
+            />
+          ))}
+        </aside>
       )}
 
-      {activeIndex < sectionIds.length - 1 && (
-        <button
-          type="button"
-          className="slider-arrow slider-arrow-right"
-          onClick={() => goToSection(activeIndex + 1)}
-          aria-label="向右前进下一页"
-          title="向右滑动至下一页 (快捷键: →)"
-        >
-          <ChevronRight size={24} />
-        </button>
-      )}
-
-      <aside className="section-dots" aria-label="页面指示器">
-        {navItems.map((item, index) => (
-          <button
-            aria-label={`跳转到${item.label}`}
-            className={activeIndex === index ? 'is-active' : undefined}
-            key={item.id}
-            type="button"
-            onClick={() => goToSection(index)}
-          />
-        ))}
-      </aside>
-
-      {/* 横向平滑滑轨 */}
+      {/* 横向多模块平滑滑轨: 主页 (纵向5屏) <-> 模型库大厅 <-> 爱宠定制工坊 */}
       <div
-        className="horizontal-slider-track"
-        style={{ transform: `translateX(-${activeIndex * 100}vw)` }}
+        className="views-slider-track"
+        style={{
+          transform:
+            activeTab === 'home'
+              ? 'translateX(0vw)'
+              : activeTab === 'models'
+              ? 'translateX(-100vw)'
+              : 'translateX(-200vw)',
+        }}
       >
-        <section className="snap-section hero-page" id="home" aria-label="Window Pet 首页">
-          <div className="section-inner hero-layout">
-            <div className="hero-copy">
-              <p className="eyebrow">WINDOWS DESKTOP COMPANION</p>
-              <h1>让桌面多一个会回应你的伙伴</h1>
-              <p className="hero-subtitle">
-                Window Pet 把可爱的角色、日常提醒和轻量桌面工具放在一起。下载后，选择喜欢的伙伴，让它陪你工作、休息和记录琐事。
-              </p>
-              <div className="hero-actions">
-                <a className="primary-download" href={releaseInstallerHref} download={releaseInstallerName}>
-                  <Download size={21} />
-                  下载 Windows 安装包 (仅 50MB)
-                </a>
-                <button className="secondary-action" type="button" onClick={() => goToSection(1)}>
-                  浏览角色与模型库
-                  <ChevronRight size={18} />
-                </button>
-              </div>
+        {/* Pane 0: 100% 原始上下滚动主页 */}
+        <div
+          className="tab-pane tab-home"
+          ref={homeScrollRef}
+          onWheel={handleHomeWheel}
+        >
+          <section className="snap-section hero-page" id="home" aria-label="Window Pet 首页">
+            <div className="section-inner hero-layout">
+              <div className="hero-copy">
+                <p className="eyebrow">WINDOWS DESKTOP COMPANION</p>
+                <h1>让桌面多一个会回应你的伙伴</h1>
+                <p className="hero-subtitle">
+                  Window Pet 把可爱的角色、日常提醒和轻量桌面工具放在一起。下载后，选择喜欢的伙伴，让它陪你工作、休息和记录琐事。
+                </p>
+                <div className="hero-actions">
+                  <a className="primary-download" href={releaseInstallerHref} download={releaseInstallerName}>
+                    <Download size={21} />
+                    下载 Windows 安装包 (仅 50MB)
+                  </a>
+                  <button className="secondary-action" type="button" onClick={() => setActiveTab('models')}>
+                    浏览全部 24 款角色
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
               <div className="hero-meta" aria-label="版本信息">
                 <span>v{releaseVersion} 正式版</span>
                 <span>仅 50MB 极速秒开</span>
@@ -562,8 +534,8 @@ function App() {
               <button
                 type="button"
                 className="section-heading-gallery-link"
-                onClick={handleOpenGallery}
-                title="打开小鼻嘎展馆，探索全部 24 款萌宠"
+                onClick={() => setActiveTab('models')}
+                title="打开模型库，探索全部 24 款萌宠"
               >
                 <Sparkles size={14} />
                 <span>探索全部 24 款萌宠图鉴</span>
@@ -738,16 +710,26 @@ function App() {
               <strong style={{ fontSize: '1.15rem', display: 'block', color: 'var(--wp-ink)' }}>想给自家宠物定制独一无二的专属桌宠？</strong>
               <span style={{ color: 'var(--wp-muted)', fontSize: '0.9rem' }}>官方交流群现已开放预约，透明进度，支持验收满意后再交付。</span>
             </div>
-            <a
-              className="primary-download"
-              href="https://qm.qq.com/q/cYlRBbvuda"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', textDecoration: 'none' }}
-            >
-              <HeartHandshake size={18} />
-              立即预约爱宠定制 / 进群交流
-            </a>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={() => setActiveTab('custom')}
+                style={{ padding: '10px 18px', background: 'rgba(255, 255, 255, 0.75)' }}
+              >
+                查看定制工坊详情
+              </button>
+              <a
+                className="primary-download"
+                href="https://qm.qq.com/q/cYlRBbvuda"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', textDecoration: 'none' }}
+              >
+                <HeartHandshake size={18} />
+                预约定制 / 进群交流
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -857,22 +839,23 @@ function App() {
       </section>
       </div>
 
-      {isGalleryOpen && (
-        <div
-          className="gallery-lightbox-overlay"
-          onClick={handleCloseGallery}
-          role="dialog"
-          aria-modal="true"
-          aria-label="WindowPet 小鼻嘎展馆"
-        >
-          <div className="gallery-lightbox-card" onClick={(e) => e.stopPropagation()}>
-            <PetGallery onClose={handleCloseGallery} />
-          </div>
-        </div>
-      )}
-    </main>
+      {/* Tab 1: 模型库 (小鼻嘎展馆 24 款全量图鉴) */}
+      <div className="tab-pane tab-models">
+        <PetGallery onBackToHome={() => { setActiveTab('home'); scrollHomeToSection(0); }} />
+      </div>
+
+      {/* Tab 2: 爱宠专属定制工坊 */}
+      <div className="tab-pane tab-custom">
+        <CustomPetStudio
+          onBackToHome={() => { setActiveTab('home'); scrollHomeToSection(0); }}
+          onExploreModels={() => setActiveTab('models')}
+        />
+      </div>
+    </div>
+  </main>
   )
 }
 
 export default App
+
 
