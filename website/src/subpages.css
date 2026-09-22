@@ -863,3 +863,557 @@
   color: #ffffff;
 }
 
+/* =============================================================================
+   纯粉色主题（CustomPetPage · 爱宠定制纯粉浪漫治愈风）
+   ============================================================================= */
+.custom-pet-page-pure-pink {
+  background: radial-gradient(circle at 10% 20%, rgba(255, 240, 243, 0.85) 0%, rgba(255, 255, 255, 0.98) 60%),
+              radial-gradient(circle at 90% 80%, rgba(255, 228, 233, 0.6) 0%, rgba(255, 255, 255, 0.98) 70%);
+}
+
+.custom-pet-page-pure-pink .pink-eyebrow {
+  background: rgba(255, 107, 129, 0.12);
+  color: #ff4757;
+  border: 1px solid rgba(255, 107, 129, 0.25);
+  font-weight: 750;
+}
+
+.custom-pet-page-pure-pink .pink-primary-btn {
+  background: linear-gradient(135deg, #ff758c 0%, #ff4757 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(255, 71, 87, 0.35) !important;
+  border: none !important;
+  font-weight: 750;
+  transition: all 0.2s ease;
+}
+
+.custom-pet-page-pure-pink .pink-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 71, 87, 0.45) !important;
+}
+
+.custom-pet-page-pure-pink .pink-secondary-btn {
+  border: 1.5px solid rgba(255, 107, 129, 0.28) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #4a4a4a !important;
+  font-weight: 650;
+  transition: all 0.2s ease;
+}
+
+.custom-pet-page-pure-pink .pink-secondary-btn:hover {
+  background: #fff0f3 !important;
+  border-color: #ff6b81 !important;
+  color: #ff4757 !important;
+  transform: translateY(-2px);
+}
+
+.custom-pet-page-pure-pink .pink-badge {
+  background: rgba(255, 107, 129, 0.1) !important;
+  color: #ff4757 !important;
+  border: 1px solid rgba(255, 107, 129, 0.22) !important;
+  font-weight: 750;
+}
+
+.custom-pet-page-pure-pink .pink-toast-pill {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1.5px solid rgba(255, 107, 129, 0.35) !important;
+  color: #ff4757 !important;
+  box-shadow: 0 12px 32px rgba(255, 107, 129, 0.22) !important;
+}
+
+.custom-pet-page-pure-pink .pink-producer-card {
+  border: 1px solid rgba(255, 107, 129, 0.18) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffbfc 100%) !important;
+  box-shadow: 0 8px 24px rgba(255, 107, 129, 0.08) !important;
+}
+
+.custom-pet-page-pure-pink .pink-producer-avatar {
+  background: linear-gradient(135deg, #ff758c 0%, #ff4757 100%) !important;
+  color: #ffffff !important;
+}
+
+.custom-pet-page-pure-pink .pink-chat-btn {
+  background: #fff0f3 !important;
+  border: 1.5px solid rgba(255, 107, 129, 0.3) !important;
+  color: #ff4757 !important;
+  font-weight: 750;
+}
+
+.custom-pet-page-pure-pink .pink-chat-btn:hover {
+  background: #ffe4e9 !important;
+  border-color: #ff4757 !important;
+}
+
+.custom-pet-page-pure-pink .pink-direct-link {
+  background: linear-gradient(135deg, #ff758c 0%, #ff4757 100%) !important;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.25) !important;
+}
+
+.custom-pet-page-pure-pink .pink-card-hover:hover {
+  border-color: #ff6b81 !important;
+  box-shadow: 0 12px 28px rgba(255, 107, 129, 0.18) !important;
+  transform: translateY(-4px);
+}
+
+.custom-pet-page-pure-pink .pink-step-card {
+  border: 1px solid rgba(255, 107, 129, 0.16) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffcfd 100%) !important;
+}
+
+.custom-pet-page-pure-pink .pink-step-number {
+  color: rgba(255, 107, 129, 0.16) !important;
+}
+
+.custom-pet-page-pure-pink .pink-step-icon {
+  background: #fff0f3 !important;
+  color: #ff4757 !important;
+  border: 1px solid rgba(255, 107, 129, 0.22) !important;
+}
+
+.custom-pet-page-pure-pink .pink-faq-card {
+  border: 1px solid rgba(255, 107, 129, 0.16) !important;
+  background: #ffffff !important;
+}
+
+.custom-pet-page-pure-pink .pink-q-badge {
+  background: linear-gradient(135deg, #ff758c 0%, #ff4757 100%) !important;
+  color: #ffffff !important;
+}
+
+.custom-pet-page-pure-pink .pink-cta-box {
+  background: linear-gradient(135deg, #fff0f3 0%, #ffe4e9 60%, #ffd1dc 100%) !important;
+  border: 1.5px solid rgba(255, 107, 129, 0.3) !important;
+  box-shadow: 0 16px 40px rgba(255, 107, 129, 0.16) !important;
+}
+
+/* =============================================================================
+   小汪生写真明信片大赏 (Postcard Desk Wall)
+   ============================================================================= */
+.xiaowang-showcase-section {
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.xiaowang-postcard-wall {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  padding: 24px 8px 36px 8px;
+  align-items: stretch;
+}
+
+@media (max-width: 980px) {
+  .xiaowang-postcard-wall {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .xiaowang-postcard-wall {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.xiaowang-postcard-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px 16px 20px 16px;
+  box-shadow: 0 10px 24px rgba(216, 75, 107, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 1.5px solid rgba(255, 182, 193, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+
+.xiaowang-postcard-card:hover {
+  transform: translateY(-8px) scale(1.03) !important;
+  box-shadow: 0 22px 42px rgba(255, 107, 129, 0.26);
+  z-index: 10;
+  border-color: #ff6b81;
+}
+
+.xiaowang-postcard-card.is-active-card {
+  border: 2.5px solid #ff4757 !important;
+  box-shadow: 0 18px 38px rgba(255, 71, 87, 0.3) !important;
+  transform: translateY(-5px) scale(1.02) !important;
+}
+
+/* 顶部和纸胶带装饰 */
+.postcard-washi-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86px;
+  height: 22px;
+  background: rgba(255, 182, 193, 0.72);
+  backdrop-filter: blur(2px);
+  border-left: 3px dashed rgba(255, 255, 255, 0.75);
+  border-right: 3px dashed rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+  z-index: 3;
+}
+
+/* 右上角复古邮票 */
+.postcard-stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 46px;
+  height: 52px;
+  border: 2px dotted #ff758c;
+  border-radius: 4px;
+  background: #fff0f3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 2px 6px rgba(255, 107, 129, 0.14);
+}
+
+.postcard-stamp .stamp-text {
+  font-size: 8px;
+  font-weight: 850;
+  color: #ff4757;
+  letter-spacing: 0.5px;
+}
+
+.postcard-stamp .stamp-num {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff6b81;
+}
+
+/* 照片相框 */
+.postcard-photo-frame {
+  width: 100%;
+  height: 205px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: #fbfbfb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.postcard-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.xiaowang-postcard-card:hover .postcard-photo-img {
+  transform: scale(1.06);
+}
+
+.postcard-tag-pill {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(4px);
+  color: #ff4757;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 明信片手写注释 */
+.postcard-caption {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.postcard-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.postcard-title {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: #2d3436;
+}
+
+.postcard-date {
+  font-size: 11px;
+  color: #b2bec3;
+  font-weight: 600;
+}
+
+.postcard-note {
+  font-size: 12.5px;
+  color: #636e72;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* =============================================================================
+   小汪生全动作实时交互舞台 (Live Actions Stage)
+   ============================================================================= */
+.xiaowang-interactive-stage-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f9 100%);
+  border: 2px solid rgba(255, 107, 129, 0.28);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 16px 42px rgba(255, 107, 129, 0.14);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 36px;
+  align-items: center;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .xiaowang-interactive-stage-card {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 28px;
+  }
+}
+
+.stage-left-avatar-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.stage-avatar-glow-ring {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff0f3 0%, #ffe4e9 60%, rgba(255, 107, 129, 0.18) 100%);
+  border: 3px solid #ff758c;
+  box-shadow: 0 0 35px rgba(255, 107, 129, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.stage-live-avatar-img {
+  width: 175px;
+  height: 175px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(255, 107, 129, 0.25));
+  animation: stageAvatarBob 3s ease-in-out infinite;
+}
+
+@keyframes stageAvatarBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.stage-audio-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff4757;
+  background: #fff0f3;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 107, 129, 0.22);
+}
+
+.stage-right-control-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.stage-control-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stage-pet-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stage-pet-title-row h3 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.stage-author-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffe4e9;
+  color: #ff4757;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 750;
+  border: 1px solid rgba(255, 107, 129, 0.28);
+}
+
+.stage-pet-intro {
+  margin: 0;
+  font-size: 13.5px;
+  color: #636e72;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.stage-action-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-tabs-label {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #ff4757;
+}
+
+.action-tab-button-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .action-tab-button-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stage-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 107, 129, 0.22);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.stage-action-btn strong {
+  font-size: 13px;
+  color: #2d3436;
+}
+
+.stage-action-btn small {
+  font-size: 11px;
+  color: #888888;
+}
+
+.stage-action-btn:hover {
+  border-color: #ff6b81;
+  background: #fff5f7;
+  transform: translateY(-2px);
+}
+
+.stage-action-btn.is-active {
+  border-color: #ff4757;
+  background: linear-gradient(135deg, #fff0f3 0%, #ffe4e9 100%);
+  box-shadow: 0 4px 14px rgba(255, 107, 129, 0.22);
+}
+
+.stage-action-btn.is-active strong {
+  color: #ff4757;
+}
+
+.stage-action-btn.is-active small {
+  color: #ff6b81;
+  font-weight: 650;
+}
+
+.stage-current-action-tip {
+  padding: 10px 14px;
+  background: rgba(255, 240, 243, 0.7);
+  border-left: 3px solid #ff4757;
+  border-radius: 0 8px 8px 0;
+  font-size: 12.5px;
+  color: #555555;
+  line-height: 1.5;
+}
+
+.stage-current-action-tip strong {
+  color: #ff4757;
+}
+
+.stage-action-cta-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.stage-import-pet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ff758c 0%, #ff4757 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255, 71, 87, 0.32);
+  transition: all 0.2s ease;
+}
+
+.stage-import-pet-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 71, 87, 0.45);
+}
+
+.stage-custom-my-pet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1.5px solid #ff758c;
+  background: #ffffff;
+  color: #ff4757;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stage-custom-my-pet-btn:hover {
+  background: #fff0f3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 129, 0.2);
+}

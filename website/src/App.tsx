@@ -416,7 +416,7 @@ function App() {
           </span>
           <span>
             <strong>Window Pet</strong>
-            <small>桌面萌宠下载</small>
+            <small>小鼻嘎</small>
           </span>
         </button>
 

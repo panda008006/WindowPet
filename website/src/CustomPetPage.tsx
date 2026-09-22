@@ -10,9 +10,11 @@ import {
   HelpCircle,
   Copy,
   Check,
-  Zap,
-  Laptop,
   MessageSquare,
+  Volume2,
+  Download,
+  Heart,
+  Award,
 } from 'lucide-react'
 import './subpages.css'
 
@@ -23,9 +25,22 @@ interface CustomPetPageProps {
 
 const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
+type XiaoWangActionKey = 'idle' | 'click' | 'drag'
+
+interface PostcardItem {
+  id: string
+  title: string
+  tag: string
+  img: string
+  note: string
+  actionKey: XiaoWangActionKey
+  rotation: string
+}
+
 export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProps) {
   const [copiedQq, setCopiedQq] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [activeXiaoWangAction, setActiveXiaoWangAction] = useState<XiaoWangActionKey>('idle')
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -56,39 +71,116 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
     }
   }
 
-  // 4 大画师链式圈圈展示（一个作者圆圈，下面圈一个案例，再下面圈一个案例）
+  // 小汪生全部动作配置
+  const xiaoWangActions: Record<
+    XiaoWangActionKey,
+    { label: string; anim: string; desc: string; frames: number; tag: string }
+  > = {
+    idle: {
+      label: '伴读待机 · 吐舌笑',
+      anim: `${import.meta.env.BASE_URL}pets/xiaowang-idle.webp`,
+      desc: '96 帧平稳呼吸循化，咧开小嘴灿烂大笑，双耳微动。放在工位屏幕边，一眼就治愈！',
+      frames: 96,
+      tag: '静音伴读 · 呼吸微笑',
+    },
+    click: {
+      label: '撒欢互动 · 狂奔扑腾',
+      anim: `${import.meta.env.BASE_URL}pets/xiaowang-click.webp`,
+      desc: '96 帧大步狂奔扑腾，短腿生风，身体侧身飞跃，真实还原狗狗听到零食开心的撒欢步态！',
+      frames: 96,
+      tag: '点击撒欢 · 短腿飞奔',
+    },
+    drag: {
+      label: '悬空拖拽 · 超人起飞',
+      anim: `${import.meta.env.BASE_URL}pets/xiaowang-drag.webp`,
+      desc: '96 帧四爪离地腾空跃起，鼠标抓取拖拽时像小狗超人一样悬空飞扑蹬腿求抱抱！',
+      frames: 96,
+      tag: '悬空拖拽 · 飞狗起飞',
+    },
+  }
+
+  // 小汪生真实爱宠写真明信片堆
+  const postcards: PostcardItem[] = [
+    {
+      id: 'p1',
+      title: '小汪生 · 天使微笑',
+      tag: '📸 待机神态',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-1-smile.png`,
+      note: '真实柯基犬生活照切帧 · 每天开机对你灿烂咧嘴笑',
+      actionKey: 'idle',
+      rotation: '-2.5deg',
+    },
+    {
+      id: 'p2',
+      title: '小汪生 · 撒欢狂奔',
+      tag: '🏃‍♂️ 奔跑动作',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-3-running.png`,
+      note: '实录跑动步态切帧 · 小短腿在屏幕底栏嗒嗒快跑',
+      actionKey: 'click',
+      rotation: '2deg',
+    },
+    {
+      id: 'p3',
+      title: '小汪生 · 腾空飞跃',
+      tag: '🚀 悬空起飞',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-5-flying.png`,
+      note: '鼠标拖拽起飞抓拍 · 悬空蹬动短腿求抱抱',
+      actionKey: 'drag',
+      rotation: '-1.8deg',
+    },
+    {
+      id: 'p4',
+      title: '小汪生 · 歪头眨眼',
+      tag: '💖 萌态抓拍',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-2-happy.png`,
+      note: '生活照神采还原 · 好奇歪头与耳朵小晃动',
+      actionKey: 'idle',
+      rotation: '2.4deg',
+    },
+    {
+      id: 'p5',
+      title: '小汪生 · 扑腾玩耍',
+      tag: '🐾 互动命中',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-4-pounce.png`,
+      note: '逗弄道具即时反馈 · 扑腾翻滚捉桌面蝴蝶',
+      actionKey: 'click',
+      rotation: '-2.2deg',
+    },
+    {
+      id: 'p6',
+      title: '小汪生 · 治愈小太阳',
+      tag: '✨ 永久相伴',
+      img: `${import.meta.env.BASE_URL}pets/xiaowang/postcard-6-airborne.png`,
+      note: '独一无二的生命印记 · 把真实爱宠做进电脑屏幕',
+      actionKey: 'drag',
+      rotation: '1.5deg',
+    },
+  ]
+
+  // 画师分栏展示
   const artistChains = [
     {
       id: 'chestnut',
       name: '@糖炒栗子',
-      shortName: '糖炒栗子',
-      studio: '糖炒栗子定制工坊',
       initial: '栗',
       badge: '特邀主理',
-      badgeColor: '#e11d48',
       role: '特邀定制主理人 · 真实毛发专精',
       desc: '资深宠物肖像画师，擅长眼神微动作追踪与毛流感精绘。鼠标晃到哪里，爱宠就机敏地看到哪里。',
       tags: ['真实毛发', '25帧视线跟随', '微表情打呼噜', '猫犬专精'],
-      gradient: 'linear-gradient(135deg, #ff7f87, #e85f6d)',
-      ringColor: '#e85f6d',
       status: '● 开放约稿中（工期约 3~5 天）',
       cases: [
         {
           id: 'maicuijiao',
           title: '田园橘猫 · 麦脆角',
           img: `${import.meta.env.BASE_URL}pets/jiyi-action-waving.webp`,
-          sourceTag: '生活照阳台晒太阳',
           resultTag: '25帧毛发微表情',
-          desc: '提取特征山字纹与琥珀色大眼，定制了视线跟随、趴睡发呆与按爪印 3 个动作。',
           redeemCode: 'WPX-2026-JIYI',
         },
         {
           id: 'snowball',
           title: '纯种布偶 · 雪球',
           img: `${import.meta.env.BASE_URL}pets/cat.png`,
-          sourceTag: '蓝眼大围脖照片',
           resultTag: '视线跟随+呼噜踩奶',
-          desc: '抓取布偶猫标志性海双八字脸与蓬松围脖，跟随鼠标歪头眨眼，屏幕边缘伸懒腰踩奶。',
           redeemCode: 'WPX-2026-CAT',
         },
       ],
@@ -96,105 +188,26 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
     {
       id: 'mino',
       name: '@米诺画画中',
-      shortName: '米诺',
-      studio: '米诺治愈工坊',
       initial: '米',
-      badge: '家宠写生',
-      badgeColor: '#2f9f93',
-      role: '独立家宠插画师 · 日系Q版/像素风',
-      desc: '重度猫狗双全铲屎官，擅长将宠物的憨态与花斑特征提取为极具治愈感的萌系形象。',
-      tags: ['治愈Q版', '软萌像素', '踩奶互动', '异宠可接'],
-      gradient: 'linear-gradient(135deg, #2f9f93, #57c7b8)',
-      ringColor: '#2f9f93',
+      badge: '金牌画师',
+      role: '金牌宠物动态画师 · 治愈微表情专精',
+      desc: '擅长捕捉爱宠标志性萌态（歪头杀、飞机耳、打哈欠），动作生动传神。',
+      tags: ['治愈微表情', '生动神态', 'Q萌神形兼备'],
       status: '● 开放约稿中（工期约 2~4 天）',
       cases: [
         {
-          id: 'xiaochai',
-          title: '小柴犬 · 阿黄',
-          img: `${import.meta.env.BASE_URL}pets/xiaochai.png`,
-          sourceTag: '歪头杀正脸生活照',
-          resultTag: '摇尾巴+接飞盘逗弄',
-          desc: '还原标志性白肚皮与豆豆眉，加入点击欢快摇尾巴、丢飞盘互动与小憩打呼噜。',
-          redeemCode: 'WPX-2026-XIAOCHAI',
+          id: 'huanhuan',
+          title: '短腿柯基 · 欢欢',
+          img: `${import.meta.env.BASE_URL}pets/dog.png`,
+          resultTag: '扭臀+摇尾小跳',
+          redeemCode: 'WPX-2026-DOG',
         },
         {
-          id: 'nuomi',
-          title: '垂耳兔 · 糯米团',
-          img: `${import.meta.env.BASE_URL}pets/dora-action-waving.webp`,
-          sourceTag: '灰白软糯生活照',
-          resultTag: '任务栏静音嚼胡萝卜',
-          desc: '高度还原灰白兔耳，双击投喂胡萝卜，常驻在屏幕任务栏右下角安静咀嚼。',
-          redeemCode: 'WPX-2026-DORA',
-        },
-      ],
-    },
-    {
-      id: 'hoshino',
-      name: '@星野光年漫研所',
-      shortName: '星野',
-      studio: '星野创作组',
-      initial: '星',
-      badge: '动漫拟人',
-      badgeColor: '#fb7185',
-      role: '动漫概念插画师 · 二次元拟人伴侣',
-      desc: '把自家的毛孩子打造成动漫伴侣！设计专属敲小鼓、吉他伴奏或打字狂暴摇晃动作。',
-      tags: ['动漫拟人', '连携乐器合奏', '打工怨种搭子', '限量接单'],
-      gradient: 'linear-gradient(135deg, #a78bfa, #fb7185)',
-      ringColor: '#a78bfa',
-      status: '● 开放约稿中（每月限量 5 单）',
-      cases: [
-        {
-          id: 'miaomiao',
-          title: '猫耳伴侣 · 喵喵',
-          img: `${import.meta.env.BASE_URL}pets/jiyi-action-concert.webp`,
-          sourceTag: '三花猫生活照拟人',
-          resultTag: '敲小鼓吉他合奏',
-          desc: '将自家三花猫花斑融入动漫猫耳少女，跟随键盘敲击节奏弹奏吉他，带来专属治愈 BGM。',
-          redeemCode: 'WPX-2026-MIAOMIAO',
-        },
-        {
-          id: 'foxboy',
-          title: '赤狐少年 · 小赤',
-          img: `${import.meta.env.BASE_URL}pets/fox-action-waving.webp`,
-          sourceTag: '赤狐抓拍生活图',
-          resultTag: '屏幕边沿探头挥手',
-          desc: '蓬松大尾巴随风轻晃，在任务栏上方露出半个小脑袋偷偷看你，点击害羞缩回再探出。',
-          redeemCode: 'WPX-2026-FOX',
-        },
-      ],
-    },
-    {
-      id: 'memelab',
-      name: '@整活大队 MemeLab',
-      shortName: 'MemeLab',
-      studio: 'MemeLab 创意室',
-      initial: 'M',
-      badge: '趣味整活',
-      badgeColor: '#f59e0b',
-      role: '幽默动态设计师 · 狂暴打字/摸鱼搭子',
-      desc: '专治工位无聊！将爱宠的沙雕丑照与表情包制作成桌面搭子，陪你上班疯狂敲键盘。',
-      tags: ['沙雕表情包', '狂暴敲键盘', '打工怨种', '随缘接单'],
-      gradient: 'linear-gradient(135deg, #fb923c, #f59e0b)',
-      ringColor: '#fb923c',
-      status: '● 开放约稿中（随缘接单）',
-      cases: [
-        {
-          id: 'salarycat',
-          title: '疯狂敲键盘猫',
-          img: `${import.meta.env.BASE_URL}pets/salary_cat.png`,
-          sourceTag: '打工怨种搞笑丑照',
-          resultTag: '超高速打字残影冒烟',
-          desc: '打工人专属解压！你打字越快它敲键盘越狠，键盘冒火星，还会随着按键抓狂拍桌。',
-          redeemCode: 'WPX-2026-SALARYCAT',
-        },
-        {
-          id: 'mochuchai',
-          title: '摸鱼怨种柴柴',
+          id: 'moyu-fox',
+          title: '赤狐小皮皮',
           img: `${import.meta.env.BASE_URL}pets/fox.png`,
-          sourceTag: '翻白眼搞怪生活照',
-          resultTag: '任务栏打哈欠叹气',
-          desc: '趴在任务栏边沿不停打哈欠、叹气与翻白眼，完美化身工位精神状态代言人。',
-          redeemCode: 'WPX-2026-CHAI',
+          resultTag: '翻白眼打哈欠',
+          redeemCode: 'WPX-2026-FOX',
         },
       ],
     },
@@ -214,20 +227,16 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       a: '交付的是专门为您生成的独立专属安装包（仅几十MB）及配套的角色资源包（.pet）。双击即可常驻电脑桌面，且该角色永久属于您，未来更换新电脑或重装系统只需重新解压即可永久使用。',
     },
     {
-      q: '画师直约与官方平台之间是什么关系？会公开我的爱宠吗？',
-      a: '默认交付为 100% 私人专享，绝不未经允许公开给任何第三方下载！平台提供中立的轻量运行引擎支持与动作标准规范，画师团队一对一为宠友绘制，透明安全。',
-    },
-    {
       q: '定制费用如何支付？平台会抽取中介提成吗？',
       a: '平台 100% 永久免费开源，绝不收取任何中介抽成！用户与画师直接 1 对 1 私聊沟通定制细节与工期，双方自行协商付款（微信/支付宝等直接转账给画师）。平台只提供中立的切帧与技术封装支持，零差价、零套路！',
     },
   ]
 
   return (
-    <div className="page-view-pane">
+    <div className="page-view-pane custom-pet-page-pure-pink">
       {/* 浮动操作提示 */}
       {toastMessage && (
-        <div className="gallery-toast-pill" role="status" aria-live="polite">
+        <div className="gallery-toast-pill pink-toast-pill" role="status" aria-live="polite">
           <Sparkles size={16} />
           <span>{toastMessage}</span>
         </div>
@@ -236,40 +245,43 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
       <div className="subpage-container">
         {/* 顶部 Hero */}
         <header className="subpage-hero">
-          <span className="eyebrow">CUSTOM PET STUDIO · 专属定制工坊</span>
+          <span className="eyebrow pink-eyebrow">
+            <Sparkles size={14} />
+            <span>CUSTOM PET STUDIO · 真实毛孩子专属定制</span>
+          </span>
           <h1>把自家的毛孩子，做进电脑桌面陪伴你</h1>
           <p className="subpage-lead">
-            不只是现成的动漫角色！提供 1~3 张爱宠真实生活照（猫咪、狗狗、龙猫、鹦鹉），
-            特邀知名独立插画师 1 对 1 量身手绘 + 25 帧丝滑动作设计 + 官方轻量引擎专属打包。
-            每一次敲键盘、看屏幕，自家的毛孩子都在你身边。
+            不只是现成的动漫角色！提供 1~3 张自家族宠真实生活照，
+            纯手工 1 对 1 精细切帧 + 288 帧全套生动动作 + 官方轻量引擎封装。
+            每一次敲键盘看屏幕，自家的毛孩子都在你身边摇尾巴~
           </p>
 
           <div className="subpage-hero-actions">
             <a
-              className="primary-download"
+              className="primary-download pink-primary-btn"
               href={qqGroupUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{ padding: '12px 28px', fontSize: '15px' }}
             >
               <HeartHandshake size={18} />
-              <span>立即预约爱宠定制 / 进群直通</span>
+              <span>立即预约爱宠定制 / 进群私聊</span>
             </a>
 
             <button
               type="button"
-              className="secondary-action"
+              className="secondary-action pink-secondary-btn"
               onClick={handleCopyQq}
               style={{ padding: '12px 22px', fontSize: '14px' }}
             >
-              {copiedQq ? <Check size={16} color="#059669" /> : <Copy size={16} />}
+              {copiedQq ? <Check size={16} color="#ff6b81" /> : <Copy size={16} />}
               <span>{copiedQq ? '群号 422616922 已复制！' : '复制官方群号：422616922'}</span>
             </button>
 
             {onOpenGallery && (
               <button
                 type="button"
-                className="secondary-action"
+                className="secondary-action pink-secondary-btn"
                 onClick={onOpenGallery}
                 style={{ padding: '12px 22px', fontSize: '14px' }}
               >
@@ -281,7 +293,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
             {onBackToHome && (
               <button
                 type="button"
-                className="secondary-action"
+                className="secondary-action pink-secondary-btn"
                 onClick={onBackToHome}
                 style={{ padding: '12px 22px', fontSize: '14px' }}
               >
@@ -292,29 +304,185 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
           </div>
         </header>
 
-        {/* 核心特色：制作人横向分栏，直接写“制作人”，下面接着写他的角色 */}
-        <section style={{ marginBottom: '64px' }}>
-          <div className="subpage-section-header">
-            <span className="subpage-section-badge">
-              <Sparkles size={14} />
-              <span>CUSTOM CREATORS & PETS</span>
+        {/* =========================================================================
+            核心王牌：小汪生 · 真实毛孩子手作写真明信片大赏 + 全部动作交互舞台
+            ========================================================================= */}
+        <section className="xiaowang-showcase-section">
+          <div className="subpage-section-header text-center">
+            <span className="subpage-section-badge pink-badge">
+              <Heart size={14} fill="#ff6b81" color="#ff6b81" />
+              <span>OFFICIAL MASTERPIECE · 官方唯一手工实拍定制示范</span>
             </span>
-            <h2>制作人专属定制案例</h2>
+            <h2>真实宠物定制代表作：《小汪生》写真明信片</h2>
+            <p>
+              打开就像铺满一整张桌子的漂亮明信片！
+              由作者唯一倾心纯手工实拍抠图调校，完整收录待机吐舌、撒欢狂奔、悬空起飞全部生动动作。
+            </p>
+          </div>
+
+          {/* 1. 明信片写真大赏 (Postcard Desk Wall) */}
+          <div className="xiaowang-postcard-wall" aria-label="小汪生真实宠物明信片大赏">
+            {postcards.map((p) => {
+              const isActive = activeXiaoWangAction === p.actionKey
+              return (
+                <div
+                  key={p.id}
+                  className={`xiaowang-postcard-card ${isActive ? 'is-active-card' : ''}`}
+                  style={{ transform: `rotate(${p.rotation})` }}
+                  onClick={() => {
+                    setActiveXiaoWangAction(p.actionKey)
+                    showToast(`✨ 已联动切换至【${xiaoWangActions[p.actionKey].label}】动作演示！`)
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  title={`点击查看【${p.title}】动态演示`}
+                >
+                  {/* 顶部樱花粉和纸胶带装饰 */}
+                  <div className="postcard-washi-tape" />
+
+                  {/* 右上角复古粉色邮票 */}
+                  <div className="postcard-stamp">
+                    <span className="stamp-text">WindowPet</span>
+                    <span className="stamp-num">No.{p.id.replace('p', '0')}</span>
+                  </div>
+
+                  {/* 真实照片相框 */}
+                  <div className="postcard-photo-frame">
+                    <img src={p.img} alt={p.title} className="postcard-photo-img" loading="lazy" />
+                    <span className="postcard-tag-pill">{p.tag}</span>
+                  </div>
+
+                  {/* 手写风标题与文字 */}
+                  <div className="postcard-caption">
+                    <div className="postcard-title-row">
+                      <strong className="postcard-title">{p.title}</strong>
+                      <span className="postcard-date">2026.08 · 手作实切</span>
+                    </div>
+                    <p className="postcard-note">{p.note}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* 2. 小汪生全部动作动态演示交互舞台 (Live Actions Stage) */}
+          <div className="xiaowang-interactive-stage-card">
+            <div className="stage-left-avatar-zone">
+              <div className="stage-avatar-glow-ring">
+                <img
+                  key={activeXiaoWangAction}
+                  src={xiaoWangActions[activeXiaoWangAction].anim}
+                  alt={`小汪生 ${xiaoWangActions[activeXiaoWangAction].label} 实时演示`}
+                  className="stage-live-avatar-img"
+                />
+              </div>
+
+              <div className="stage-audio-badge">
+                <Volume2 size={14} color="#ff6b81" />
+                <span>实录音源配套 · 奔跑喘气与欢快汪汪声</span>
+              </div>
+            </div>
+
+            <div className="stage-right-control-zone">
+              <div className="stage-control-header">
+                <div className="stage-pet-title-row">
+                  <h3>小汪生 · 真实柯基毛孩子</h3>
+                  <span className="stage-author-pill">
+                    <Award size={13} color="#ff6b81" />
+                    <span>作者唯一手工示范作</span>
+                  </span>
+                </div>
+                <p className="stage-pet-intro">
+                  “全套 288 帧生活视频逐帧切帧，100% 还原真实毛孩子的表情与动作反馈。
+                  自家族宠的每一次撒欢与陪伴，都可以在电脑桌面上永久定格。”
+                </p>
+              </div>
+
+              {/* 动作切换标签组 */}
+              <div className="stage-action-tabs" aria-label="切换小汪生动作">
+                <span className="action-tabs-label">点击切换动作体验：</span>
+                <div className="action-tab-button-group">
+                  {(Object.keys(xiaoWangActions) as XiaoWangActionKey[]).map((key) => {
+                    const action = xiaoWangActions[key]
+                    const isActive = activeXiaoWangAction === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`stage-action-btn ${isActive ? 'is-active' : ''}`}
+                        onClick={() => {
+                          setActiveXiaoWangAction(key)
+                          showToast(`切换动作：【${action.label}】`)
+                        }}
+                      >
+                        <strong>{action.label}</strong>
+                        <small>{action.tag}</small>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 当前动作详情提示 */}
+              <div className="stage-current-action-tip">
+                <strong>当前播放动作细节：</strong>
+                <span>{xiaoWangActions[activeXiaoWangAction].desc}</span>
+              </div>
+
+              {/* 核心操作按钮组 */}
+              <div className="stage-action-cta-group">
+                <button
+                  type="button"
+                  className="stage-import-pet-btn"
+                  onClick={() => handleDeepLink('WPX-2026-XIAOWANG', '小汪')}
+                  title="直接将小汪生一键导入桌面软件常驻陪伴"
+                >
+                  <Download size={16} />
+                  <span>免费将【小汪生】导入桌面客户端</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="stage-custom-my-pet-btn"
+                  onClick={() => {
+                    handleCopyQq()
+                    showToast('已复制官方群号 422616922！进群直接私聊定制自家的真实毛孩子~')
+                  }}
+                  title="预约定制自家族宠，双方自行私聊付款"
+                >
+                  <HeartHandshake size={16} />
+                  <span>我也想定做我家的毛孩子 (私聊自行付款)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            特邀画师专栏（极简横向分栏，纯粉色主题）
+            ========================================================================= */}
+        <section style={{ marginBottom: '56px' }}>
+          <div className="subpage-section-header">
+            <span className="subpage-section-badge pink-badge">
+              <Palette size={14} />
+              <span>VERIFIED ARTISTS & STYLES</span>
+            </span>
+            <h2>特邀合作画师作品案例</h2>
             <p>简约浏览体验：按制作人分栏呈现，外部仅展示宠物与动作，清爽直观。</p>
           </div>
 
           <div className="gallery-producers-stream">
             {artistChains.map((artist) => (
-              <section className="gallery-producer-section" key={artist.id}>
+              <section className="gallery-producer-section pink-producer-card" key={artist.id}>
                 {/* 制作人标题栏：直接写“制作人：XXX” */}
                 <div className="gallery-producer-header">
-                  <div className="gallery-producer-avatar" style={{ background: artist.gradient }}>
+                  <div className="gallery-producer-avatar pink-producer-avatar">
                     {artist.initial}
                   </div>
                   <div className="gallery-producer-title-wrap">
                     <div className="gallery-producer-main-title">
                       <h2>制作人：{artist.name}</h2>
-                      <span className="gallery-producer-badge" style={{ borderColor: artist.ringColor, color: artist.ringColor }}>
+                      <span className="gallery-producer-badge pink-badge">
                         {artist.badge}
                       </span>
                     </div>
@@ -324,7 +492,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                   <div className="producer-action-group">
                     <button
                       type="button"
-                      className="gallery-producer-custom-tag"
+                      className="gallery-producer-custom-tag pink-chat-btn"
                       onClick={() => {
                         handleCopyQq()
                         showToast(`已复制官方群号 422616922！进群可直接私聊【${artist.name}】沟通定制与自行付款~`)
@@ -338,7 +506,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                       href={qqGroupUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="producer-direct-chat-link"
+                      className="producer-direct-chat-link pink-direct-link"
                       title="一键进群私聊画师"
                     >
                       进群私聊
@@ -346,12 +514,12 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
                   </div>
                 </div>
 
-                {/* 极简宠物卡片网格：只放宠物动效 + 名称 + 动作 */}
+                {/* 极简宠物卡片网格 */}
                 <div className="gallery-minimal-grid">
                   {artist.cases.map((c) => (
                     <article
                       key={c.id}
-                      className="gallery-minimal-card"
+                      className="gallery-minimal-card pink-card-hover"
                       onClick={() => handleDeepLink(c.redeemCode, c.title)}
                       role="button"
                       tabIndex={0}
@@ -379,131 +547,23 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
           </div>
         </section>
 
-        {/* 作者入驻与免登录一键直接导入机制图解 */}
-        <section style={{ marginBottom: '64px' }}>
-          <div className="subpage-section-header">
-            <span className="subpage-section-badge">
-              <Zap size={14} />
-              <span>ZERO-LOGIN IMPORT & CREATOR ONBOARDING</span>
-            </span>
-            <h2>免登录直接导入 & 画师入驻机制图解</h2>
-            <p>
-              彻底免去繁琐的手机号注册与密码记忆！理解博主与主流桌面软件的“DeepLink 协议直接唤醒 + 备用识别码”双轨机制。
-            </p>
-          </div>
-
-          <div className="import-mechanisms-grid">
-            {/* 卡片 1：免登录直接导入与备用码原理 */}
-            <article className="subpage-card import-mech-card">
-              <div className="import-mech-head">
-                <div className="import-mech-icon-wrap" style={{ background: 'rgba(232, 95, 109, 0.12)', color: '#e85f6d' }}>
-                  <Laptop size={24} />
-                </div>
-                <div>
-                  <h3>网站如何直接把宠物导入本地软件？</h3>
-                  <small style={{ color: '#57c7b8', fontWeight: 700 }}>系统级 DeepLink 协议唤醒 + 备用口令码</small>
-                </div>
-              </div>
-
-              <div className="import-mech-steps">
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">1</div>
-                  <div>
-                    <strong>点导入自动唤醒（原生系统协议）</strong>
-                    <p>
-                      我们在 Windows 系统中注册了专属协议头 <code>windowpet://import</code>。当你在网页上点击【一键导入】时，Edge 或 Chrome 浏览器会自动弹出确认框：
-                      <span className="dialog-mockup">“是否打开 WindowPet？/ 在其他应用中打开”</span>
-                      点击【确定/允许】，本地软件立刻被唤醒并无感装载！
-                    </p>
-                  </div>
-                </div>
-
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">2</div>
-                  <div>
-                    <strong>0 账号登录负担，免去一切繁琐验证</strong>
-                    <p>
-                      无论是展馆中的公共伙伴还是画师定制交付的专属角色，一律免注册账号、免手机验证码，点开即刻直接导入桌面，离线永久使用！
-                    </p>
-                  </div>
-                </div>
-
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">3</div>
-                  <div>
-                    <strong>备用识别码双轨保险（复制粘贴秒导）</strong>
-                    <p>
-                      如果用户的浏览器安全级别过高拦截了自动弹窗，网页会同步显示 12 位口令识别码（如 <code>WPX-2026-JIYI</code>）。
-                      只需在本地软件右键托盘 ➜ 选择【兑换/导入伙伴】粘贴该码，同样 1 秒完成下载装载，两套方案互为保险！
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            {/* 卡片 2：画师如何入驻与自动化打包 */}
-            <article className="subpage-card import-mech-card">
-              <div className="import-mech-head">
-                <div className="import-mech-icon-wrap" style={{ background: 'rgba(47, 159, 147, 0.12)', color: '#2f9f93' }}>
-                  <Palette size={24} />
-                </div>
-                <div>
-                  <h3>画师如何入驻？宠物如何传到软件里？</h3>
-                  <small style={{ color: '#e85f6d', fontWeight: 700 }}>画师只管画图，官方工具一键切帧打包</small>
-                </div>
-              </div>
-
-              <div className="import-mech-steps">
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">A</div>
-                  <div>
-                    <strong>画师零代码创作（提供 18 格主精灵图）</strong>
-                    <p>
-                      画师完全不需要懂编程！画师只需按官方规范画出待机（idle）、点击（click）、悬空拖拽（drag）共 18 格 PNG 切片或一张大图纸。
-                    </p>
-                  </div>
-                </div>
-
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">B</div>
-                  <div>
-                    <strong>官方自动化工具 1 秒切帧打包</strong>
-                    <p>
-                      使用项目中现成的 <code>build_character_from_sheet.py</code> 脚本，自动网格分割、去除纯色底、标准化尺寸并生成 <code>asset.json</code>，打包成几兆大小的 <code>.pet</code> 资源包。
-                    </p>
-                  </div>
-                </div>
-
-                <div className="import-mech-step-item">
-                  <div className="step-badge-num">C</div>
-                  <div>
-                    <strong>云端分发与作者专属展馆上架</strong>
-                    <p>
-                      将打包好的角色发布至静态资源库，系统自动分配专属兑换口令码，并生成画师的个人专属主页与作品集。
-                      用户一键点击即可秒速拉取并常驻桌面！
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        {/* 四步极简定制流程 */}
+        {/* =========================================================================
+            四步极简定制流程（纯粉色）
+            ========================================================================= */}
         <section style={{ marginBottom: '56px' }}>
           <div className="subpage-section-header">
-            <span className="subpage-section-badge">
+            <span className="subpage-section-badge pink-badge">
               <Sparkles size={14} />
               <span>SIMPLE 4-STEP PROCESS</span>
             </span>
             <h2>四步极简定制，毛孩子跃然桌面</h2>
-            <p>从生活照到桌面灵动伙伴，标准化专业流程，透明省心。</p>
+            <p>从真实生活照到桌面灵动伙伴，标准化专业流程，透明省心。</p>
           </div>
 
           <div className="custom-steps-grid">
-            <article className="subpage-card custom-step-card">
-              <div className="custom-step-number">01</div>
-              <div className="custom-step-icon" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626' }}>
+            <article className="subpage-card custom-step-card pink-step-card">
+              <div className="custom-step-number pink-step-number">01</div>
+              <div className="custom-step-icon pink-step-icon">
                 <Camera size={24} />
               </div>
               <h3>01. 提供真实生活照</h3>
@@ -512,9 +572,9 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
               </p>
             </article>
 
-            <article className="subpage-card custom-step-card">
-              <div className="custom-step-number">02</div>
-              <div className="custom-step-icon" style={{ background: 'rgba(14, 165, 233, 0.12)', color: '#0284c7' }}>
+            <article className="subpage-card custom-step-card pink-step-card">
+              <div className="custom-step-number pink-step-number">02</div>
+              <div className="custom-step-icon pink-step-icon">
                 <Palette size={24} />
               </div>
               <h3>02. 挑选动作与互动风格</h3>
@@ -523,9 +583,9 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
               </p>
             </article>
 
-            <article className="subpage-card custom-step-card">
-              <div className="custom-step-number">03</div>
-              <div className="custom-step-icon" style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#7c3aed' }}>
+            <article className="subpage-card custom-step-card pink-step-card">
+              <div className="custom-step-number pink-step-number">03</div>
+              <div className="custom-step-icon pink-step-icon">
                 <Sparkles size={24} />
               </div>
               <h3>03. 画师 1 对 1 绘制精修</h3>
@@ -534,9 +594,9 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
               </p>
             </article>
 
-            <article className="subpage-card custom-step-card">
-              <div className="custom-step-number">04</div>
-              <div className="custom-step-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
+            <article className="subpage-card custom-step-card pink-step-card">
+              <div className="custom-step-number pink-step-number">04</div>
+              <div className="custom-step-icon pink-step-icon">
                 <Gift size={24} />
               </div>
               <h3>04. 专属安装包交付</h3>
@@ -547,22 +607,24 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
           </div>
         </section>
 
-        {/* 定制答疑 FAQ */}
+        {/* =========================================================================
+            定制答疑 FAQ（纯粉色）
+            ========================================================================= */}
         <section style={{ marginBottom: '40px' }}>
           <div className="subpage-section-header">
-            <span className="subpage-section-badge">
+            <span className="subpage-section-badge pink-badge">
               <HelpCircle size={14} />
               <span>FAQ</span>
             </span>
             <h2>爱宠定制常见问题</h2>
-            <p>了解定制流程、工期安排与交付保障细节。</p>
+            <p>了解定制流程、工期安排、零抽成与交付保障细节。</p>
           </div>
 
           <div className="faq-list">
             {customFaqs.map((faq, idx) => (
-              <article className="subpage-card faq-item" key={idx}>
+              <article className="subpage-card faq-item pink-faq-card" key={idx}>
                 <div className="faq-question">
-                  <div className="faq-q-badge">Q</div>
+                  <div className="faq-q-badge pink-q-badge">Q</div>
                   <h3>{faq.q}</h3>
                 </div>
                 <div className="faq-answer">
@@ -574,14 +636,14 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
         </section>
 
         {/* 底部 CTA 预约横幅 */}
-        <div className="subpage-cta-box">
+        <div className="subpage-cta-box pink-cta-box">
           <div>
             <h3>想给自家毛孩子定制专属电脑桌面陪伴？</h3>
-            <p>官方交流群现已开放预约通道，透明工期与进度跟踪，支持验收满意后再交付。</p>
+            <p>官方交流群现已开放预约通道，透明工期与进度跟踪，双方直接私聊自行付款，平台零抽成！</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <a
-              className="primary-download"
+              className="primary-download pink-primary-btn"
               href={qqGroupUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -596,7 +658,7 @@ export function CustomPetPage({ onBackToHome, onOpenGallery }: CustomPetPageProp
 
         {/* 底部版权 */}
         <footer className="subpage-footer">
-          <span>© 2026 WindowPet Open Source Community · 永久开源免费</span>
+          <span>© 2026 WindowPet · 小鼻嘎开源社区 · 永久免费</span>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
             桂ICP备2026009615号-2
           </a>
