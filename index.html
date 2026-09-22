@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="./favicon.ico?v=1.0.32" sizes="any" />
+    <link rel="shortcut icon" href="./favicon.ico?v=1.0.32" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=1.0.32" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fffaf5" />
+    <meta name="description" content="Window Pet 桌面萌宠：静态陪伴、轻量互动与日常提醒。" />
+    <title>Window Pet 桌面萌宠官方下载</title>
+    <script>
+      // 修复访问 /WindowPet 缺少尾随斜线导致的相对静态资源 404
+      if (location.pathname === '/WindowPet' || location.pathname.endsWith('/WindowPet')) {
+        location.replace(location.pathname + '/' + location.search + location.hash);
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/index-CFB4_owk.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-COA-1cNj.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
