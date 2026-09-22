@@ -12,6 +12,7 @@ import {
   FileArchive,
   Gift,
   HeartHandshake,
+  Home,
   LockKeyhole,
   MousePointerClick,
   PawPrint,
@@ -23,10 +24,36 @@ import './App.css'
 import './polish.css'
 import { PetGallery } from './PetGallery'
 
+function QqIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+      <path d="M824.8 613.2c-16-51.4-34.4-94.6-62.7-165.3C766.5 262.2 683.4 128 512 128s-254.5 134.2-250.1 319.9c-28.3 70.7-46.7 113.9-62.7 165.3-21.1 67.7-42 165.1 41.5 165.1 41.5 0 71.9-52.5 90.7-94.4 70.3 35.8 153.6 37.1 178.6 37.1 25 0 108.3-1.3 178.6-37.1 18.8 41.9 49.2 94.4 90.7 94.4 83.5 0 62.6-97.4 41.5-165.1z" />
+    </svg>
+  )
+}
+
+function BilibiliIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+      <path d="M784 224h-100l60-60c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L587.3 224H436.7L325.3 118.7c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l60 60H240C151.6 224 80 295.6 80 384v384c0 88.4 71.6 160 160 160h544c88.4 0 160-71.6 160-160V384c0-88.4-71.6-160-160-160zm96 544c0 53-43 96-96 96H240c-53 0-96-43-96-96V384c0-53 43-96 96-96h544c53 0 96 43 96 96v384zm-520-224c0-26.5 21.5-48 48-48s48 21.5 48 48-21.5 48-48 48-48-21.5-48-48zm304 0c0-26.5 21.5-48 48-48s48 21.5 48 48-21.5 48-48 48-48-21.5-48-48z" />
+    </svg>
+  )
+}
+
+function GithubIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+    </svg>
+  )
+}
+
 const releaseVersion = '1.0.32'
 const releaseInstallerName = `WindowPet_Setup_v${releaseVersion}.exe`
 const releaseInstallerHref = `https://github.com/panda008006/WindowPet/releases/download/v${releaseVersion}/${releaseInstallerName}`
 const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
+const bilibiliVideoUrl = 'https://www.bilibili.com/video/BV1E2eb6PE5Q/'
+const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
 
 const sectionIds = ['home', 'pets', 'features', 'custom', 'control'] as const
 
@@ -376,7 +403,8 @@ function App() {
             className={`nav-link-btn ${currentView === 'home' ? 'is-active' : ''}`}
             onClick={handleNavHome}
           >
-            首页
+            <Home size={15} />
+            <span>首页</span>
           </button>
           <button
             type="button"
@@ -384,27 +412,59 @@ function App() {
             onClick={handleOpenGallery}
             title="打开小鼻嘎展馆，查看全部 24 款萌宠"
           >
-            小鼻嘎展馆
-            <span className="nav-gallery-tag">NEW</span>
+            <Sparkles size={15} />
+            <span>小鼻嘎展馆</span>
+            <span className="nav-gallery-tag">24款</span>
           </button>
-          <a
-            className="nav-github-link"
-            href={githubRepoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontWeight: 600, color: 'var(--wp-ink)' }}
-          >
-            GitHub 开源
-          </a>
         </nav>
 
-        <a className="nav-download" href={releaseInstallerHref} download={releaseInstallerName}>
-          <Download size={17} />
-          免费下载 (50MB)
-        </a>
+        <div className="nav-actions action-buttons">
+          <div className="nav-community-actions" aria-label="社区交流群与外链">
+            <a
+              href={qqGroupUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-community-btn nav-community-btn--qq"
+              title="加入 WindowPet 官方 QQ 交流群：422616922"
+            >
+              <QqIcon size={15} />
+              <span>群: 422616922</span>
+            </a>
+            <a
+              href={bilibiliVideoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-community-btn nav-community-btn--bilibili"
+              title="在哔哩哔哩观看演示视频"
+            >
+              <BilibiliIcon size={16} />
+              <span>B站演示</span>
+            </a>
+            <a
+              href={githubRepoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-community-btn nav-community-btn--github"
+              title="前往 GitHub 开源仓库 Star"
+            >
+              <GithubIcon size={15} />
+              <span>GitHub</span>
+            </a>
+          </div>
+
+          <a className="nav-download" href={releaseInstallerHref} download={releaseInstallerName} title="下载官方安装包">
+            <Download size={16} />
+            <span>免费下载 (50MB)</span>
+          </a>
+        </div>
       </header>
 
-      {currentView === 'home' && (
+      <main
+        className="fullpage-site"
+        ref={shellRef}
+        onWheel={handleWheel}
+        style={{ display: currentView === 'home' ? 'block' : 'none' }}
+      >
         <aside className="section-dots" aria-label="页面进度">
           {sectionDots.map((item, index) => (
             <button
@@ -417,14 +477,6 @@ function App() {
             />
           ))}
         </aside>
-      )}
-
-      <main
-        className="fullpage-site"
-        ref={shellRef}
-        onWheel={handleWheel}
-        style={{ display: currentView === 'home' ? 'block' : 'none' }}
-      >
 
       <section className="snap-section hero-page" id="home" aria-label="Window Pet 首页">
         <div className="section-inner hero-layout">
