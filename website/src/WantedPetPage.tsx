@@ -4,7 +4,6 @@ import {
   Send,
   Flame,
   Heart,
-  CheckCircle2,
   ArrowLeft,
   Compass,
   Palette,
@@ -23,6 +22,7 @@ export interface WishBubble {
   glowColor: string
   isHot?: boolean
   claimedBy?: string
+  claimedCount?: number
   createdAt?: string
 }
 
@@ -57,6 +57,7 @@ const initialBubbles: WishBubble[] = [
     glowColor: 'rgba(94, 234, 212, 0.45)',
     isHot: true,
     claimedBy: '糖炒栗子定制工坊',
+    claimedCount: 1,
   },
   {
     id: 'b4',
@@ -68,6 +69,7 @@ const initialBubbles: WishBubble[] = [
     glowColor: 'rgba(252, 211, 77, 0.45)',
     isHot: true,
     claimedBy: '米诺画画中',
+    claimedCount: 1,
   },
   {
     id: 'b5',
@@ -108,6 +110,7 @@ const initialBubbles: WishBubble[] = [
     textColor: '#581c87',
     glowColor: 'rgba(216, 180, 254, 0.45)',
     claimedBy: '星野光年漫研所',
+    claimedCount: 1,
   },
   {
     id: 'b9',
@@ -154,6 +157,7 @@ const initialBubbles: WishBubble[] = [
     textColor: '#14532d',
     glowColor: 'rgba(134, 239, 172, 0.45)',
     claimedBy: '官方创研所',
+    claimedCount: 1,
   },
   {
     id: 'b14',
@@ -290,6 +294,17 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [poppingId, setPoppingId] = useState<string | null>(null)
+  const [isArtistMode, setIsArtistMode] = useState(false)
+
+  // 用户个人投票记录：每个角色限投 20 次，可投多个不同角色
+  const [userVotes, setUserVotes] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('windowpet_wish_votes_map')
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
+  })
 
   // 升腾冒起泡泡的核心动画状态 (Codex/Anti-gravity 物理升腾)
   const [ascendingBubble, setAscendingBubble] = useState<{
@@ -307,13 +322,48 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
     setTimeout(() => setToastMsg(null), 3000)
   }
 
-  // 投票点赞 +1
+  // 投票点赞 +1 (单角色限 20 票，多角色不限)
   const handleVote = (id: string, name: string) => {
+    const currentCount = userVotes[id] || 0
+    if (currentCount >= 20) {
+      showToast(`💖 您已为【${name}】投满 20 票心愿啦！心意满满，去为其他心仪角色投出宝贵一票吧~`)
+      return
+    }
+
+    const nextCount = currentCount + 1
+    const updatedVotes = { ...userVotes, [id]: nextCount }
+    setUserVotes(updatedVotes)
+    try {
+      localStorage.setItem('windowpet_wish_votes_map', JSON.stringify(updatedVotes))
+    } catch {
+      // ignore
+    }
+
     setPoppingId(id)
     setBubbles((prev) =>
       prev.map((b) => (b.id === id ? { ...b, votes: b.votes + 1 } : b))
     )
-    showToast(`🎉 为【${name}】点赞 +1！泡泡又膨胀了一圈~`)
+    showToast(`🎉 为【${name}】许愿 +1！(您已投 ${nextCount}/20 票) 泡泡又膨胀了一圈~`)
+    setTimeout(() => setPoppingId(null), 600)
+  }
+
+  // 画师认领制作：认领人数加 1 并点亮制作状态
+  const handleClaimPet = (id: string, name: string) => {
+    setPoppingId(id)
+    let newClaimCount = 1
+    setBubbles((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b
+        const prevCount = b.claimedCount || (b.claimedBy ? 1 : 0)
+        newClaimCount = prevCount + 1
+        return {
+          ...b,
+          claimedCount: newClaimCount,
+          claimedBy: b.claimedBy || '社区画师',
+        }
+      })
+    )
+    showToast(`🎨 感谢画师老师认领【${name}】！认领人数已加 1（当前已有 ${newClaimCount} 位画师认领制作），期待早日上线！`)
     setTimeout(() => setPoppingId(null), 600)
   }
 
@@ -488,35 +538,101 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
           </p>
         </div>
 
+        {/* 画师入驻与心愿认领状态栏 (放置在气泡海洋上方，一目了然且永不被底部输入框遮挡) */}
+        <div className="wanted-artist-callout">
+          <div className="callout-left">
+            {isArtistMode ? (
+              <div className="callout-artist-mode-active">
+                <span className="callout-live-dot" />
+                <span>
+                  <strong>画师认领模式生效中：</strong>点击下方任意角色的气泡，即可认领该心愿（认领画师数 +1 并点亮制作进度）！
+                </span>
+              </div>
+            ) : (
+              <div className="callout-artist-mode-idle">
+                <Palette size={16} color="#2f9f93" />
+                <span>
+                  <strong>画师心愿认领：</strong>点击右侧【我是画师】，即可开启认领模式并点亮您想制作的角色~
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="callout-right-actions">
+            <button
+              type="button"
+              className={`callout-artist-btn ${isArtistMode ? 'is-artist-active' : ''}`}
+              onClick={() => {
+                setIsArtistMode((prev) => !prev)
+                if (!isArtistMode) {
+                  showToast('🎨 已开启【画师认领模式】！现在点击下方任意角色的气泡，即可认领该角色（认领数加 1）~')
+                } else {
+                  showToast('已退出画师认领模式，恢复普通心愿投票。')
+                }
+              }}
+              title={isArtistMode ? '点击退出画师认领模式' : '点击开启画师认领模式'}
+            >
+              <Palette size={14} />
+              <span>{isArtistMode ? '✓ 画师认领中 (点击退出)' : '我是画师，认领心愿'}</span>
+            </button>
+
+            {onOpenCustom && (
+              <button
+                type="button"
+                className="callout-secondary-custom-btn"
+                onClick={onOpenCustom}
+                title="前往爱宠定制专区"
+              >
+                <span>爱宠定制专区 →</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* 气泡天空与海洋 */}
-        <div className="wanted-bubbles-ocean">
+        <div className={`wanted-bubbles-ocean ${isArtistMode ? 'is-artist-mode' : ''}`}>
           {filteredBubbles.map((b, idx) => {
             // 尺寸计算：从 82px 到 152px 动态线性平滑膨胀
             const ratio = Math.min(1, Math.max(0, b.votes / maxVotes))
             const sizePx = Math.round(82 + ratio * 68)
             const isPopping = poppingId === b.id
+            const myVote = userVotes[b.id] || 0
+            const claimCount = b.claimedCount || (b.claimedBy ? 1 : 0)
 
             return (
               <div
                 key={b.id}
                 className={`ocean-bubble-node bubble-float-drift-${(idx % 6) + 1} ${
                   isPopping ? 'is-heart-bouncing' : ''
-                }`}
+                } ${isArtistMode ? 'is-artist-interactive' : ''}`}
                 style={{
                   width: `${sizePx}px`,
                   height: `${sizePx}px`,
                   background: b.gradient,
-                  boxShadow: `0 10px 30px ${b.glowColor}, inset 0 -4px 12px rgba(0,0,0,0.06), inset 0 4px 12px rgba(255,255,255,0.85)`,
+                  boxShadow: isArtistMode
+                    ? `0 10px 30px rgba(16, 185, 129, 0.4), inset 0 -4px 12px rgba(0,0,0,0.06), inset 0 4px 12px rgba(255,255,255,0.85)`
+                    : `0 10px 30px ${b.glowColor}, inset 0 -4px 12px rgba(0,0,0,0.06), inset 0 4px 12px rgba(255,255,255,0.85)`,
                   color: b.textColor,
                 }}
-                onClick={() => handleVote(b.id, b.name)}
-                title={`点击为【${b.name}】投出宝贵 1 票 (当前: ${b.votes} 票)`}
+                onClick={() => (isArtistMode ? handleClaimPet(b.id, b.name) : handleVote(b.id, b.name))}
+                title={
+                  isArtistMode
+                    ? `[画师认领模式] 点击认领【${b.name}】制作 (认领画师数 +1，当前: ${claimCount} 位)`
+                    : `点击为【${b.name}】投出宝贵心愿票 (当前: ${b.votes} 票，您已投: ${myVote}/20 票)`
+                }
                 role="button"
                 tabIndex={0}
               >
                 {b.isHot && (
                   <span className="ocean-hot-badge" title="呼声超高！">
                     <Flame size={12} fill="#ef4444" color="#ef4444" />
+                  </span>
+                )}
+
+                {/* 画师模式悬浮引导 */}
+                {isArtistMode && (
+                  <span className="ocean-artist-claim-pill" title="点击即可认领制作">
+                    + 认领
                   </span>
                 )}
 
@@ -527,30 +643,17 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
                   <span>{b.votes}</span>
                 </div>
 
-                {b.claimedBy && (
-                  <span className="ocean-claimed-tag" title={`已被【${b.claimedBy}】认领制作中`}>
-                    ✓ 制作中
+                {claimCount > 0 && (
+                  <span
+                    className="ocean-claimed-tag"
+                    title={`已有 ${claimCount} 位画师认领制作`}
+                  >
+                    ✓ 制作中 ({claimCount}画师)
                   </span>
                 )}
               </div>
             )
           })}
-        </div>
-
-        {/* 画师入驻呼吁底栏 */}
-        <div className="wanted-artist-callout">
-          <div className="callout-left">
-            <CheckCircle2 size={16} color="#10b981" />
-            <span>
-              <strong>开源防刷保障：</strong>每个角色独立投票，防止重复刷屏；每个作者最多认领 20 款入驻。
-            </span>
-          </div>
-          {onOpenCustom && (
-            <button type="button" className="callout-artist-btn" onClick={onOpenCustom}>
-              <Palette size={14} />
-              <span>我是画师，认领心愿制作</span>
-            </button>
-          )}
         </div>
       </main>
 

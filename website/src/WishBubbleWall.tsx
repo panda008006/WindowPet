@@ -266,7 +266,7 @@ export function WishBubbleWall({ onNavigateCustom }: { onNavigateCustom?: () => 
         <div className="bubble-footer-tips">
           <CheckCircle2 size={15} color="#10b981" />
           <span>
-            <strong>防刷与审核机制：</strong>内置敏感词与频率限制，每个作者最多可认领 20 款入驻。绿色健康，人人可参与！
+            <strong>画师入驻合作：</strong>欢迎各位独立插画师与像素创作者认领制作，绿色健康，人人可参与！
           </span>
         </div>
 

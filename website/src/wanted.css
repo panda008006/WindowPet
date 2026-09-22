@@ -148,7 +148,7 @@
 .wanted-main-stage {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 20px 24px 220px;
+  padding: 20px 24px 280px;
 }
 
 .wanted-hero-header {
@@ -402,6 +402,105 @@
   background: #2f9f93;
   color: #ffffff;
   transform: translateY(-1px);
+}
+
+.callout-artist-btn.is-artist-active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+.callout-right-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.callout-secondary-custom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 95, 109, 0.3);
+  background: rgba(232, 95, 109, 0.06);
+  color: #e85f6d;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.callout-secondary-custom-btn:hover {
+  background: #fff0f3;
+  border-color: #ff6b81;
+  color: #ff4757;
+  transform: translateY(-1px);
+}
+
+.callout-artist-mode-active,
+.callout-artist-mode-idle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.callout-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulseDot 1.5s infinite;
+  flex-shrink: 0;
+}
+
+/* 画师认领模式下气泡海洋高亮 */
+.wanted-bubbles-ocean.is-artist-mode {
+  border: 2px dashed rgba(16, 185, 129, 0.55);
+  background: radial-gradient(circle at 10% 20%, rgba(209, 250, 229, 0.75) 0%, transparent 22rem),
+              radial-gradient(circle at 90% 80%, rgba(255, 238, 240, 0.65) 0%, transparent 24rem),
+              rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
+}
+
+.ocean-bubble-node.is-artist-interactive {
+  cursor: copy !important;
+  border: 1.5px dashed rgba(16, 185, 129, 0.65) !important;
+}
+
+.ocean-bubble-node.is-artist-interactive:hover {
+  transform: scale(1.12) translateY(-6px) !important;
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.65), inset 0 2px 8px rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid #10b981 !important;
+}
+
+.ocean-artist-claim-pill {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 850;
+  padding: 2px 7px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+  animation: claimPillBob 1.6s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes claimPillBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 /* =========================================================================
