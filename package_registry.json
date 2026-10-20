@@ -9,34 +9,10 @@
   },
   "packages": [
     {
-      "code": "0001",
-      "package_id": "bear",
-      "folder_name": "BearPet",
-      "display_name": "Bear",
-      "owner_type": "official",
-      "status": "published"
-    },
-    {
       "code": "0002",
       "package_id": "bubu",
       "folder_name": "BubuPet",
-      "display_name": "Bubu",
-      "owner_type": "official",
-      "status": "published"
-    },
-    {
-      "code": "0003",
-      "package_id": "buya",
-      "folder_name": "BuyaPet",
-      "display_name": "不鸭",
-      "owner_type": "official",
-      "status": "published"
-    },
-    {
-      "code": "0004",
-      "package_id": "huhu2",
-      "folder_name": "Huhu2Pet",
-      "display_name": "呼呼",
+      "display_name": "布布鼠",
       "owner_type": "official",
       "status": "published"
     },
@@ -65,18 +41,10 @@
       "status": "published"
     },
     {
-      "code": "0008",
-      "package_id": "kun-like",
-      "folder_name": "KunLikePet",
-      "display_name": "Kun Like",
-      "owner_type": "official",
-      "status": "published"
-    },
-    {
       "code": "0009",
       "package_id": "logo-guinea-pig",
       "folder_name": "LogoGuineaPigPet",
-      "display_name": "小豚鼠吉祥物",
+      "display_name": "小豚鼠",
       "owner_type": "official",
       "status": "published"
     },
@@ -92,15 +60,7 @@
       "code": "0011",
       "package_id": "mianmian",
       "folder_name": "MianmianPet",
-      "display_name": "绵绵",
-      "owner_type": "official",
-      "status": "published"
-    },
-    {
-      "code": "0012",
-      "package_id": "nezuko",
-      "folder_name": "NezukoPet",
-      "display_name": "Nezuko",
+      "display_name": "绵绵羊",
       "owner_type": "official",
       "status": "published"
     },
@@ -116,7 +76,7 @@
       "code": "0014",
       "package_id": "panda",
       "folder_name": "PandaPet",
-      "display_name": "Panda",
+      "display_name": "功夫大熊猫",
       "owner_type": "official",
       "status": "published"
     },
@@ -148,7 +108,7 @@
       "code": "0018",
       "package_id": "xiaochai",
       "folder_name": "XiaochaiPet",
-      "display_name": "小柴",
+      "display_name": "小柴犬",
       "owner_type": "official",
       "status": "published"
     },
@@ -156,7 +116,7 @@
       "code": "0019",
       "package_id": "window-pet-buddy",
       "folder_name": "WindowPetBuddy",
-      "display_name": "电光小鼻嘎",
+      "display_name": "经典小鼻嘎",
       "owner_type": "official",
       "status": "preview"
     },
@@ -164,7 +124,7 @@
       "code": "0020",
       "package_id": "kukukaka",
       "folder_name": "KukukakaPet",
-      "display_name": "库库咔咔",
+      "display_name": "库库卡卡",
       "owner_type": "official",
       "status": "legacy"
     },
@@ -172,7 +132,7 @@
       "code": "0021",
       "package_id": "dora",
       "folder_name": "DoraPet",
-      "display_name": "Dora",
+      "display_name": "糯糯 Dora",
       "owner_type": "official",
       "status": "published"
     },
@@ -188,7 +148,7 @@
       "code": "1003",
       "package_id": "redwolf",
       "folder_name": "RedWolfPet",
-      "display_name": "曼波红狼",
+      "display_name": "红狼小咪",
       "owner_type": "custom",
       "status": "published"
     },
@@ -196,16 +156,152 @@
       "code": "1004",
       "package_id": "beecat",
       "folder_name": "BeeCatPet",
-      "display_name": "哈基蜂",
+      "display_name": "小蜜蜂猫",
       "owner_type": "custom",
       "status": "published"
     },
     {
-      "code": "1005",
-      "package_id": "weichong",
-      "folder_name": "WeiChongPet",
-      "display_name": "威虫",
+      "code": "1007",
+      "package_id": "westie",
+      "folder_name": "WestiePet",
+      "display_name": "西高地白白",
       "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1008",
+      "package_id": "sugarglider",
+      "folder_name": "SugarGliderPet",
+      "display_name": "白化蜜袋黝",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1009",
+      "package_id": "munchkincat",
+      "folder_name": "MunchkinCatPet",
+      "display_name": "短腿猫",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1010",
+      "package_id": "chubbygoldencat",
+      "folder_name": "ChubbyGoldenCatPet",
+      "display_name": "金渐层胖猫",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1011",
+      "package_id": "leopardgecko",
+      "folder_name": "LeopardGeckoPet",
+      "display_name": "微笑豹纹守宫",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1012",
+      "package_id": "xiaoba-turn",
+      "folder_name": "XiaobaTurnPet",
+      "display_name": "麦脆角小猫",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1013",
+      "package_id": "dadeepseek",
+      "folder_name": "DaDeepSeekPet",
+      "display_name": "大 DeepSeek",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1014",
+      "package_id": "zlm",
+      "folder_name": "ZlmPet",
+      "display_name": "周六木",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1015",
+      "package_id": "codex",
+      "folder_name": "CodexPet",
+      "display_name": "Codex 白龙娘",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1016",
+      "package_id": "claude",
+      "folder_name": "ClaudePet",
+      "display_name": "Claude",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1017",
+      "package_id": "xiaodeepseek",
+      "folder_name": "XiaoDeepSeekPet",
+      "display_name": "小 DeepSeek",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1018",
+      "package_id": "doubao-ai",
+      "folder_name": "DoubaoAiPet",
+      "display_name": "豆包 (视频版)",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1019",
+      "package_id": "zhuzhuxia",
+      "folder_name": "ZhuZhuXiaPet",
+      "display_name": "猪猪侠",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1020",
+      "package_id": "tesla",
+      "folder_name": "TeslaPet",
+      "display_name": "特斯拉超跑",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1021",
+      "package_id": "liangsheng",
+      "folder_name": "LiangShengPet",
+      "display_name": "梁圣",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1022",
+      "package_id": "qianduoduo",
+      "folder_name": "QianDuoDuoPet",
+      "display_name": "钱多多",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1023",
+      "package_id": "linchuxue",
+      "folder_name": "LinChuXuePet",
+      "display_name": "林初雪",
+      "owner_type": "custom",
+      "status": "published"
+    },
+    {
+      "code": "1024",
+      "package_id": "dafeiyu",
+      "folder_name": "DaFeiYuPet",
+      "display_name": "大肥鱼",
+      "owner_type": "official",
       "status": "published"
     }
   ]

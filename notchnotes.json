@@ -1,5 +1,5 @@
 {
-  "current_scene": "notes",
+  "current_scene": "todo",
   "anchor_mode": "pet",
   "opacity": 0.95,
   "pin_top": true,
@@ -17,13 +17,5 @@
       "content": "# 脑洞与碎碎念\n\n- [Idea] 给桌宠增加更多微互动动作\n- [Idea] 定时提醒与番茄钟完成联动播报\n"
     }
   },
-  "file_shelf": [
-    {
-      "path": "G:\\Windpet\\WindowPet最终交接打包_2026年8月15日172746\\01_发给同事_项目包\\01_软件与源码\\03_最新开发源码1.0.32_candidate\\icon.ico",
-      "name": "icon.ico",
-      "ext": ".ico",
-      "size": "82.0 KB",
-      "is_dir": false
-    }
-  ]
+  "file_shelf": []
 }

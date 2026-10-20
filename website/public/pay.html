@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Window Pet - 支付宝扫码支付 / 会员赞助</title>
+  <title>Window Pet - 开发者随心投喂与支持</title>
   <link rel="icon" type="image/svg+xml" href="/pet/favicon.svg">
   <style>
     :root {
@@ -450,7 +450,7 @@
         <img src="/pet/apple-touch-icon.png" alt="Window Pet">
         <span>Window Pet</span>
       </a>
-      <p class="brand-subtitle">桌面萌宠 · 终身特权与角色解锁</p>
+      <p class="brand-subtitle">桌面萌宠 · 全角色免费开放 · 开发者随心支持</p>
     </div>
 
     <!-- User Account Status -->
@@ -465,47 +465,44 @@
     <!-- Step 1: Select Plan & Create Order -->
     <div id="selectionView">
       <div class="section-title">
-        <span>选择特权方案</span>
-        <span style="font-size: 11px; color: #38bdf8;">限时特惠</span>
+        <span>选择支持方案（所有角色均免费开放）</span>
+        <span style="font-size: 11px; color: #38bdf8;">随心投喂</span>
       </div>
 
       <div class="plans-grid" id="plansContainer">
-        <div class="plan-card selected" data-id="plan_lifetime_vip" data-amount="9.90" onclick="selectPlan(this)">
+        <div class="plan-card selected" data-id="plan_lifetime" data-amount="9.90" onclick="selectPlan(this)">
           <div class="plan-info">
-            <h4>终身全角色解锁包 <span class="plan-tag">最受欢迎</span></h4>
-            <div class="plan-desc">一键解锁全套 8 款角色、全部动作与永久 VIP 标识</div>
+            <h4>请作者喝杯奶茶 <span class="plan-tag">心意支持</span></h4>
+            <div class="plan-desc">全套角色与动作工坊本身均免费开放，您的支持将用于云端维护</div>
           </div>
           <div class="plan-price">
-            <div class="price-num">￥9.90<span class="price-unit">/永久</span></div>
-            <div class="original-price">￥29.90</div>
+            <div class="price-num">￥9.90<span class="price-unit">/支持</span></div>
           </div>
         </div>
 
-        <div class="plan-card" data-id="plan_vip_ai" data-amount="19.90" onclick="selectPlan(this)">
+        <div class="plan-card" data-id="plan_sponsor_super" data-amount="19.90" onclick="selectPlan(this)">
           <div class="plan-info">
-            <h4>终身 VIP + 优先 AI 配额</h4>
-            <div class="plan-desc">含全角色解锁 + 永久优先 AI 对话配额 + 专属气泡</div>
+            <h4>为作者加个鸡腿</h4>
+            <div class="plan-desc">支持个人开发者持续维护、绘制新角色与功能迭代</div>
           </div>
           <div class="plan-price">
-            <div class="price-num">￥19.90<span class="price-unit">/永久</span></div>
-            <div class="original-price">￥59.90</div>
+            <div class="price-num">￥19.90<span class="price-unit">/支持</span></div>
           </div>
         </div>
 
         <div class="plan-card" data-id="plan_sponsor" data-amount="29.90" onclick="selectPlan(this)">
           <div class="plan-info">
             <h4>开发者赞助包</h4>
-            <div class="plan-desc">全特权 + 角色工坊首发体验 + 贡献者专属金色勋章</div>
+            <div class="plan-desc">感谢您的慷慨支持，助力 WindowPet 开源与陪伴生态</div>
           </div>
           <div class="plan-price">
             <div class="price-num">￥29.90<span class="price-unit">/赞助</span></div>
-            <div class="original-price">￥99.00</div>
           </div>
         </div>
       </div>
 
       <div class="input-group">
-        <label for="accountInput">授权账号（手机号或邮箱，用于开通永久权益）</label>
+        <label for="accountInput">关联账号（手机号或邮箱，用于登记支持记录）</label>
         <input type="text" id="accountInput" placeholder="请输入您的邮箱或手机号" required>
       </div>
 
@@ -513,14 +510,14 @@
         <svg viewBox="0 0 1024 1024">
           <path d="M798.72 593.92c-56.32-35.84-128-66.56-209.92-87.04 25.6-35.84 46.08-76.8 61.44-117.76H768v-61.44H563.2V256h-81.92v71.68H256v61.44h317.44c-15.36 35.84-35.84 71.68-61.44 102.4-76.8-25.6-158.72-35.84-240.64-35.84v61.44c76.8 0 153.6 10.24 225.28 35.84-81.92 61.44-184.32 107.52-296.96 133.12l35.84 61.44c122.88-30.72 235.52-87.04 327.68-158.72 76.8 20.48 148.48 51.2 204.8 87.04l50.68-60.48z"/>
         </svg>
-        <span>支付宝扫码支付 ￥<span id="btnPriceDisplay">9.90</span></span>
+        <span>支付宝扫码支持 ￥<span id="btnPriceDisplay">9.90</span></span>
       </button>
     </div>
 
     <!-- Step 2: QR Code Scanning View -->
     <div id="qrView" class="qr-view">
       <div class="qr-title">请使用手机支付宝扫码支付</div>
-      <div class="qr-tip">支付完成后将自动开通特权，请勿关闭本页面</div>
+      <div class="qr-tip">支付完成后将自动登记支持记录，请勿关闭本页面</div>
 
       <div class="qr-card">
         <img id="qrImage" class="qr-image" src="" alt="支付宝付款码">
@@ -541,14 +538,14 @@
     <!-- Step 3: Success View -->
     <div id="successView" class="success-view">
       <div class="success-icon">✓</div>
-      <h3>支付成功，权益已到账！</h3>
-      <p>感谢您对 Window Pet 的支持！您的账号已永久开通 VIP 权益与全角色解锁。</p>
+      <h3>支付成功，感谢您的支持！</h3>
+      <p>感谢您对 Window Pet 的支持！全套萌宠角色与动作工坊均已免费为您开放。</p>
 
       <ul class="feature-checkmarks">
-        <li>全套 8 款萌宠角色全部解锁</li>
+        <li>全套萌宠角色全部免费开放</li>
         <li>动作工坊（Action Studio）自由自定义</li>
         <li>闭麦静音与定时关机/休眠功能已激活</li>
-        <li>多设备云端配置与勋章数据永久漫游</li>
+        <li>多设备云端配置数据同步</li>
       </ul>
 
       <div style="display: flex; gap: 12px;">
@@ -573,7 +570,7 @@
     let currentOrderId = null;
     let pollTimer = null;
     let countdownTimer = null;
-    let selectedPlanId = 'plan_lifetime_vip';
+    let selectedPlanId = 'plan_lifetime';
     let selectedAmount = '9.90';
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -610,33 +607,44 @@
       }
     }
 
+    function formatPlanPrice(raw) {
+      const str = String(raw ?? '').trim();
+      const num = Number(str);
+      if (!Number.isFinite(num)) return '0.00';
+      if (str.includes('.') || num < 100) return num.toFixed(2);
+      return (num / 100).toFixed(2);
+    }
+
     function renderPlans(plans) {
       const container = document.getElementById('plansContainer');
       container.innerHTML = '';
       plans.forEach((plan, idx) => {
+        const amountStr = formatPlanPrice(plan.amount);
         const card = document.createElement('div');
         card.className = `plan-card ${idx === 0 ? 'selected' : ''}`;
         card.dataset.id = plan.id;
-        card.dataset.amount = (plan.amount / 100).toFixed(2);
+        card.dataset.amount = amountStr;
         card.onclick = () => selectPlan(card);
 
-        const original = plan.originalPrice ? `<div class="original-price">￥${(plan.originalPrice / 100).toFixed(2)}</div>` : '';
-        const tag = plan.tag ? `<span class="plan-tag">${plan.tag}</span>` : '';
+        const original = plan.originalPrice ? `<div class="original-price">￥${formatPlanPrice(plan.originalPrice)}</div>` : '';
+        const tagText = plan.tag || plan.badge || '';
+        const tag = tagText ? `<span class="plan-tag">${tagText}</span>` : '';
+        const descText = plan.description || plan.tagline || '';
 
         card.innerHTML = `
           <div class="plan-info">
             <h4>${plan.name} ${tag}</h4>
-            <div class="plan-desc">${plan.description || ''}</div>
+            <div class="plan-desc">${descText}</div>
           </div>
           <div class="plan-price">
-            <div class="price-num">￥${(plan.amount / 100).toFixed(2)}<span class="price-unit">/${plan.period || '永久'}</span></div>
+            <div class="price-num">￥${amountStr}<span class="price-unit">/${plan.period || '支持'}</span></div>
             ${original}
           </div>
         `;
         container.appendChild(card);
         if (idx === 0) {
           selectedPlanId = plan.id;
-          selectedAmount = (plan.amount / 100).toFixed(2);
+          selectedAmount = amountStr;
           document.getElementById('btnPriceDisplay').textContent = selectedAmount;
         }
       });
@@ -653,7 +661,7 @@
     async function initiatePayment() {
       const account = document.getElementById('accountInput').value.trim();
       if (!account) {
-        alert('请输入授权账号（邮箱或手机号），以保证权益顺利到账！');
+        alert('请输入关联账号（邮箱或手机号）！');
         document.getElementById('accountInput').focus();
         return;
       }
@@ -694,7 +702,7 @@
           <svg viewBox="0 0 1024 1024">
             <path d="M798.72 593.92c-56.32-35.84-128-66.56-209.92-87.04 25.6-35.84 46.08-76.8 61.44-117.76H768v-61.44H563.2V256h-81.92v71.68H256v61.44h317.44c-15.36 35.84-35.84 71.68-61.44 102.4-76.8-25.6-158.72-35.84-240.64-35.84v61.44c76.8 0 153.6 10.24 225.28 35.84-81.92 61.44-184.32 107.52-296.96 133.12l35.84 61.44c122.88-30.72 235.52-87.04 327.68-158.72 76.8 20.48 148.48 51.2 204.8 87.04l50.68-60.48z"/>
           </svg>
-          <span>支付宝扫码支付 ￥<span id="btnPriceDisplay">${selectedAmount}</span></span>
+          <span>支付宝扫码支持 ￥<span id="btnPriceDisplay">${selectedAmount}</span></span>
         `;
       }
     }
@@ -793,7 +801,7 @@
         const stored = localStorage.getItem('wp_user');
         if (stored) {
           const user = JSON.parse(stored);
-          user.isVip = true;
+          user.allUnlocked = true;
           localStorage.setItem('wp_user', JSON.stringify(user));
         }
       } catch (e) {}

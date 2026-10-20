@@ -201,7 +201,7 @@ def generate_character_action_doc(folder_path: Path) -> str:
     lines.append("")
 
     lines.append("## 🌈 触发交互类型指南\n")
-    lines.append("在 WindowPet 角色动作工坊中，可通过拖拽彩色阴影/光晕为动作绑定不同的触发方式：")
+    lines.append("在 WindowPet 角色【动作】设置中，可通过拖拽动作卡片绑定不同的触发方式：")
     lines.append("- 🔴 **单击触发 (Left Click)**：鼠标左键轻点桌宠时立即播放此动作并自动恢复待机。")
     lines.append("- 🔵 **双击触发 (Double Click)**：鼠标左键连续双击桌宠时播放此动作。")
     lines.append("- 🟢 **默认待机 (Default Idle)**：桌宠在屏幕上停留时默认循环播放的姿态。")
@@ -213,8 +213,8 @@ def generate_character_action_doc(folder_path: Path) -> str:
     lines.append("欢迎民间创作者为本角色制作新动作或设计新角色，只需遵循以下极简规范：\n")
     lines.append("1. **新建动作文件夹**：在角色目录下新建一个文件夹（例如 `my-dance/`）；")
     lines.append("2. **放入序列帧**：将制作好的透明背景 PNG 帧图片放入该目录（命名建议为 `01.png`, `02.png` ...，尺寸推荐 192×208，通常 6~24 帧）；")
-    lines.append("3. **在软件中一键配置**：打开 WindowPet 控制台主页，**右键本角色卡片 -> 🎨 角色动作工坊**，即可在下方托盘看到新动作，拖动彩色阴影即可完成绑定并实时预览！")
-    lines.append("4. **保存即更新**：点击保存后，软件会自动更新 `asset.json` 并重新生成此文档。\n")
+    lines.append("3. **在软件中一键配置**：打开 WindowPet 控制台主页，**右键本角色卡片 -> 🎨 动作**，即可在下方看到新动作，拖动卡片即可完成绑定并实时预览！")
+    lines.append("4. **保存即更新**：配置完成后，软件会自动更新 `asset.json` 并重新生成此文档。\n")
 
     return "\n".join(lines)
 

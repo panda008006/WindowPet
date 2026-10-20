@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Award, Camera, Check, Copy, HeartHandshake, ShieldCheck, Sparkles, Video, Zap } from 'lucide-react'
 
-const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
+const qqGroupUrl = 'https://qm.qq.com/q/aCrzrRQkqA'
 
 interface MasterCreatorSectionProps {
   onNavigateCustom?: () => void
@@ -13,7 +13,7 @@ export function MasterCreatorSection({ onNavigateCustom, onNavigateGallery }: Ma
 
   const handleCopyQq = () => {
     try {
-      navigator.clipboard.writeText('422616922')
+      navigator.clipboard.writeText('536254840')
       setCopiedQq(true)
       setTimeout(() => setCopiedQq(false), 2400)
     } catch {
@@ -83,7 +83,7 @@ export function MasterCreatorSection({ onNavigateCustom, onNavigateGallery }: Ma
             onClick={handleCopyQq}
           >
             {copiedQq ? <Check size={16} color="#059669" /> : <Copy size={16} />}
-            <span>{copiedQq ? '官方群号已复制！' : '复制官方群号：422616922'}</span>
+            <span>{copiedQq ? '官方群号已复制！' : '复制官方群号：536254840'}</span>
           </button>
 
           {onNavigateCustom && (

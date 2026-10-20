@@ -12,6 +12,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import './subpages.css'
+import { releaseInstallerHref, releaseInstallerName } from './releaseConfig'
 
 interface FaqPageProps {
   onBackToHome?: () => void
@@ -19,16 +20,14 @@ interface FaqPageProps {
   onOpenGallery?: () => void
 }
 
-const qqGroupUrl = 'https://qm.qq.com/q/cYlRBbvuda'
+const qqGroupUrl = 'https://qm.qq.com/q/aCrzrRQkqA'
 const githubRepoUrl = 'https://github.com/panda008006/WindowPet'
-const releaseInstallerHref = 'https://github.com/panda008006/WindowPet/releases/download/v1.0.32/WindowPet_Setup_v1.0.32.exe'
-
 export function FaqPage({ onBackToHome, onOpenCustom, onOpenGallery }: FaqPageProps) {
   const [copiedQq, setCopiedQq] = useState(false)
 
   const handleCopyQq = () => {
     try {
-      navigator.clipboard.writeText('422616922')
+      navigator.clipboard.writeText('536254840')
       setCopiedQq(true)
       setTimeout(() => setCopiedQq(false), 2400)
     } catch {
@@ -89,8 +88,8 @@ export function FaqPage({ onBackToHome, onOpenCustom, onOpenGallery }: FaqPagePr
       iconColor: '#7c3aed',
       items: [
         {
-          q: '获取小鼻嘎展馆里的角色需要登录账号吗？如何购买与导入？',
-          a: '无需注册或登录任何账号！WindowPet 采用极简免登录付费与即时导入机制：官方创研看板角色完全免费；特邀独立画师与工坊创研角色可直接扫码支付（￥3.9~￥9.9），付款后系统自动永久授权并呼叫客户端一键导入桌面端，即买即玩。',
+          q: '获取小鼻嘎展馆里的角色需要登录账号或付费吗？如何导入？',
+          a: '无需注册或登录任何账号！WindowPet 全量馆藏角色永久 100% 免费开放，点击即可直接一键导入桌面端即装即玩。我们唯一的付费业务为【爱宠定制】：为用户自家真实毛孩子或专属形象提供 1 对 1 手绘定制桌宠服务。',
         },
         {
           q: '展馆里的角色是由哪些作者制作的？如何找到心仪作者的作品？',
@@ -98,7 +97,7 @@ export function FaqPage({ onBackToHome, onOpenCustom, onOpenGallery }: FaqPagePr
         },
         {
           q: '如何把自家的真实毛孩子（猫咪/狗狗）定制成桌面专属宠物？',
-          a: '点击顶部导航栏【爱宠定制】，只需提供 1~3 张爱宠真实生活照，平台特邀独立插画师会 1 对 1 量身手绘并设计专属互动动作。加入官方交流群（422616922）即可快速预约画师。',
+          a: '点击顶部导航栏【爱宠定制】，只需提供 1~3 张爱宠真实生活照，平台特邀独立插画师会 1 对 1 量身手绘并设计专属互动动作。加入官方交流群（536254840）即可快速预约画师。',
         },
       ],
     },
@@ -140,11 +139,11 @@ export function FaqPage({ onBackToHome, onOpenCustom, onOpenGallery }: FaqPagePr
             <a
               className="primary-download"
               href={releaseInstallerHref}
-              download="WindowPet_Setup_v1.0.32.exe"
+              download={releaseInstallerName}
               style={{ padding: '12px 28px', fontSize: '15px' }}
             >
               <Download size={18} />
-              <span>免费下载正式版 (50MB)</span>
+              <span>免费下载 2.0 正式版</span>
             </a>
 
             <button
@@ -154,7 +153,7 @@ export function FaqPage({ onBackToHome, onOpenCustom, onOpenGallery }: FaqPagePr
               style={{ padding: '12px 22px', fontSize: '14px' }}
             >
               {copiedQq ? <Check size={16} color="#059669" /> : <Copy size={16} />}
-              <span>{copiedQq ? '群号 422616922 已复制！' : '官方 QQ 交流群：422616922'}</span>
+              <span>{copiedQq ? '群号 536254840 已复制！' : '官方 QQ 交流群：536254840'}</span>
             </button>
 
             {onOpenCustom && (

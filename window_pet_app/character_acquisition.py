@@ -29,8 +29,9 @@ class CharacterAcquisitionError(Exception):
 
 def ensure_ai_authoring_guide(app_root=None):
     app_root = Path(app_root or BASE_DIR).resolve()
-    bundled_guide = resource_path("AI角色制作").resolve()
-    external_guide = app_root / "AI角色制作"
+    guide_name = "角色" if resource_path("角色").is_dir() or (app_root / "角色").is_dir() else "AI角色制作"
+    bundled_guide = resource_path(guide_name).resolve()
+    external_guide = app_root / guide_name
     if bundled_guide != external_guide.resolve():
         try:
             shutil.copytree(bundled_guide, external_guide, dirs_exist_ok=True)
@@ -43,7 +44,7 @@ def ensure_ai_authoring_guide(app_root=None):
     return external_guide if external_guide.is_dir() else bundled_guide
 
 
-DOUBAO_REFERENCE_RULES = """REFERENCE IMAGE MODE (MANDATORY):
+DEEPSEEK_REFERENCE_RULES = """REFERENCE IMAGE MODE (MANDATORY):
 Read AI角色制作/reference_image_mode.md before making any frame.
 If the user provides one or more character reference images, treat the original attached image as the authoritative source of truth.
 Do not redraw, redesign, reinterpret, beautify, simplify, or replace the character with a text-only lookalike.
@@ -54,38 +55,50 @@ Attach the original reference image or the extracted canonical base to every act
 Before saving, compare every frame against the supplied image and reject any frame that looks like a newly invented or different character.
 If the reference image cannot be accessed, stop and ask the user to attach it again; do not invent a replacement character."""
 
+DEEPSEEK_ACTION_RULES = """ACTION DESIGN MODE (MANDATORY):
+Read AI角色制作/action_design_mode.md before making any frame.
+Do not fake animation with only scale, zoom, translation, opacity, or whole-image wobble.
+Use the image-generation or image-editing API/account configured for the current task.
+Generate one complete full-frame character image per frame.
+Do not overlay icons, stickers, props, badges, or separate PNGs.
+Compose/package frames only after the full images are generated.
+If the configured provider cannot use the reference image, stop.
+When the character is recognizable, research 3-5 recognizable gestures, habits, expressions, signature poses, or prop interactions.
+Adapt the required motion concepts: idle, click for left_click, and drag for left_drag.
+Follow the six-frame motion arc: anticipation, action, and settle.
+Every adjacent frame must have a meaningful pose, limb, expression, or prop change.
+one image per frame.
 
-DOUBAO_ACTION_RULES = """ACTION DESIGN MODE (MANDATORY):
-Use the image-generation or image-editing API/account configured for the current task. WindowPet does not require a specific provider or built-in tool. The deterministic scripts may only extract frames, validate, and package already-generated images.
-Read AI角色制作/action_design_mode.md before planning actions.
-Do not fake animation with only scale, zoom, translation, opacity, or whole-image wobble. Those are camera/transform effects, not character actions.
-Before drawing frames, identify the character from the user's text and image. If the character or franchise is recognizable and web/search tools are available, research 3-5 recognizable, character-appropriate classic gestures, habits, expressions, or prop interactions. Use research for motion ideas only; do not copy existing animation frames.
-Design only three independently drawn WindowPet basic actions: idle, click for left_click, and drag for left_drag. Do not let these three basic actions reuse, share, or alias another basic action folder. Hover, double-click, right-click, wheel, middle-click, release, random behavior, edge proximity, and rewards do not trigger character actions.
-Additional actions such as waving, dance, feather-tickle, whip-hit, fall, or land are optional named animation folders. Give each a human-readable label in animations.<name>.label, animations.<name>.display_name, or action_labels.<name>. Right-click only opens the menu; its Actions submenu lists these named actions. Selecting one plays it once and returns to idle. Do not add interaction_bindings that make extra actions automatic.
-For each trigger, write a one-sentence action storyboard with anticipation, action, and settle. The pose must visibly evolve through the sequence.
-Draw one image per frame conceptually: inside the single master sheet, every cell must be a newly drawn complete frame. Every adjacent frame must contain a meaningful pose, limb, expression, or prop change caused by the action; body shape, clothing, hair, tail, and ears may also provide secondary motion.
-Generate one complete full-frame character image per frame. Do not overlay icons, stickers, props, badges, or separate PNGs onto a static base image to pretend that the character moved.
-Compose/package frames only after the full images are generated and visually inspected. If the configured provider cannot use the reference image, stop and ask for a compatible image-editing/generation provider; do not fall back to icon compositing.
-Default to 6 frames per action: frame 1 neutral/anticipation; frames 2-3 preparation; frame 4 main action; frame 5 overshoot/reaction; frame 6 settle or return toward idle. Add frames when the action needs more motion, never replace frame drawing with whole-image transforms.
-Keep the feet/body anchor stable unless the storyboard requires travel. Use small scale changes only as a secondary squash-and-stretch detail after the pose itself changes.
-The drag folder is a stable picked-up/suspended loop only. Do not draw falling or landing inside the looping drag frames; use separate fall/land actions when supported, otherwise return to idle after release.
-Reject any sequence whose frames are the same drawing merely enlarged, reduced, shifted, rotated, faded, or shaken."""
+WindowPet 2.0 拥有 5 大核心动作插槽标准体系：
+1. 【常规待机 idle】：呆萌平稳站立或端坐，带有轻微的呼吸起伏与重心摆动，首尾无缝平滑闭环 (Looping)；
+2. 【点击互动 click】：被鼠标戳中后的招牌动作，如开心挥手、举双手欢呼或招牌卖萌；
+3. 【提溜悬空 drag】：被鼠标拎起后颈皮或悬空拖拽，两脚微晃自然悬空，神情呆萌惊讶；
+4. 【思考中 thinking / habit1】：AI深度推理思考状态，小手托腮望向斜上方，灵动思考；
+5. 【回答完成 result / habit2】：AI推理结束生成结果，自信打响指、满意点头或欢呼庆祝。
 
-DOUBAO_MASTER_SHEET_RULES = """MASTER SHEET AND LOCAL INSTALL MODE (MANDATORY):
+同时 WindowPet 2.0 搭载「静态随机动作池」，支持在待机时随机展示打瞌睡、伸懒腰、吃零食等趣味表演。"""
+
+DEEPSEEK_MASTER_SHEET_RULES = """MASTER SHEET AND LOCAL INSTALL MODE (MANDATORY):
 Use the original reference image and the completed action storyboards to generate one high-resolution 6-column by 3-row master sprite sheet containing exactly 18 cells.
 Columns are frames 1 through 6. Rows are strictly idle, click, and drag.
 The sheet is a generation deliverable, not the installed character. After visually checking all 18 cells, save it to a local working path and call WindowPet's build_character_from_sheet.py tool.
 The local tool must perform deterministic grid splitting, plain-background removal, shared crop/scale normalisation, metadata creation, validation, and atomic installation.
 Do not ask the user to crop, split, configure, import, or move files manually. Do not overwrite or delete any existing character."""
 
+DEEPSEEK_EXEC_GUIDE = """【DeepSeek AI 角色生成指引（WindowPet 2.0 官方自适应规范）】：
+1. 🎨 极简出图提示词模式（发给生图 AI 绘图，强烈推荐）：
+   DeepSeek 将为你深度思考并产出专业的 Midjourney / FLUX / 即梦 AI / 可灵 提示词：
+   - 角色形象：2~2.5 头身超萌 Q 版二次元立绘，正面全身无遮挡无截断；
+   - 纯净底色：绝对纯白背景（#FFFFFF）或影视级纯绿幕（#00FF00），便于 WindowPet 发丝级无损透明抠像；
+   - 动作套系：精准覆盖待机 (idle)、点击 (click)、拖拽 (drag)、深度思考 (thinking)、回答完成 (result)；
+   - 用户只需将图片/视频拖入 WindowPet 2.0 的「九宫格动作工坊」，1 秒即可点亮桌面！
+2. 💻 本地全自动部署模式（配备终端执行环境）：
+   DeepSeek 生成标准 JSON 动作编排与安装代码，自动装配至 assets 目录并注入系统注册表。"""
 
-DOUBAO_EXEC_GUIDE = """【豆包生图指引（双模式自适应说明）】：
-1. 极简生图模式（若在手机或网页端对话生图，强烈推荐）：
-   请直接为用户绘制该角色的超萌 Q 版白底全身立绘（纯白背景 #FFFFFF 或透明底，2~2.5头身，正面全身无截断，无复杂背景杂物）：
-   - 分别绘制【待机 idle】、【点击欢呼 click】、【悬空拖拽 drag】姿态（哪怕先画出 1 张待机图也可以！）；
-   - 图片生成后，用户直接右键保存图片并拖入 WindowPet 软件的「九宫格动作工坊」，即可 1 秒自动生成并运行桌宠！
-2. 本地全自动部署模式（办公任务 Turbo / 本地代码执行）：
-   如果你具备本地终端执行权限，请严格按以下设计规范与自动化流程完成 18 格主精灵图生成、自动拆帧及原子安装。"""
+DOUBAO_REFERENCE_RULES = DEEPSEEK_REFERENCE_RULES
+DOUBAO_ACTION_RULES = DEEPSEEK_ACTION_RULES
+DOUBAO_MASTER_SHEET_RULES = DEEPSEEK_MASTER_SHEET_RULES
+DOUBAO_EXEC_GUIDE = DEEPSEEK_EXEC_GUIDE
 
 
 def _inject_reference_rules(prompt, reference_doc=None, action_doc=None):
@@ -111,32 +124,43 @@ def _inject_reference_rules(prompt, reference_doc=None, action_doc=None):
     return "\n".join((lines[0], "", rules, *lines[1:]))
 
 
-def build_doubao_image_prompt(character_description="XXX"):
-    desc = str(character_description or "").strip().rstrip("。") or "超萌可爱的宠物小动物"
-    return f"""请帮我设计并绘制一个超萌的桌面宠物角色立绘：【{desc}】。
+def build_deepseek_image_prompt(character_description="XXX"):
+    desc = str(character_description or "").strip().rstrip("。") or "超萌可爱的桌面宠物小动物"
+    return f"""作为 WindowPet 2.0 桌面宠物角色资深概念设计师，请帮我为【{desc}】设计一套完整的超清桌宠立绘与动作提示词。
 
-【立绘风格与构图要求（画出高品质桌宠的关键）】：
-1. 风格定位：Q版治愈系二次元桌宠立绘，2~2.5 头身超萌比例，大头小身，大眼睛清澈灵动，线条干净圆润，色彩鲜亮治愈。
-2. 视角与画幅：正面正视全身立绘（Full Body View），角色居中站立，全身完整无遮挡截断，不要任何外边框或背景框。
-3. 背景纯白（非常重要）：必须是绝对纯白背景（#FFFFFF）或纯透明背景！严禁地平线、地板阴影、草地花纹或环境装饰，确保角色轮廓清晰利落，便于一键抠图。
-4. 动作状态（请分别绘制以下 3 个动作，或先绘制 1 张待机动作）：
-   - 【待机动作 idle】：呆萌正面站立或端坐，微微歪头眨眼，轻松放松的静止陪伴姿态；
-   - 【点击动作 click】：开心地跳跃或举起双手欢呼，做出专属得意卖萌动作，表情极度灿烂；
-   - 【拖拽动作 drag】：仿佛被鼠标拎起后颈皮或悬空抓起，两脚悬空微晃，表情惊讶呆萌，四肢自然下垂。
+【WindowPet 2.0 角色标准规范】：
+1. 风格定位：Q版二次元治愈系桌宠立绘，2~2.5 头身萌系比例，大头小身，大眼睛清澈灵动，线条干净圆润，无杂乱背景干扰。
+2. 视角与画幅：正面正视全身立绘（Full Body View），角色居中站立，全身完整无截断，杜绝半身像或大头贴。
+3. 纯净背景（核心关键）：必须是绝对纯白背景（#FFFFFF）或纯正绿幕（#00FF00）！绝对不要地平线、地板杂色阴影、室内外装饰或花草杂物，确保 WindowPet 2.0 的 UltraKey 原生发丝级透明抠像能 100% 干净提取！
 
-💡【使用指引】：
-出图后，我只需在豆包中右键保存图片，直接拖进电脑上的 WindowPet 软件「九宫格动作工坊」，软件会自动填充待机/点击/拖拽并生成专属桌宠，直接在桌面上开始互动！"""
+【5 大核心动作剧本与生图提示词（请按以下格式逐一生成中英文 Midjourney/FLUX Prompt）】：
+1. 【待机 idle】（常规待机）：正面呆萌站立或端坐，微微歪头眨眼，轻松放松的静止陪伴姿态，身体重心平衡稳定。
+   - 画面描述：Q-version cute character, full body front view, standing peacefully, blinking adorably, isolated on pure solid white background #FFFFFF, no shadows, no floor.
+2. 【点击 click】（交互响应）：鼠标轻戳时做出的招牌互动，开心地双臂欢呼、单脚轻蹦或得意卖萌，神情极度灿烂治愈。
+   - 画面描述：Q-version character jumping joyfully with arms raised, cheering happily, dynamic cute pose, isolated on pure solid white background #FFFFFF.
+3. 【拖拽 drag】（悬空提溜）：被鼠标拎起后颈皮或悬空抓起，两脚悬空微晃，四肢自然下垂，露出惊讶呆萌的委屈小表情。
+   - 画面描述：Q-version character lifted up in mid-air, dangling feet gently, surprised and cute face, centered, isolated on pure solid white background #FFFFFF.
+4. 【思考 thinking】（AI思考模式）：两只小手托腮或托下巴，眼睛望向斜上方，头顶冒出灵感小气泡，专心沉思中。
+   - 画面描述：Q-version character pondering deeply, hand on chin, looking upwards thoughtfully, cute thinking pose, isolated on pure solid white background #FFFFFF.
+5. 【回答 result】（AI作答庆祝）：思考得出满意答案，自豪地打响指、双手抱胸点头或举起写着满分的小牌子，开心得意。
+   - 画面描述：Q-version character celebrating an answer proudly, nodding with a triumphant cute smile, isolated on pure solid white background #FFFFFF.
+
+💡【WindowPet 2.0 极速使用指引】：
+图片生成后，直接右键保存为 PNG，打开 WindowPet 2.0 点击「🎨 九宫格动作工坊」，直接拖入对应动作槽位，即可在桌面上享受 1440P 原生超清透明互动！"""
 
 
-build_doubao_simple_prompt = build_doubao_image_prompt
+build_doubao_image_prompt = build_deepseek_image_prompt
+build_doubao_simple_prompt = build_deepseek_image_prompt
+build_deepseek_simple_prompt = build_deepseek_image_prompt
 
 
-def build_doubao_prompt(app_root=None, assets_root=None, character_description="XXX"):
+def _base_doubao_prompt(app_root=None, assets_root=None, character_description="XXX"):
     app_root = Path(app_root or BASE_DIR).resolve()
     assets_root = Path(assets_root or state.ASSETS_DIR).resolve()
-    guide_root = app_root / "AI角色制作"
+    guide_folder = "角色" if (app_root / "角色").is_dir() else "AI角色制作"
+    guide_root = app_root / guide_folder
     character_package = assets_root / "{角色英文名}Pet"
-    master_sheet = app_root / "AI角色制作" / "角色制作工作区" / "{角色英文名}-master-sheet.png"
+    master_sheet = app_root / guide_folder / "角色制作工作区" / "{角色英文名}-master-sheet.png"
     character_description = str(character_description or "").strip().rstrip("。") or "XXX"
     return f"""我创建这个角色是{character_description}。
 请直接为当前 WindowPet 软件生成并添加一个新角色。
@@ -172,16 +196,19 @@ python "{guide_root / 'validate_character.py'}" "{character_package}"
 检查通过后刷新 WindowPet 角色库，确认角色已经保存在上述最终地址，并告诉我实际角色目录、18 帧数量和检查结果。"""
 
 
-_build_doubao_prompt = build_doubao_prompt
-
-
-def build_doubao_prompt(app_root=None, assets_root=None, character_description="XXX"):
+def build_deepseek_prompt(app_root=None, assets_root=None, character_description="XXX"):
     app_root = Path(app_root or BASE_DIR).resolve()
+    assets_root = Path(assets_root or state.ASSETS_DIR).resolve()
+    guide_folder = "角色" if (app_root / "角色").is_dir() else "AI角色制作"
     return _inject_reference_rules(
-        _build_doubao_prompt(app_root, assets_root, character_description),
-        app_root / "AI角色制作" / "reference_image_mode.md",
-        app_root / "AI角色制作" / "action_design_mode.md",
+        _base_doubao_prompt(app_root, assets_root, character_description),
+        app_root / guide_folder / "reference_image_mode.md",
+        app_root / guide_folder / "action_design_mode.md",
     )
+
+
+build_doubao_prompt = build_deepseek_prompt
+_build_doubao_prompt = _base_doubao_prompt
 
 
 def sha256_file(path):

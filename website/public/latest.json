@@ -1,7 +1,6 @@
 {
-  "version": "1.0.32",
-  "package_url": "https://windowpet.cn/pet/downloads/window-pet-1.0.32.zip",
-  "sha256": "db61578204c10f9fa1c4d8872a0ee665b996b680340af13e06b27e76f5c347f4",
-  "release_notes": "WindowPet 1.0.32 正式版：全套8款精选萌宠与动作工坊上线；新增右键麦克风一键闭麦/开麦；定时关机与休眠功能全面回归；上线支付宝扫码支付与终身VIP权益云端漫游。"
+  "version": "2.0.0",
+  "package_url": "https://windowpet.cn/pet/downloads/window-pet-2.0.0.zip",
+  "sha256": "606f3997900478644fb316746c5d7a2a37504495629957eb45bc528e5f8a6d44",
+  "release_notes": "WindowPet 2.0 震撼发布：\n1. 默认开箱即用「大DeepSeek」与「大肥鱼」萌趣双宠共存，智能错位排列；\n2. 全新集成 DeepSeek AI 角色生成助手，超高质量 2.0 规格提示词与 Q 版鲸鱼看板；\n3. 全量角色 1440P 超清点对点原生无损透明渲染，发丝级画质，告别灰底；\n4. 全新极简「动作」工坊，一键绑定动作素材；\n5. 支持单只桌宠独立精准关闭，不影响其他桌面伙伴；\n6. 开机静默后台检测，新版本一键无感升级。"
 }
-

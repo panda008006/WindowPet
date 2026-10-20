@@ -146,11 +146,23 @@ foreach ($name in $preserveNames) {{
   }}
 }}
 Get-ChildItem -LiteralPath $target -Force | Where-Object {{
-  $preserveNames -notcontains $_.Name -and $_.Name -notlike '.update_backup_*'
+  $preserveNames -notcontains $_.Name -and $_.Name -ne 'assets' -and $_.Name -notlike '.update_backup_*'
 }} | ForEach-Object {{
   Remove-Item -LiteralPath $_.FullName -Recurse -Force
 }}
-Copy-Item -LiteralPath (Join-Path $source '*') -Destination $target -Recurse -Force
+# Merge the package instead of replacing the whole installation directory.
+# This keeps user-imported role folders that are absent from the new package.
+Get-ChildItem -LiteralPath $source -Force | Where-Object {{
+  $_.Name -ne 'assets'
+}} | ForEach-Object {{
+  Copy-Item -LiteralPath $_.FullName -Destination $target -Recurse -Force
+}}
+if (Test-Path -LiteralPath (Join-Path $source 'assets')) {{
+  New-Item -ItemType Directory -Path (Join-Path $target 'assets') -Force | Out-Null
+  Get-ChildItem -LiteralPath (Join-Path $source 'assets') -Force | ForEach-Object {{
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $target 'assets') -Recurse -Force
+  }}
+}}
 foreach ($name in $preserveNames) {{
   $src = Join-Path $preserveRoot $name
   if (Test-Path -LiteralPath $src) {{
@@ -193,55 +205,63 @@ def safe_extract_zip(package_path, extract_dir):
         archive.extractall(extract_root)
 
 
-def check_for_updates(parent=None):
+def check_for_updates(parent=None, silent=False):
     manifest_url = update_manifest_url()
     if not manifest_url:
-        result = QMessageBox.information(
-            parent,
-            "软件更新",
-            "还没有配置更新清单地址。请先在 update_config.json 里填写 manifest_url。以后点更新时会从你的官网读取最新版本。",
-            QMessageBox.Open | QMessageBox.Ok,
-            QMessageBox.Ok,
-        )
-        if result == QMessageBox.Open:
-            open_official_site(parent)
+        if not silent:
+            result = QMessageBox.information(
+                parent,
+                "软件更新",
+                "还没有配置更新清单地址。请先在 update_config.json 里填写 manifest_url。以后点更新时会从你的官网读取最新版本。",
+                QMessageBox.Open | QMessageBox.Ok,
+                QMessageBox.Ok,
+            )
+            if result == QMessageBox.Open:
+                open_official_site(parent)
         return False
 
     try:
         manifest = fetch_json(manifest_url)
     except (OSError, urllib.error.URLError, json.JSONDecodeError) as exc:
         log_warning("Update check failed: %s", exc)
-        result = QMessageBox.warning(
-            parent,
-            "软件更新",
-            "检查更新失败。可以先打开官网手动查看最新版本。",
-            QMessageBox.Open | QMessageBox.Ok,
-            QMessageBox.Ok,
-        )
-        if result == QMessageBox.Open:
-            open_official_site(parent)
+        if not silent:
+            result = QMessageBox.warning(
+                parent,
+                "软件更新",
+                "检查更新失败。可以先打开官网手动查看最新版本。",
+                QMessageBox.Open | QMessageBox.Ok,
+                QMessageBox.Ok,
+            )
+            if result == QMessageBox.Open:
+                open_official_site(parent)
         return False
 
     if not isinstance(manifest, dict):
-        QMessageBox.warning(parent, "软件更新", "官网更新清单格式不正确。")
+        if not silent:
+            QMessageBox.warning(parent, "软件更新", "官网更新清单格式不正确。")
         return False
 
     remote_version = str(manifest.get("version") or "").strip()
     package_url = str(manifest.get("package_url") or "").strip()
     if not remote_version or not package_url:
-        QMessageBox.warning(parent, "软件更新", "官网更新清单缺少 version 或 package_url。")
+        if not silent:
+            QMessageBox.warning(parent, "软件更新", "官网更新清单缺少 version 或 package_url。")
         return False
 
     if not is_newer_version(remote_version):
-        QMessageBox.information(parent, "软件更新", f"当前已经是最新版本：{__version__}")
+        if not silent:
+            QMessageBox.information(parent, "软件更新", f"当前已经是最新版本：{__version__}")
         return False
 
     notes = str(manifest.get("release_notes") or "").strip()
-    message = f"发现新版本：{remote_version}\n当前版本：{__version__}\n\n更新会保留 config.json、update_config.json 和 logs。"
+    message = (
+        f"发现新版本：{remote_version}\n当前版本：{__version__}\n\n"
+        "更新会自动保留您的个性化设置、已添加的角色与历史记录。\n"
+    )
     if notes:
-        message += f"\n\n更新说明：\n{notes[:500]}"
-    message += "\n\n是否现在下载并更新？"
-    confirm = QMessageBox.question(parent, "软件更新", message, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        message += f"\n更新说明：\n{notes[:500]}\n"
+    message += "\n是否现在下载并自动更新？"
+    confirm = QMessageBox.question(parent, "软件更新 - 发现新版本", message, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
     if confirm != QMessageBox.Yes:
         return False
 
@@ -260,10 +280,38 @@ def check_for_updates(parent=None):
         if source_root is None:
             QMessageBox.warning(parent, "软件更新", "下载包里没有找到 Window Pet.exe，已取消更新。")
             return False
-        QMessageBox.information(parent, "软件更新", "下载完成。程序会退出并自动替换文件，更新后会重新打开。")
+        QMessageBox.information(parent, "软件更新", "下载完成。程序会自动退出并更新文件，更新后会自动重新打开。")
         apply_update_after_exit(source_root)
         return True
     except Exception as exc:
         log_exception("Update install failed: %s", exc)
         QMessageBox.warning(parent, "软件更新", f"更新失败：{exc}")
         return False
+
+
+def check_for_updates_async(parent=None, silent=True):
+    """在后台静默发起更新检查（不阻塞任何界面操作与动画渲染）"""
+    import threading
+    from PySide6.QtCore import QTimer
+
+    def _worker():
+        manifest_url = update_manifest_url()
+        if not manifest_url:
+            return
+        try:
+            manifest = fetch_json(manifest_url)
+            if not isinstance(manifest, dict):
+                return
+            remote_version = str(manifest.get("version") or "").strip()
+            package_url = str(manifest.get("package_url") or "").strip()
+            if not remote_version or not package_url:
+                return
+            if not is_newer_version(remote_version):
+                return
+            # 发现新版本！安全切回 Qt 主线程弹出更新询问对话框
+            QTimer.singleShot(0, lambda: check_for_updates(parent=parent, silent=False))
+        except Exception as exc:
+            log_warning("Background update check ignored: %s", exc)
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()

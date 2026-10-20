@@ -1732,18 +1732,17 @@ class VibeVerticalSizeControl(QWidget):
         if on_scale_changed:
             self.scaleChanged.connect(on_scale_changed)
 
-        self.setFixedSize(168, 190)
+        self.setFixedSize(170, 180)
         self.setStyleSheet("""
             QWidget#VibeVerticalSizeControl {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fffcf9, stop: 1 #fff6f0);
-                border: 1px solid #fed7cc;
-                border-radius: 14px;
+                background: transparent;
+                border: none;
             }
         """)
         self.setObjectName("VibeVerticalSizeControl")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setContentsMargins(12, 6, 12, 6)
         layout.setSpacing(8)
 
         # Header: Icon, Label, and Pill Badge
@@ -1751,7 +1750,7 @@ class VibeVerticalSizeControl(QWidget):
         header.setSpacing(6)
 
         lbl = QLabel("📏 缩放大小")
-        lbl.setStyleSheet("font-size: 12px; font-weight: bold; color: #2d2320; background: transparent;")
+        lbl.setStyleSheet("font-size: 12px; font-weight: 600; color: #1d1d1f; background: transparent;")
         header.addWidget(lbl)
 
         header.addStretch(1)
@@ -1759,13 +1758,13 @@ class VibeVerticalSizeControl(QWidget):
         self.badge = QLabel(f"{self._scale}%")
         self.badge.setStyleSheet("""
             QLabel {
-                background-color: #ffeff0;
-                color: #ff526c;
-                font-weight: bold;
+                background-color: #f2f2f7;
+                color: #1d1d1f;
+                font-weight: 600;
                 font-size: 11px;
-                padding: 2px 7px;
-                border: 1px solid #ffccd3;
+                padding: 2px 8px;
                 border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.06);
             }
         """)
         header.addWidget(self.badge)
@@ -1778,12 +1777,12 @@ class VibeVerticalSizeControl(QWidget):
 
         # Quick guide labels on the left (200%, 100%, 20%)
         ticks_col = QVBoxLayout()
-        ticks_col.setContentsMargins(0, 4, 0, 4)
+        ticks_col.setContentsMargins(0, 2, 0, 2)
         t_max = QLabel("200%")
         t_mid = QLabel("100%")
         t_min = QLabel("20%")
         for t in (t_max, t_mid, t_min):
-            t.setStyleSheet("font-size: 9px; color: #a89c96; background: transparent;")
+            t.setStyleSheet("font-size: 9px; color: #8e8e93; background: transparent;")
         ticks_col.addWidget(t_max, 0, Qt.AlignRight)
         ticks_col.addStretch(1)
         ticks_col.addWidget(t_mid, 0, Qt.AlignRight)
@@ -1798,31 +1797,40 @@ class VibeVerticalSizeControl(QWidget):
         self.slider.setSingleStep(5)
         self.slider.setPageStep(20)
         self.slider.setFixedHeight(110)
+        self.slider.setFixedWidth(32)
         self.slider.setCursor(PetCursorManager.grab_cursor())
         self.slider.setStyleSheet("""
+            QSlider:vertical {
+                min-width: 32px;
+                max-width: 32px;
+                padding: 0px;
+            }
             QSlider::groove:vertical {
-                background: #f0e4dc;
+                background: #e5e5ea;
                 width: 6px;
                 border-radius: 3px;
+                margin: 9px 0px;
             }
             QSlider::sub-page:vertical {
-                background: #f0e4dc;
+                background: #e5e5ea;
                 border-radius: 3px;
+                margin: 9px 0px;
             }
             QSlider::add-page:vertical {
-                background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #ff8a9e, stop: 1 #ff526c);
+                background: #ff5e7e;
                 border-radius: 3px;
+                margin: 9px 0px;
             }
             QSlider::handle:vertical {
                 background: #ffffff;
-                border: 2px solid #ff526c;
-                height: 16px;
-                width: 16px;
-                margin: 0 -5px;
-                border-radius: 8px;
+                border: 2px solid #ff5e7e;
+                width: 18px;
+                height: 18px;
+                margin: 0px -6px;
+                border-radius: 9px;
             }
             QSlider::handle:vertical:hover {
-                background: #ff526c;
+                background: #ff5e7e;
                 border: 2px solid #ffffff;
             }
         """)
@@ -1835,24 +1843,23 @@ class VibeVerticalSizeControl(QWidget):
         btn_col.setSpacing(4)
         btn_style = """
             QPushButton {
-                background: #ffffff;
-                border: 1px solid #fed7cc;
-                border-radius: 7px;
-                color: #4a3b34;
+                background: #f2f2f7;
+                border: 1px solid rgba(0, 0, 0, 0.06);
+                border-radius: 6px;
+                color: #1d1d1f;
                 font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
                 font-size: 11px;
                 font-weight: 500;
-                min-width: 40px;
+                min-width: 38px;
                 min-height: 22px;
                 padding: 1px 4px;
             }
             QPushButton:hover {
-                background: #ffeff0;
-                border-color: #ff8a9e;
-                color: #ff526c;
+                background: #e5e5ea;
+                color: #000000;
             }
             QPushButton:pressed {
-                background: #ffd6dc;
+                background: #d1d1d6;
             }
         """
         b_plus = SpringPushButton("+")

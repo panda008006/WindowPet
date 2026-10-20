@@ -25,7 +25,12 @@ def configure_logging():
 
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
-        handler = RotatingFileHandler(
+        class FlushingRotatingFileHandler(RotatingFileHandler):
+            def emit(self, record):
+                super().emit(record)
+                self.flush()
+
+        handler = FlushingRotatingFileHandler(
             LOG_PATH,
             maxBytes=1_000_000,
             backupCount=3,

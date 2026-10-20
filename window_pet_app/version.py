@@ -1,4 +1,3 @@
-﻿"""Window Pet release version."""
+"""Window Pet release version."""
 
-__version__ = "1.0.32"
-
+__version__ = "2.0.0"

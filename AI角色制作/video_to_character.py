@@ -45,6 +45,19 @@ class VideoImportError(RuntimeError):
     pass
 
 
+def _hidden_subprocess_kwargs() -> dict:
+    """Keep ffmpeg/ffprobe from opening a console window on Windows.
+
+    The importer is normally launched from the Qt GUI.  Inheriting the GUI's
+    console-less process is not reliable when Python is started by a shortcut,
+    so explicitly request CREATE_NO_WINDOW for every media probe/extraction
+    subprocess.  The flag is ignored on non-Windows platforms.
+    """
+    if hasattr(subprocess, "CREATE_NO_WINDOW"):
+        return {"creationflags": subprocess.CREATE_NO_WINDOW}
+    return {}
+
+
 def _normalise_character_folder(character_id: str) -> str:
     value = str(character_id or "").strip()
     if not CHARACTER_ID_PATTERN.fullmatch(value):
@@ -75,6 +88,7 @@ def _probe(video: Path, ffprobe: str) -> dict:
          "-show_entries", "stream=width,height,nb_frames,pix_fmt,avg_frame_rate",
          "-of", "json", str(video)],
         capture_output=True, text=True, check=True,
+        **_hidden_subprocess_kwargs(),
     )
     streams = json.loads(result.stdout).get("streams") or []
     if not streams:
@@ -88,6 +102,7 @@ def _first_frame_has_alpha(video: Path, ffmpeg: str, out_dir: Path) -> bool:
     subprocess.run(
         [ffmpeg, "-y", "-v", "error", "-i", str(video), "-frames:v", "1", str(probe_png)],
         capture_output=True, text=True, check=True,
+        **_hidden_subprocess_kwargs(),
     )
     probes = sorted(out_dir.glob("probe_*.png"))
     if not probes:
@@ -118,7 +133,7 @@ def _extract_with_ffmpeg(video: Path, out_dir: Path, background: str, max_frames
         color = background[1:]
         cmd += ["-vf", f"colorkey=0x{color}:0.30:0.10"]
     cmd += ["-frames:v", str(max_frames * 3), str(out_pattern)]
-    subprocess.run(cmd, capture_output=True, text=True, check=True)
+    subprocess.run(cmd, capture_output=True, text=True, check=True, **_hidden_subprocess_kwargs())
 
     frames = sorted(out_dir.glob("raw_*.png"))
     if not frames:

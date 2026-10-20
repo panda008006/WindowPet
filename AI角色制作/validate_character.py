@@ -9,6 +9,7 @@ from pathlib import Path
 
 REQUIRED_ACTIONS = {"idle", "click", "drag"}
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".mkv", ".avi", ".m4v"}
+AUDIO_EXTENSIONS = {".aac", ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".wma"}
 
 
 def load_quality_profile() -> dict:
@@ -55,11 +56,37 @@ def validate(character_dir: Path) -> tuple[list[str], list[str]]:
     special_mode = str(metadata.get("interaction_mode") or "").strip().lower()
     is_head_track = special_mode == "head_track"
     required_actions = {"idle", "head_track"} if special_mode == "head_track" else (set(action_profile) or REQUIRED_ACTIONS)
-    if metadata.get("type") != "frame_animation":
-        errors.append("type 必须为 frame_animation")
+    metadata_type = str(metadata.get("type") or "").strip().lower()
+    if metadata_type not in {"frame_animation", "video_animation", "spritesheet"}:
+        errors.append("type 必须为 frame_animation、video_animation 或 spritesheet")
     animations = metadata.get("animations")
     if not isinstance(animations, dict):
         return errors + ["animations 必须是对象"], warnings
+
+    if metadata_type == "spritesheet":
+        image_value = metadata.get("image")
+        image_path = character_dir / str(image_value) if isinstance(image_value, str) else None
+        if image_path is None or not image_path.is_file():
+            errors.append("spritesheet 的 image 文件不存在")
+        for action_name in sorted(required_actions):
+            definition = animations.get(action_name)
+            if not isinstance(definition, dict) or not isinstance(definition.get("frames"), list) or not definition["frames"]:
+                errors.append(f"动作 {action_name} 缺少 frames")
+        for name, definition in animations.items():
+            if not isinstance(definition, dict):
+                errors.append(f"动作 {name} 的配置不是对象")
+                continue
+            frames = definition.get("frames")
+            if not isinstance(frames, list) or not frames:
+                errors.append(f"动作 {name} 缺少 frames")
+                continue
+            for index, frame in enumerate(frames):
+                if not isinstance(frame, dict) or not (("col" in frame and "row" in frame) or ("x" in frame and "y" in frame)):
+                    errors.append(f"动作 {name} 的第 {index + 1} 帧需要 col/row 或 x/y")
+        preview = metadata.get("preview")
+        if not isinstance(preview, str) or not (character_dir / preview).is_file():
+            errors.append("preview 指向的图片不存在")
+        return errors, warnings
 
     _validate_video_sources(character_dir, metadata, animations, errors)
 
@@ -73,7 +100,15 @@ def validate(character_dir: Path) -> tuple[list[str], list[str]]:
         if not isinstance(definition, dict):
             continue
         folder_value = definition.get("folder")
+        # video_animation manifests can keep the visual source directly in
+        # ``video`` without creating a parallel PNG folder.  The runtime
+        # expands that source to cached PNG frames, so a missing folder is
+        # valid as long as the declared video exists.
         if not isinstance(folder_value, str) or not folder_value:
+            if metadata_type == "video_animation" and _definition_has_video_source(
+                character_dir, action_name, definition, metadata
+            ):
+                continue
             continue
         previous_action = required_folders.get(folder_value)
         if previous_action is not None:
@@ -91,6 +126,10 @@ def validate(character_dir: Path) -> tuple[list[str], list[str]]:
             continue
         folder_value = definition.get("folder")
         if not isinstance(folder_value, str) or not folder_value:
+            if metadata_type == "video_animation" and _definition_has_video_source(
+                character_dir, name, definition, metadata
+            ):
+                continue
             errors.append(f"动作 {name} 缺少 folder")
             continue
         folder = character_dir if folder_value == "." else character_dir / folder_value
@@ -186,10 +225,35 @@ def _validate_video_sources(character_dir: Path, metadata: dict, animations: dic
         except ValueError:
             errors.append(f"动作 {action_name} 的视频来源路径不安全：{value}")
             continue
-        if resolved.suffix.lower() not in VIDEO_EXTENSIONS:
-            errors.append(f"动作 {action_name} 的视频来源格式不支持：{value}")
+        if resolved.suffix.lower() not in VIDEO_EXTENSIONS | AUDIO_EXTENSIONS:
+            errors.append(f"动作 {action_name} 的音频/视频来源格式不支持：{value}")
         elif not resolved.is_file():
             errors.append(f"动作 {action_name} 的视频来源文件不存在：{value}")
+
+
+def _definition_has_video_source(
+    character_dir: Path,
+    action_name: str,
+    definition: dict,
+    metadata: dict,
+) -> bool:
+    """Return whether a video_animation action has a safe existing source."""
+    source_value = definition.get("video") or definition.get("video_source")
+    if not source_value:
+        sources = metadata.get("video_sources")
+        if isinstance(sources, dict):
+            source_value = sources.get(action_name)
+    if not isinstance(source_value, str) or not source_value.strip():
+        return False
+    source = Path(source_value)
+    if source.is_absolute() or any(part in {"", ".", ".."} for part in source.parts):
+        return False
+    resolved = (character_dir / source).resolve()
+    try:
+        resolved.relative_to(character_dir.resolve())
+    except ValueError:
+        return False
+    return resolved.suffix.lower() in VIDEO_EXTENSIONS and resolved.is_file()
 
 
 def main() -> int:

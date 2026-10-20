@@ -2,6 +2,7 @@ import json
 import math
 import random
 import re
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
@@ -62,6 +63,8 @@ from .asset_setup_dialog import AssetSetupDialog
 from .asset_validation import validate_asset_metadata
 from .character_acquisition import (
     CharacterAcquisitionError,
+    build_deepseek_image_prompt,
+    build_deepseek_prompt,
     build_doubao_image_prompt,
     build_doubao_prompt,
     download_and_install_character,
@@ -95,6 +98,8 @@ from .cloud_api import (
     register as cloud_register,
     send_register_code,
 )
+from .external_integrations import launch_all_integrations
+from .new_api_dialog import NewApiDialog
 from .logging_utils import log_info, log_warning, recent_warnings_and_errors
 from .medals import MedalStore
 from .local_search import (
@@ -105,6 +110,7 @@ from .local_search import (
     search_local,
 )
 from .overlay import add_window, exit_app, frame_paths_for_folder
+from .media_folder import media_source_frames_async
 from .metadata_renderers import load_spritesheet_frames
 from . import recovery
 from .startup import set_startup_enabled, startup_enabled
@@ -120,7 +126,6 @@ from .updater import (
     update_manifest_url,
 )
 from .version import __version__
-from .whip_tool import show_whip_tool
 from .vibe_components import (
     SegmentedControl,
     SpringPushButton,
@@ -939,8 +944,9 @@ class AccountDialog(QDialog):
         }
 
 
-class DoubaoGuideDialog(QDialog):
-    DOUBAO_URL = "https://www.doubao.com/chat/"
+class DeepSeekGuideDialog(QDialog):
+    DEEPSEEK_URL = "https://chat.deepseek.com/"
+    DOUBAO_URL = DEEPSEEK_URL
 
     def __init__(self, prompt, assets_root, on_installed, parent=None):
         super().__init__(parent)
@@ -951,20 +957,22 @@ class DoubaoGuideDialog(QDialog):
         else:
             self.prompt_body = initial_prompt
         self.prompt = ""
-        self.current_mode = "auto"
+        self.current_mode = "simple"
         self.assets_root = Path(assets_root)
         self.on_installed = on_installed
         self.setObjectName("GlassDialog")
-        self.setWindowTitle("豆包生成角色")
+        self.setWindowTitle("DeepSeek 生成角色")
         self.setMinimumSize(720, 620)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(26, 24, 26, 24)
         layout.setSpacing(12)
 
-        title = QLabel("豆包 AI 角色生成助手")
+        title = QLabel("DeepSeek AI 角色生成助手")
         title.setObjectName("SectionTitle")
-        note = QLabel("支持「极简生图（一键出图）」与「本地全自动部署」两种方式。就算豆包无法直接跑代码，也能画图 100% 成功一键生成桌宠！")
+        note = QLabel(
+            "支持「极简出图提示词」与「本地全自动部署」两种方式。让 DeepSeek 为你构思并生成 WindowPet 2.0 规格的超清桌宠！"
+        )
         note.setObjectName("SubtleLabel")
         note.setWordWrap(True)
         layout.addWidget(title)
@@ -977,14 +985,15 @@ class DoubaoGuideDialog(QDialog):
         mode_layout.setContentsMargins(4, 4, 4, 4)
         mode_layout.setSpacing(6)
 
-        self.mode_auto_btn = QPushButton("💻 本地全自动模式 (办公任务 Turbo)")
+        self.mode_auto_btn = QPushButton("💻 本地全自动模式 (DeepSeek 终端任务)")
         self.mode_auto_btn.setObjectName("AccountSegmentButton")
         self.mode_auto_btn.setCheckable(True)
-        self.mode_auto_btn.setChecked(True)
+        self.mode_auto_btn.setChecked(False)
 
-        self.mode_simple_btn = QPushButton("🎨 极简生图模式 (手机/网页直接出图 · 推荐)")
+        self.mode_simple_btn = QPushButton("🎨 极简出图提示词 (复制发给 DeepSeek · 推荐)")
         self.mode_simple_btn.setObjectName("AccountSegmentButton")
         self.mode_simple_btn.setCheckable(True)
+        self.mode_simple_btn.setChecked(True)
 
         self.mode_group = QButtonGroup(self)
         self.mode_group.addButton(self.mode_auto_btn, 0)
@@ -1007,12 +1016,12 @@ class DoubaoGuideDialog(QDialog):
         tips_layout = QVBoxLayout(self.tips_card)
         tips_layout.setContentsMargins(14, 10, 14, 10)
         tips_layout.setSpacing(4)
-        tips_title = QLabel("💡 零门槛出图秘诀（小白推荐！即便豆包无法跑终端代码，也能 100% 成功）：")
+        tips_title = QLabel("💡 零门槛出图秘诀（DeepSeek 智能生成 100% 成功）：")
         tips_title.setStyleSheet("font-weight: bold; color: #12315b; font-size: 13px;")
         tips_desc = QLabel(
-            "1. 复制【极简生图提示词】发给豆包，豆包会为您画出高清 Q 版白底桌宠立绘；\n"
-            "2. 手机或网页上右键保存生成的图片；\n"
-            "3. 点击下方「🎨 打开九宫格动作工坊」，把图片直接拖进九宫格，一秒自动生成新桌宠！"
+            "1. 复制【极简出图提示词】发给 DeepSeek，获取专业的角色立绘与动作提示词；\n"
+            "2. 将生图 AI 生成的纯白底（#FFFFFF）或纯绿幕图片/视频保存；\n"
+            "3. 点击下方「🎨 动作」，把角色文件拖到待机、单击、拖拽、思考或回答槽位。"
         )
         tips_desc.setWordWrap(True)
         tips_desc.setStyleSheet("color: #386381; font-size: 12px; line-height: 1.4;")
@@ -1020,16 +1029,20 @@ class DoubaoGuideDialog(QDialog):
         tips_layout.addWidget(tips_desc)
         layout.addWidget(self.tips_card)
 
-        self.doubao_mode_guide_label = QLabel()
-        self.doubao_mode_guide_label.setObjectName("DoubaoModeGuide")
-        self.doubao_mode_guide_label.setAlignment(Qt.AlignCenter)
-        self.doubao_mode_guide_label.setToolTip(
-            "在豆包输入框上方选择“办公任务 Turbo”和“本地电脑”"
+        self.deepseek_mode_guide_label = QLabel()
+        self.deepseek_mode_guide_label.setObjectName("DeepSeekModeGuide")
+        self.deepseek_mode_guide_label.setAlignment(Qt.AlignCenter)
+        self.deepseek_mode_guide_label.setToolTip(
+            "在 DeepSeek (https://chat.deepseek.com/) 粘贴提示词并发送"
         )
         guide_pixmap = QPixmap(
-            str(resource_path("assets/UiAssets/doubao-local-computer-guide.png"))
+            str(resource_path("assets/UiAssets/deepseek-guide-banner.png"))
         )
-        self.doubao_mode_guide_label.setPixmap(
+        if guide_pixmap.isNull():
+            guide_pixmap = QPixmap(
+                str(resource_path("assets/UiAssets/doubao-local-computer-guide.png"))
+            )
+        self.deepseek_mode_guide_label.setPixmap(
             guide_pixmap.scaled(
                 640,
                 120,
@@ -1037,7 +1050,8 @@ class DoubaoGuideDialog(QDialog):
                 Qt.SmoothTransformation,
             )
         )
-        layout.addWidget(self.doubao_mode_guide_label)
+        layout.addWidget(self.deepseek_mode_guide_label)
+        self.doubao_mode_guide_label = self.deepseek_mode_guide_label
 
         description_label = QLabel("我想创建的角色")
         description_label.setObjectName("SearchMeta")
@@ -1071,13 +1085,13 @@ class DoubaoGuideDialog(QDialog):
         self.copy_button.setObjectName("ToolPrimaryButton")
         self.copy_button.clicked.connect(self.copy_prompt)
 
-        self.open_button = QPushButton("复制并打开豆包")
+        self.open_button = QPushButton("复制并打开 DeepSeek")
         self.open_button.setObjectName("ToolPrimaryButton")
-        self.open_button.clicked.connect(self.open_doubao)
+        self.open_button.clicked.connect(self.open_deepseek)
 
-        self.studio_button = QPushButton("🎨 打开九宫格动作工坊")
+        self.studio_button = QPushButton("🎨 动作")
         self.studio_button.setObjectName("ToolPrimaryButton")
-        self.studio_button.setToolTip("直接打开角色动作九宫格工坊，将豆包画好的图片拖入即可生成角色")
+        self.studio_button.setToolTip("打开动作设置，把角色图片、视频或其他文件拖到对应动作")
         self.studio_button.clicked.connect(self.open_action_studio)
 
         primary_row.addWidget(self.copy_button)
@@ -1098,13 +1112,13 @@ class DoubaoGuideDialog(QDialog):
     def _on_mode_switched(self, button_id):
         if button_id == 1:
             self.current_mode = "simple"
-            self.doubao_mode_guide_label.setVisible(False)
+            self.deepseek_mode_guide_label.setVisible(False)
             self.package_label.setVisible(False)
             self.package_path_label.setVisible(False)
             self.copy_button.setText("复制极简生图词")
         else:
             self.current_mode = "auto"
-            self.doubao_mode_guide_label.setVisible(True)
+            self.deepseek_mode_guide_label.setVisible(True)
             self.package_label.setVisible(True)
             self.package_path_label.setVisible(True)
             self.copy_button.setText("复制全自动提示词")
@@ -1116,7 +1130,7 @@ class DoubaoGuideDialog(QDialog):
         self.auto_prompt = (
             f"{first_line}\n{self.prompt_body}" if self.prompt_body else first_line
         )
-        self.simple_prompt = build_doubao_image_prompt(description)
+        self.simple_prompt = build_deepseek_image_prompt(description)
         if self.current_mode == "simple":
             self.prompt = self.simple_prompt
         else:
@@ -1135,12 +1149,16 @@ class DoubaoGuideDialog(QDialog):
     def copy_prompt(self):
         QApplication.clipboard().setText(self.prompt)
         mode_name = "极简生图提示词" if self.current_mode == "simple" else "提示词"
-        QMessageBox.information(self, "豆包生成", f"{mode_name}已复制。")
+        QMessageBox.information(self, "DeepSeek 生成", f"{mode_name}已成功复制到剪贴板。")
 
-    def open_doubao(self):
+    def open_deepseek(self):
         QApplication.clipboard().setText(self.prompt)
-        if not QDesktopServices.openUrl(QUrl(self.DOUBAO_URL)):
-            QMessageBox.warning(self, "豆包生成", "无法打开豆包网页，提示词已经复制，可手动粘贴。")
+        if not QDesktopServices.openUrl(QUrl(self.DEEPSEEK_URL)):
+            QMessageBox.warning(self, "DeepSeek 生成", "无法打开 DeepSeek 网页，提示词已复制到剪贴板，可手动粘贴访问：https://chat.deepseek.com/")
+
+    open_doubao = open_deepseek
+
+DoubaoGuideDialog = DeepSeekGuideDialog
 
 class RedeemCharacterDialog(QDialog):
     def __init__(self, token, assets_root, on_installed, parent=None):
@@ -1171,7 +1189,7 @@ class RedeemCharacterDialog(QDialog):
         hero_text.setSpacing(4)
         title = QLabel("兑换云端专属角色")
         title.setObjectName("SectionTitle")
-        note = QLabel("登录账号后，输入兑换码即可安全导入专属角色包，不会覆盖本地已有角色。")
+        note = QLabel("输入官方展馆兑换码，即可一键安全导入专属角色包，无需注册登录，开箱即用！")
         note.setObjectName("SubtleLabel")
         note.setWordWrap(True)
         hero_text.addWidget(title)
@@ -1213,6 +1231,20 @@ class RedeemCharacterDialog(QDialog):
 
         # 1. 检查是否为小鼻嘎展馆官方公开兑换码（支持免登录直接激活）
         public_map = {
+            "WPX-2026-DAFEIYU": ("DaFeiYuPet", "大肥鱼"),
+            "WPX-DAFEIYU": ("DaFeiYuPet", "大肥鱼"),
+            "WPX-2026-LEOPARDGECKO": ("LeopardGeckoPet", "微笑守宫"),
+            "WPX-2026-CHUBBYGOLDENCAT": ("ChubbyGoldenCatPet", "金渐层胖猫"),
+            "WPX-2026-MUNCHKINCAT": ("MunchkinCatPet", "矮脚橘白猫"),
+            "WPX-2026-LINCHUXUE": ("LinChuXuePet", "林初雪"),
+            "WPX-LINCHUXUE": ("LinChuXuePet", "林初雪"),
+            "WPX-2026-QIANDUODUO": ("QianDuoDuoPet", "钱多多"),
+            "WPX-QIANDUODUO": ("QianDuoDuoPet", "钱多多"),
+            "WPX-2026-DADEEPSEEKPET": ("DaDeepSeekPet", "大DeepSeek"),
+            "WPX-2026-GECKO": ("LeopardGeckoPet", "微笑守宫"),
+            "WPX-2026-GOLDENCAT": ("ChubbyGoldenCatPet", "金渐层胖猫"),
+            "WPX-2026-MUNCHKIN": ("MunchkinCatPet", "矮脚橘白猫"),
+            "WPX-2026-SUGARGLIDER": ("SugarGliderPet", "白化蜜袋鼯"),
             "WPX-2026-JIYI": ("JiyiPet", "吉伊"),
             "WPX-2026-DORA": ("NuonuoPet", "糯糯 Dora"),
             "WPX-2026-FOX": ("HuhuPet", "小狐狸"),
@@ -1220,21 +1252,53 @@ class RedeemCharacterDialog(QDialog):
             "WPX-2026-USAGI": ("UsagiPet", "乌萨奇兔兔"),
             "WPX-2026-XCHAI": ("XiaochaiPet", "小柴犬"),
             "WPX-2026-CAPY": ("LuluCapybaraPet", "卡皮巴拉 水豚"),
-            "WPX-2026-BEAR": ("BearPet", "抱抱小熊"),
             "WPX-2026-BUBU": ("BubuPet", "布布鼠"),
-            "WPX-2026-BUYA": ("BuyaPet", "不鸭"),
             "WPX-2026-WORK": ("SalaryCatPet", "打工猫"),
-            "WPX-2026-KUN": ("KunLikePet", "小中分"),
             "WPX-2026-POPO": ("PopoPet", "啵啵 Popo"),
             "WPX-2026-LOGO": ("LogoGuineaPigPet", "豚鼠小鼻嘎"),
             "WPX-2026-MIAN": ("MianmianPet", "绵绵羊"),
             "WPX-2026-PANDA": ("PandaPet", "功夫大熊猫"),
             "WPX-2026-PENG": ("PenguinSisterPet", "企鹅妹妹"),
             "WPX-2026-KUMI": ("KumikoPet", "库库咔咔"),
-            "WPX-2026-RED": ("Huhu2Pet", "赤狐烈焰"),
             "WPX-2026-TRACK": ("XiaobaTurnPet", "家宠·麦脆角 (摇头猫)"),
             "WPX-HOME-CAT": ("XiaobaTurnPet", "家宠·麦脆角 (摇头猫)"),
-            "WPX-2026-NEZU": ("NezukoPet", "祢豆子"),
+            "WPX-2026-WANGCAI": ("WangcaiPet", "旺财"),
+            "WPX-2026-GANGBENG": ("GangbengPet", "钢蹦"),
+            "WPX-2026-BOBA": ("BobaPet", "波霸 Boba"),
+            "WPX-2026-BANANA": ("BananaCatPet", "香蕉猫"),
+            "WPX-2026-OIIAI": ("OiiaiPet", "旋转小猫 Oiiai"),
+            "WPX-2026-MAODIE": ("RoundMaodiePet", "圆头耄耋"),
+            "WPX-2026-WESTIE": ("WestiePet", "西高地白白"),
+            "WPX-2026-CHUBBY": ("ChubbyGoldenCatPet", "金渐层胖猫"),
+            "WPX-2026-GECKO": ("LeopardGeckoPet", "微笑守宫"),
+            "WPX-2026-MUNCHKIN": ("MunchkinCatPet", "矮脚橘白猫"),
+            "WPX-2026-GLIDER": ("SugarGliderPet", "白化蜜袋鼯"),
+            "WPX-2026-DEEPSEEK": ("DaDeepSeekPet", "大DeepSeek"),
+            "WPX-DEEPSEEK": ("DaDeepSeekPet", "大DeepSeek"),
+            "WPX-2026-DADEEPSEEK": ("DaDeepSeekPet", "大DeepSeek"),
+            "WPX-2026-DOUBAOAI": ("DoubaoAiPet", "豆包"),
+            "WPX-GGBOND": ("ZhuZhuXiaPet", "猪猪侠"),
+            "WPX-2026-GGBOND": ("ZhuZhuXiaPet", "猪猪侠"),
+            "WPX-ZHUZHUXIA": ("ZhuZhuXiaPet", "猪猪侠"),
+            "WPX-2026-ZHUZHUXIA": ("ZhuZhuXiaPet", "猪猪侠"),
+            "WPX-CYBERTRUCK": ("TeslaPet", "特斯拉超跑"),
+            "WPX-2026-CYBERTRUCK": ("TeslaPet", "特斯拉超跑"),
+            "WPX-TESLA": ("TeslaPet", "特斯拉超跑"),
+            "WPX-2026-TESLA": ("TeslaPet", "特斯拉超跑"),
+            "WPX-DOUBAO": ("DoubaoAiPet", "豆包"),
+            "WPX-2026-DOUBAO": ("DoubaoAiPet", "豆包"),
+            "WPX-XIAODEEPSEEK": ("XiaoDeepSeekPet", "小DeepSeek"),
+            "WPX-2026-XIAODEEPSEEK": ("XiaoDeepSeekPet", "小DeepSeek"),
+            "WPX-CLAUDE": ("ClaudePet", "Claude"),
+            "WPX-2026-CLAUDE": ("ClaudePet", "Claude"),
+            "WPX-CODEX": ("CodexPet", "Codex (白龙娘)"),
+            "WPX-2026-CODEX": ("CodexPet", "Codex (白龙娘)"),
+            "WPX-GLM": ("ZlmPet", "智谱清言"),
+            "WPX-2026-GLM": ("ZlmPet", "智谱清言"),
+            "WPX-ZLM": ("ZlmPet", "智谱清言"),
+            "WPX-2026-ZLM": ("ZlmPet", "智谱清言"),
+            "WPX-LIANGSHENG": ("LiangShengPet", "梁圣"),
+            "WPX-2026-LIANGSHENG": ("LiangShengPet", "梁圣"),
         }
         if code in public_map:
             folder, pet_name = public_map[code]
@@ -1254,7 +1318,11 @@ class RedeemCharacterDialog(QDialog):
                 return
 
         if not self.token:
-            QMessageBox.information(self, "兑换角色", "该兑换码需要联网核销，请先在控制台右上角登录账号。")
+            QMessageBox.information(
+                self,
+                "兑换角色",
+                "未在本地离线库找到该兑换码。\n\n请检查官方兑换码是否输入正确，或前往官网展馆获取最新角色包。",
+            )
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1544,10 +1612,10 @@ class WallpaperSlotCard(QFrame):
         pixmap = QPixmap(str(path)) if path.exists() else QPixmap()
         if pixmap.isNull():
             placeholder = QPixmap(320, 180)
-            placeholder.fill(QColor("#e0f2fe"))
+            placeholder.fill(QColor("#ffeef2"))
             painter = QPainter(placeholder)
             painter.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing)
-            painter.setPen(QPen(QColor("#1d4ed8"), 2))
+            painter.setPen(QPen(QColor("#ff5e7e"), 2))
             painter.drawRoundedRect(QRectF(8, 8, 304, 164), 18, 18)
             painter.setPen(QColor("#64748b"))
             painter.drawText(placeholder.rect(), Qt.AlignCenter, "拖入壁纸")
@@ -1666,7 +1734,7 @@ class PetLibraryItemDelegate(QStyledItemDelegate):
                 self._anim_timer.stop()
 
     def sizeHint(self, option, index):
-        return QSize(100, 112)
+        return QSize(108, 120)
 
     def paint(self, painter, option, index):
         painter.save()
@@ -1733,10 +1801,10 @@ class PetLibraryItemDelegate(QStyledItemDelegate):
             painter.drawRoundedRect(rect, card_radius, card_radius)
         elif library_action:
             fill = QLinearGradient(rect.topLeft(), rect.bottomRight())
-            if library_action == "doubao":
-                fill.setColorAt(0.0, QColor("#fff8e8"))
-                fill.setColorAt(0.58, QColor("#fff0d2"))
-                fill.setColorAt(1.0, QColor("#f5eaff"))
+            if library_action in ("deepseek", "doubao"):
+                fill.setColorAt(0.0, QColor("#eaf3ff"))
+                fill.setColorAt(0.58, QColor("#dbeafe"))
+                fill.setColorAt(1.0, QColor("#e0e7ff"))
             else:
                 fill.setColorAt(0.0, QColor("#fffdf7"))
                 fill.setColorAt(0.58, QColor("#fff2c9"))
@@ -1785,11 +1853,11 @@ class PetLibraryItemDelegate(QStyledItemDelegate):
         if locked:
             draw_lock_icon(painter, icon_rect, QColor("#5f4725"))
         elif library_action:
-            if library_action == "doubao":
+            if library_action in ("deepseek", "doubao"):
                 draw_rounded_cover_image(
                     painter,
                     icon_rect.adjusted(3, 3, -3, -3),
-                    resource_path("assets/UiAssets/doubao-avatar.png"),
+                    resource_path("assets/UiAssets/deepseek-avatar.png"),
                     15,
                 )
             elif library_action == "redeem":
@@ -1995,9 +2063,17 @@ class GardenPreviewLabel(QLabel):
         # Dynamic Animation & Interaction State
         self._current_asset = None
         self._idle_frames = []
+        self._idle_frame_paths = []
         self._idle_fps = 8
         self._active_frames = []
+        self._active_frame_paths = []
         self._active_fps = 8
+        self._frame_pixmap_cache = OrderedDict()
+        self._frame_pixmap_cache_limit = 8
+        self._background_render_key = None
+        self._background_render_pixmap = QPixmap()
+        self._pet_render_key = None
+        self._pet_render_pixmap = QPixmap()
         self._frame_index = 0
         self._is_action_active = False
         self._action_loop_count = 0
@@ -2021,6 +2097,7 @@ class GardenPreviewLabel(QLabel):
 
         # GIF player support
         self._movie = None
+        self._media_frame_generation = 0
 
         self.setCursor(PetCursorManager.pointer_cursor())
 
@@ -2032,6 +2109,7 @@ class GardenPreviewLabel(QLabel):
         return cls._garden_pixmap
 
     def _stop_animation(self):
+        self._media_frame_generation += 1
         if self._frame_timer.isActive():
             self._frame_timer.stop()
         if self._random_action_timer.isActive():
@@ -2040,9 +2118,47 @@ class GardenPreviewLabel(QLabel):
             self._movie.stop()
             self._movie = None
         self._idle_frames = []
+        self._idle_frame_paths = []
         self._active_frames = []
+        self._active_frame_paths = []
+        self._frame_pixmap_cache.clear()
+        self._background_render_key = None
+        self._background_render_pixmap = QPixmap()
+        self._pet_render_key = None
+        self._pet_render_pixmap = QPixmap()
         self._frame_index = 0
         self._is_action_active = False
+
+    def _load_cached_frame(self, path):
+        """Read one preview frame on demand instead of decoding whole videos."""
+        key = str(Path(path).resolve())
+        cached = self._frame_pixmap_cache.get(key)
+        if cached is not None:
+            self._frame_pixmap_cache.move_to_end(key)
+            return cached
+        pixmap = QPixmap(key)
+        if pixmap.isNull():
+            return QPixmap()
+        self._frame_pixmap_cache[key] = pixmap
+        self._frame_pixmap_cache.move_to_end(key)
+        while len(self._frame_pixmap_cache) > self._frame_pixmap_cache_limit:
+            self._frame_pixmap_cache.popitem(last=False)
+        return pixmap
+
+    def _set_active_frame(self, index):
+        if self._active_frame_paths:
+            index = max(0, min(int(index), len(self._active_frame_paths) - 1))
+            pixmap = self._load_cached_frame(self._active_frame_paths[index])
+        elif self._active_frames:
+            index = max(0, min(int(index), len(self._active_frames) - 1))
+            pixmap = self._active_frames[index]
+        else:
+            return False
+        if pixmap.isNull():
+            return False
+        self._frame_index = index
+        self._pet_pixmap = pixmap
+        return True
 
     def setPetPixmap(self, pixmap):
         self._stop_animation()
@@ -2103,22 +2219,87 @@ class GardenPreviewLabel(QLabel):
             if frames:
                 self._idle_frames = frames
                 self._idle_fps = max(1, int(fps or 8))
-            bad_keys = {"idle", "fall", "land", "drag", "failed", "whip-hit"}
+            bad_keys = {
+                "idle", "fall", "land", "drag", "failed", "whip-hit",
+                "thinking", "result", "habit1", "habit2", "waiting",
+            }
             self._available_actions = [k for k in anims.keys() if k not in bad_keys]
 
         # 2. Frame Animation Pets (e.g. NuonuoPet, XiaobaPet, JiyiPet, PopoPet)
-        elif asset.type == AssetType.FRAME_ANIMATION:
+        elif asset.type in {AssetType.FRAME_ANIMATION, AssetType.VIDEO}:
             idle_def = anims.get("idle", {}) if isinstance(anims, dict) else {}
-            folder_name = idle_def.get("folder", ".") if isinstance(idle_def, dict) else "."
-            folder = p if folder_name in {"", "."} else p / folder_name
-            frame_paths = frame_paths_for_folder(folder)
-            if not frame_paths:
-                frame_paths = frame_paths_for_folder(p)
-            if frame_paths:
-                self._idle_frames = [QPixmap(str(fp)) for fp in frame_paths if not QPixmap(str(fp)).isNull()]
-                self._idle_fps = int(idle_def.get("fps", meta.get("fps", 12))) if isinstance(idle_def, dict) else 12
+            metadata_type = str(meta.get("type") or "").strip().lower()
+            if asset.type == AssetType.VIDEO or metadata_type == "video_animation":
+                source_value = p if asset.type == AssetType.VIDEO else (
+                    idle_def.get("video") or idle_def.get("video_source")
+                    if isinstance(idle_def, dict)
+                    else None
+                )
+                if not source_value:
+                    source_value = p / "idle.mov"
+                else:
+                    source_value = Path(source_value)
+                    if not source_value.is_absolute():
+                        source_value = p / source_value
+                source_value = Path(source_value).resolve()
+                preview_path = asset.preview_path or p
+                preview = QPixmap(str(preview_path)) if preview_path else QPixmap()
+                if not preview.isNull():
+                    self._idle_frames = [preview]
+                    self._idle_fps = 1
+                self._available_actions = [
+                    k for k in anims.keys()
+                    if k not in {
+                        "idle", "drag", "failed", "fall", "land", "whip-hit",
+                        # AI response clips are callback-driven and must not
+                        # be started by the gallery's random preview timer.
+                        "thinking", "result", "habit1", "habit2", "waiting",
+                    }
+                ]
+                generation = self._media_frame_generation
+
+                def ready(frame_paths, error):
+                    if generation != self._media_frame_generation or self._current_asset is not asset:
+                        return
+                    if error is not None:
+                        log_warning("展示板视频预览加载失败 %s: %s", source_value, error)
+                        return
+                    paths = [Path(fp) for fp in frame_paths if Path(fp).is_file()]
+                    if not paths:
+                        return
+                    self._idle_frame_paths = paths
+                    self._idle_frames = [QPixmap() for _ in paths]
+                    self._idle_fps = max(1, int(idle_def.get("fps", meta.get("fps", 12))) if isinstance(idle_def, dict) else 12)
+                    self._active_frame_paths = list(paths)
+                    self._active_frames = list(self._idle_frames)
+                    self._active_fps = self._idle_fps
+                    if not self._set_active_frame(0):
+                        return
+                    self._frame_timer.setInterval(max(16, int(1000 / self._active_fps)))
+                    self.update()
+
+                if source_value.is_file():
+                    cache_folder = p if p.is_dir() else p.parent
+                    media_source_frames_async(source_value, cache_folder, ready)
+            else:
+                folder_name = idle_def.get("folder", ".") if isinstance(idle_def, dict) else "."
+                folder = p if folder_name in {"", "."} else p / folder_name
+                frame_paths = frame_paths_for_folder(folder)
+                if not frame_paths:
+                    frame_paths = frame_paths_for_folder(p)
+                if frame_paths:
+                    self._idle_frames = []
+                    for fp in frame_paths:
+                        pixmap = QPixmap(str(fp))
+                        if not pixmap.isNull():
+                            self._idle_frames.append(pixmap)
+                    self._idle_fps = int(idle_def.get("fps", meta.get("fps", 12))) if isinstance(idle_def, dict) else 12
             bad_keys = {"idle", "drag", "failed", "fall", "land", "whip-hit"}
-            self._available_actions = [k for k in anims.keys() if k not in bad_keys]
+            if asset.type != AssetType.VIDEO and metadata_type != "video_animation":
+                self._available_actions = [
+                    k for k in anims.keys()
+                    if k not in bad_keys and k not in {"thinking", "result", "habit1", "habit2", "waiting"}
+                ]
 
         # 3. GIF Pets
         elif asset.type == AssetType.GIF or str(asset.path).lower().endswith(".gif"):
@@ -2163,7 +2344,8 @@ class GardenPreviewLabel(QLabel):
             return
 
         next_idx = self._frame_index + 1
-        if next_idx >= len(self._active_frames):
+        frame_count = len(self._active_frame_paths) or len(self._active_frames)
+        if next_idx >= frame_count:
             if self._is_action_active:
                 self._action_loop_count += 1
                 if self._action_loop_count >= self._max_action_loops:
@@ -2172,7 +2354,7 @@ class GardenPreviewLabel(QLabel):
             next_idx = 0
 
         self._frame_index = next_idx
-        self._pet_pixmap = self._active_frames[self._frame_index]
+        self._set_active_frame(self._frame_index)
         self.update()
 
     def _play_action(self, action_name: str, loops: int = 1):
@@ -2190,34 +2372,85 @@ class GardenPreviewLabel(QLabel):
             frames = f
         elif self._current_asset.type == AssetType.FRAME_ANIMATION:
             act_def = anims.get(action_name, {})
+            if str(meta.get("type") or "").strip().lower() == "video_animation":
+                source_value = act_def.get("video") or act_def.get("video_source") if isinstance(act_def, dict) else None
+                if not source_value and isinstance(meta.get("video_sources"), dict):
+                    source_value = meta["video_sources"].get(action_name)
+                if source_value:
+                    source = Path(source_value)
+                    if not source.is_absolute():
+                        source = p / source
+                    source = source.resolve()
+                    if source.is_file():
+                        generation = self._media_frame_generation
+
+                        def ready(frame_paths, error):
+                            if generation != self._media_frame_generation or self._current_asset is None:
+                                return
+                            if error is not None:
+                                log_warning("展示板动作加载失败 %s: %s", source, error)
+                                return
+                            paths = [Path(fp) for fp in frame_paths if Path(fp).is_file()]
+                            if paths:
+                                self._apply_action_paths(
+                                    paths,
+                                    int(act_def.get("fps", meta.get("fps", 12))) if isinstance(act_def, dict) else 12,
+                                    loops,
+                                )
+
+                        media_source_frames_async(source, p, ready)
+                return
             folder_name = act_def.get("folder", ".") if isinstance(act_def, dict) else "."
             folder = p if folder_name in {"", "."} else p / folder_name
             paths = frame_paths_for_folder(folder)
             if paths:
-                frames = [QPixmap(str(fp)) for fp in paths if not QPixmap(str(fp)).isNull()]
+                frames = []
+                for fp in paths:
+                    pixmap = QPixmap(str(fp))
+                    if not pixmap.isNull():
+                        frames.append(pixmap)
                 fps = int(act_def.get("fps", meta.get("fps", 12))) if isinstance(act_def, dict) else 12
 
         if frames:
-            self._active_frames = frames
-            self._active_fps = fps or 8
-            self._frame_index = 0
-            self._is_action_active = True
-            self._action_loop_count = 0
-            self._max_action_loops = max(1, loops)
-            self._pet_pixmap = frames[0]
-            interval = max(16, int(1000 / max(1, self._active_fps)))
-            self._frame_timer.setInterval(interval)
-            self.update()
+            self._apply_action_frames(frames, fps, loops)
+
+    def _apply_action_frames(self, frames, fps, loops):
+        self._active_frame_paths = []
+        self._active_frames = frames
+        self._active_fps = fps or 8
+        self._frame_index = 0
+        self._is_action_active = True
+        self._action_loop_count = 0
+        self._max_action_loops = max(1, loops)
+        self._set_active_frame(0)
+        interval = max(16, int(1000 / max(1, self._active_fps)))
+        self._frame_timer.setInterval(interval)
+        self.update()
+
+    def _apply_action_paths(self, paths, fps, loops):
+        self._active_frame_paths = list(paths)
+        self._active_frames = [QPixmap() for _ in self._active_frame_paths]
+        self._active_fps = fps or 8
+        self._frame_index = 0
+        self._is_action_active = True
+        self._action_loop_count = 0
+        self._max_action_loops = max(1, loops)
+        if not self._set_active_frame(0):
+            return
+        interval = max(16, int(1000 / max(1, self._active_fps)))
+        self._frame_timer.setInterval(interval)
+        self.update()
 
     def _return_to_idle(self):
         if not self._idle_frames:
             return
+        self._active_frame_paths = list(self._idle_frame_paths)
         self._active_frames = list(self._idle_frames)
         self._active_fps = self._idle_fps
         self._frame_index = 0
         self._is_action_active = False
         self._action_loop_count = 0
-        self._pet_pixmap = self._active_frames[0]
+        self._set_active_frame(0)
         interval = max(16, int(1000 / max(1, self._active_fps)))
         self._frame_timer.setInterval(interval)
         self._schedule_next_random_action()
@@ -2226,7 +2459,10 @@ class GardenPreviewLabel(QLabel):
     def _schedule_next_random_action(self):
         if not self._available_actions:
             return
-        interval_ms = random.randint(4500, 8500)
+        # The gallery is a preview, not the desktop pet.  Frequent random
+        # actions repeatedly load large video frame sequences and make the
+        # control panel contend with the rest of the application.
+        interval_ms = random.randint(45000, 90000)
         self._random_action_timer.start(interval_ms)
 
     def _trigger_random_action(self):
@@ -2279,10 +2515,16 @@ class GardenPreviewLabel(QLabel):
         painter.setClipPath(path)
         garden = self._locked_pixmap if self._locked_preview and not self._locked_pixmap.isNull() else self.garden_pixmap()
         if not garden.isNull():
-            painter.drawPixmap(
-                rect.toRect(),
-                garden.scaled(rect.size().toSize(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation),
-            )
+            target_size = rect.size().toSize()
+            background_key = (garden.cacheKey(), target_size.width(), target_size.height())
+            if background_key != self._background_render_key:
+                self._background_render_key = background_key
+                self._background_render_pixmap = garden.scaled(
+                    target_size,
+                    Qt.IgnoreAspectRatio,
+                    Qt.SmoothTransformation,
+                )
+            painter.drawPixmap(rect.toRect(), self._background_render_pixmap)
         elif self._locked_preview:
             draw_game_background(painter, rect, include_grass=True, muted=True)
         else:
@@ -2308,11 +2550,11 @@ class GardenPreviewLabel(QLabel):
 
         if self._action_hint:
             icon_rect = QRectF(rect.center().x() - 54, rect.top() + 58, 108, 108)
-            if self._action_hint == "doubao":
+            if self._action_hint in ("deepseek", "doubao"):
                 draw_rounded_cover_image(
                     painter,
                     icon_rect,
-                    resource_path("assets/UiAssets/doubao-avatar.png"),
+                    resource_path("assets/UiAssets/deepseek-avatar.png"),
                     26,
                 )
             else:
@@ -2354,7 +2596,15 @@ class GardenPreviewLabel(QLabel):
             return
 
         pet_max = QSize(max(100, int(rect.width() * 0.46)), max(100, int(rect.height() * 0.48)))
-        pet = self._pet_pixmap.scaled(pet_max, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        pet_key = (self._pet_pixmap.cacheKey(), pet_max.width(), pet_max.height())
+        if pet_key != self._pet_render_key:
+            self._pet_render_key = pet_key
+            self._pet_render_pixmap = self._pet_pixmap.scaled(
+                pet_max,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation,
+            )
+        pet = self._pet_render_pixmap
         pedestal_top_y = rect.top() + rect.height() * 0.655
         pet_x = rect.center().x() - pet.width() / 2
         pet_y = pedestal_top_y - pet.height() + 8 + self._bounce_dy
@@ -2446,7 +2696,7 @@ class SoftCalendarWidget(QCalendarWidget):
             QCalendarWidget QToolButton {
                 background: transparent;
                 border: 0;
-                color: #203247;
+                color: #1d1d1f;
             }
             QCalendarWidget QSpinBox {
                 background: transparent;
@@ -2627,6 +2877,9 @@ UI_TEXT = {
         "settings_preferences": "偏好设置",
         "settings_language_label": "控制台语言",
         "settings_language_hint": "选择控制台显示语言。",
+        "settings_new_api_title": "New API 商业账户",
+        "settings_new_api_hint": "在 New API 站点注册、验证邮箱和充值，再在这里校验 API 令牌。它与 Window Pet 云端同步账号分开管理。",
+        "settings_new_api_button": "管理 AI 服务",
         "settings_system": "启动与显示",
         "settings_startup_hint": "开机后自动打开桌宠，不需要手动启动。",
         "settings_update_badge": "设置中心",
@@ -2888,6 +3141,9 @@ UI_TEXT = {
         "settings_preferences": "Preferences",
         "settings_language_label": "Console Language",
         "settings_language_hint": "Chinese is the default. Switch to English when needed.",
+        "settings_new_api_title": "New API Account",
+        "settings_new_api_hint": "Register, verify email, and recharge on the New API site, then validate the API token here. This account is separate from Window Pet cloud sync.",
+        "settings_new_api_button": "Manage AI Service",
         "settings_system": "Startup & Display",
         "settings_startup_hint": "Open the pet automatically after Windows starts.",
         "settings_update_badge": "Settings",
@@ -3116,6 +3372,8 @@ class ControlPanel(QWidget):
         state.MEDAL_STORE = self.medal_store
 
         self.setWindowTitle(f"{APP_DISPLAY_NAME} Cockpit")
+        if app_icon is None or app_icon.isNull():
+            app_icon = QApplication.windowIcon()
         if app_icon is not None and not app_icon.isNull():
             self.setWindowIcon(app_icon)
         self.setMinimumSize(1120, 720)
@@ -3152,14 +3410,13 @@ class ControlPanel(QWidget):
         rail_layout.setSpacing(12)
 
         self.nav_title = RailBrandMark()
-        self.nav_title.hide()
+        nav_layout.addWidget(self.nav_title, 0, Qt.AlignHCenter)
+        nav_layout.addSpacing(6)
         self.nav_subtitle = QLabel()
         self.nav_subtitle.setObjectName("SubtleLabel")
         self.nav_subtitle.hide()
         self.login_paw_button = LoginPawButton()
-        self.login_paw_button.clicked.connect(self.open_account_dialog)
-        nav_layout.addWidget(self.login_paw_button, 0, Qt.AlignHCenter)
-        nav_layout.addSpacing(10)
+        self.login_paw_button.hide()
         nav_layout.addWidget(nav_rail, 0, Qt.AlignHCenter)
         nav_layout.addStretch(1)
 
@@ -3226,6 +3483,9 @@ class ControlPanel(QWidget):
         self.refresh_active()
         self.refresh_diagnostics()
 
+    def open_new_api_dialog(self):
+        NewApiDialog(self.language, self).exec()
+
     def apply_language(self):
         if not hasattr(self, "nav_subtitle"):
             return
@@ -3254,6 +3514,9 @@ class ControlPanel(QWidget):
                 ("settings_preferences_label", "settings_preferences"),
                 ("settings_language_label", "settings_language_label"),
                 ("settings_language_hint", "settings_language_hint"),
+                ("settings_new_api_title_label", "settings_new_api_title"),
+                ("settings_new_api_hint_label", "settings_new_api_hint"),
+                ("settings_new_api_button", "settings_new_api_button"),
                 ("settings_system_label", "settings_system"),
                 ("settings_uninstall_label", "settings_uninstall_group"),
                 ("settings_uninstall_badge", "settings_uninstall_badge"),
@@ -3421,33 +3684,82 @@ class ControlPanel(QWidget):
         work_row.setSpacing(18)
 
         library_panel = QWidget()
-        library_panel.setMinimumWidth(444)
-        library_panel.setMaximumWidth(456)
+        # The library is a real browseable collection.  Give each card enough
+        # horizontal room for tall/video previews and names instead of
+        # squeezing four 100px cells into a clipped strip.
+        library_panel.setMinimumWidth(500)
+        library_panel.setMaximumWidth(540)
         library_layout = QVBoxLayout(library_panel)
         library_layout.setContentsMargins(0, 0, 0, 0)
         library_layout.setSpacing(10)
         library_group_layout = QVBoxLayout()
         library_group_layout.setContentsMargins(0, 0, 0, 0)
-        library_group_layout.setSpacing(8)
-
         self.library_list = QListWidget()
         self.library_list.setObjectName("PetLibraryList")
         self.library_list.setViewMode(QListView.IconMode)
         self.library_list.setMovement(QListView.Static)
         self.library_list.setResizeMode(QListView.Adjust)
         self.library_list.setIconSize(QSize(76, 76))
-        self.library_list.setGridSize(QSize(100, 112))
-        self.library_list.setSpacing(4)
+        self.library_list.setGridSize(QSize(108, 120))
+        self.library_list.setSpacing(6)
         self.library_list.setUniformItemSizes(True)
         self.library_list.setItemDelegate(PetLibraryItemDelegate(self.library_list))
         self.library_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.library_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.library_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.library_list.currentItemChanged.connect(self.on_library_selection_changed)
-        self.library_list.itemClicked.connect(self.switch_library_asset_to_desktop)
+        self.library_list.itemClicked.connect(lambda item: self.refresh_overview_selection())
+        self.library_list.itemDoubleClicked.connect(self.add_selected_library_asset)
         self.library_list.customContextMenuRequested.connect(self.open_library_menu)
 
         library_group_layout.addWidget(self.library_list, 1)
+
+        library_tools_row = QHBoxLayout()
+        library_tools_row.setContentsMargins(2, 4, 2, 0)
+        library_tools_row.setSpacing(8)
+
+        self.btn_open_web_gallery = QPushButton("🌐 访问小鼻嘎展馆")
+        self.btn_open_web_gallery.setToolTip("在浏览器中浏览 20+ 精选萌宠角色")
+        self.btn_open_web_gallery.setStyleSheet("""
+            QPushButton {
+                background: #ffffff;
+                border: 1px solid #fed7cc;
+                border-radius: 8px;
+                color: #ff526c;
+                font-weight: bold;
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            QPushButton:hover {
+                background: #fff0f2;
+                border-color: #ff526c;
+            }
+        """)
+        self.btn_open_web_gallery.clicked.connect(lambda: open_official_site(self))
+
+        self.btn_open_assets_dir = QPushButton("📁 打开角色目录")
+        self.btn_open_assets_dir.setToolTip("打开本地 assets 角色包目录")
+        self.btn_open_assets_dir.setStyleSheet("""
+            QPushButton {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                color: #475569;
+                font-weight: 500;
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            QPushButton:hover {
+                background: #f8fafc;
+                border-color: #cbd5e1;
+            }
+        """)
+        self.btn_open_assets_dir.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(state.ASSETS_DIR))))
+
+        library_tools_row.addWidget(self.btn_open_web_gallery)
+        library_tools_row.addWidget(self.btn_open_assets_dir)
+        library_group_layout.addLayout(library_tools_row)
+
         library_layout.addLayout(library_group_layout, 1)
 
         detail_scroll = QScrollArea()
@@ -3524,8 +3836,131 @@ class ControlPanel(QWidget):
         self.overview_pet_status_badge.setObjectName("StatusPill")
         meta_row.addWidget(self.overview_pet_name_label)
         meta_row.addStretch()
-        meta_row.addWidget(self.overview_pet_status_badge)
         pet_ctrl_layout.addLayout(meta_row)
+
+        # Keep the customer-facing AI entry at the top of the card.  It is
+        # available whenever the pet control card is shown; clicking it will
+        # locate 大 DeepSeek automatically, so the user never has to pick a
+        # role or configure providers first.
+        self.deepseek_connect_button = QPushButton("🚀 一键连接 AI")
+        self.deepseek_connect_button.setCursor(Qt.PointingHandCursor)
+        self.deepseek_connect_button.setToolTip("自动打开已安装的 AI 工具；未安装的工具会打开官方入口")
+        self.deepseek_connect_button.setStyleSheet("""
+            QPushButton {
+                background: #fff0f3;
+                color: #ff5e7e;
+                font-weight: bold;
+                font-size: 13px;
+                border: 1px solid #ffccd5;
+                border-radius: 9px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background: #ffe6ec;
+                border-color: #ff8fa3;
+            }
+        """)
+        self.deepseek_connect_button.clicked.connect(self.connect_selected_deepseek_tools)
+        pet_ctrl_layout.addWidget(self.deepseek_connect_button)
+
+        self.summon_pet_button = QPushButton("➕ 召唤到桌面 (支持双击卡片)")
+        self.summon_pet_button.setCursor(Qt.PointingHandCursor)
+        self.summon_pet_button.setToolTip("将该角色添加到屏幕上，支持多个角色同时在桌面陪伴；也可以直接双击左侧卡片快捷上桌")
+        self.summon_pet_button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ff6b81, stop:1 #ff8da1);
+                color: #ffffff;
+                font-weight: bold;
+                font-size: 13px;
+                border: none;
+                border-radius: 9px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ff526c, stop:1 #ff7a92);
+            }
+        """)
+        self.summon_pet_button.clicked.connect(lambda: self.add_selected_library_asset())
+        pet_ctrl_layout.addWidget(self.summon_pet_button)
+
+        pet_actions_row = QHBoxLayout()
+        pet_actions_row.setSpacing(8)
+
+        self.switch_pet_button = QPushButton("🔄 替换当前桌宠")
+        self.switch_pet_button.setCursor(Qt.PointingHandCursor)
+        self.switch_pet_button.setToolTip("将屏幕上当前选中的这只桌宠直接替换为此角色")
+        self.switch_pet_button.setStyleSheet("""
+            QPushButton {
+                background: #ffffff;
+                color: #475569;
+                font-weight: bold;
+                font-size: 12px;
+                border: 1px solid #cbd5e1;
+                border-radius: 9px;
+                padding: 6px 10px;
+            }
+            QPushButton:hover {
+                background: #f8fafc;
+                border-color: #94a3b8;
+                color: #1e293b;
+            }
+            QPushButton:disabled {
+                background: #f8fafc;
+                color: #cbd5e1;
+                border-color: #e2e8f0;
+            }
+        """)
+        self.switch_pet_button.clicked.connect(lambda: self.switch_library_asset_to_desktop())
+        pet_actions_row.addWidget(self.switch_pet_button)
+
+        self.close_pet_button = QPushButton("✕ 关闭此桌宠")
+        self.close_pet_button.setCursor(Qt.PointingHandCursor)
+        self.close_pet_button.setToolTip("关闭这只桌宠（也可在桌面上右键点击角色选择关闭）")
+        self.close_pet_button.setStyleSheet("""
+            QPushButton {
+                background: #ffffff;
+                color: #ef4444;
+                font-weight: bold;
+                font-size: 12px;
+                border: 1px solid #fecaca;
+                border-radius: 9px;
+                padding: 6px 10px;
+            }
+            QPushButton:hover {
+                background: #fef2f2;
+                border-color: #ef4444;
+            }
+            QPushButton:disabled {
+                background: #f8fafc;
+                color: #cbd5e1;
+                border-color: #e2e8f0;
+            }
+        """)
+        self.close_pet_button.clicked.connect(self.close_selected_pet)
+        pet_actions_row.addWidget(self.close_pet_button)
+
+        pet_ctrl_layout.addLayout(pet_actions_row)
+
+        self.configure_pet_button = QPushButton("🎨 动作")
+        self.configure_pet_button.setCursor(Qt.PointingHandCursor)
+        self.configure_pet_button.setToolTip("上方五个动作槽位、下方全部角色文件，直接拖拽绑定")
+        self.configure_pet_button.setStyleSheet("""
+            QPushButton {
+                background: #ffffff;
+                color: #ff526c;
+                font-weight: bold;
+                font-size: 12px;
+                border: 1.5px solid #ffccd5;
+                border-radius: 9px;
+                padding: 7px 14px;
+            }
+            QPushButton:hover {
+                background: #fff5f7;
+                border-color: #ff526c;
+            }
+        """)
+        self.configure_pet_button.clicked.connect(lambda: self.open_character_action_studio())
+        pet_ctrl_layout.addWidget(self.configure_pet_button)
 
         pet_ctrl_layout.addWidget(self.slider_row(self.scale_label, self.scale_slider))
 
@@ -3537,8 +3972,8 @@ class ControlPanel(QWidget):
         self.reload_button = QPushButton("重新加载")
         self.reload_button.clicked.connect(self.reload_selected_asset)
 
-        self.action_studio_button = QPushButton("🎨 角色动作工坊")
-        self.action_studio_button.setToolTip("设计该角色的动作触发、默认待机与右键备选动作")
+        self.action_studio_button = QPushButton("🎨 动作")
+        self.action_studio_button.setToolTip("配置该角色的动作绑定与素材")
         self.action_studio_button.setStyleSheet("""
             QPushButton {
                 background: #ffffff;
@@ -3662,6 +4097,27 @@ class ControlPanel(QWidget):
         language_layout.addWidget(self.settings_language_button)
         preferences_layout.addWidget(language_row)
         layout.addWidget(preferences_card)
+
+        new_api_card = QFrame()
+        new_api_card.setObjectName("SettingsCard")
+        new_api_layout = QVBoxLayout(new_api_card)
+        new_api_layout.setContentsMargins(22, 20, 22, 20)
+        new_api_layout.setSpacing(10)
+        self.settings_new_api_title_label = QLabel()
+        self.settings_new_api_title_label.setObjectName("ActivityCardTitle")
+        self.settings_new_api_hint_label = QLabel()
+        self.settings_new_api_hint_label.setObjectName("SubtleLabel")
+        self.settings_new_api_hint_label.setWordWrap(True)
+        self.settings_new_api_button = QPushButton()
+        self.settings_new_api_button.setObjectName("ToolPrimaryButton")
+        self.settings_new_api_button.clicked.connect(self.open_new_api_dialog)
+        new_api_button_row = QHBoxLayout()
+        new_api_button_row.addStretch(1)
+        new_api_button_row.addWidget(self.settings_new_api_button)
+        new_api_layout.addWidget(self.settings_new_api_title_label)
+        new_api_layout.addWidget(self.settings_new_api_hint_label)
+        new_api_layout.addLayout(new_api_button_row)
+        layout.addWidget(new_api_card)
 
         system_card = QFrame()
         system_card.setObjectName("SettingsCard")
@@ -4807,10 +5263,9 @@ class ControlPanel(QWidget):
         tool_row = QHBoxLayout()
         tool_row.setSpacing(8)
         self.tool_whip_button = QPushButton()
-        self.tool_whip_button.clicked.connect(lambda: show_whip_tool(self))
+        self.tool_whip_button.setVisible(False)
         self.tool_reward_button = QPushButton()
         self.tool_reward_button.clicked.connect(self.play_tool_reward)
-        tool_row.addWidget(self.tool_whip_button)
         tool_row.addWidget(self.tool_reward_button)
         tool_row.addStretch(1)
         panel_layout.addLayout(tool_row)
@@ -5043,7 +5498,7 @@ class ControlPanel(QWidget):
                         self.tool_timer_badge.setStyleSheet("background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 9px; padding: 2px 10px; font-size: 11px; font-weight: bold;")
                     else:
                         self.tool_timer_badge.setText("⏱️ 计时运行中")
-                        self.tool_timer_badge.setStyleSheet("background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 9px; padding: 2px 10px; font-size: 11px; font-weight: bold;")
+                        self.tool_timer_badge.setStyleSheet("background: #fff0f3; color: #ff526c; border: 1px solid #ffccd3; border-radius: 9px; padding: 2px 10px; font-size: 11px; font-weight: bold;")
                 else:
                     self.tool_timer_badge.setText("⏸️ 已暂停")
                     self.tool_timer_badge.setStyleSheet("background: #fdf8f4; color: #7c6d66; border: 1px solid #ebdcd2; border-radius: 9px; padding: 2px 10px; font-size: 11px; font-weight: bold;")
@@ -5428,27 +5883,22 @@ class ControlPanel(QWidget):
         if installed is not None:
             self.select_imported_library_item(installed)
 
-    def open_doubao_guide(self):
+    def open_deepseek_guide(self):
         guide_root = ensure_ai_authoring_guide(BASE_DIR)
-        dialog = DoubaoGuideDialog(
-            build_doubao_prompt(guide_root.parent, state.ASSETS_DIR),
+        dialog = DeepSeekGuideDialog(
+            build_deepseek_prompt(guide_root.parent, state.ASSETS_DIR),
             state.ASSETS_DIR,
             self.on_character_installed,
             self,
         )
         dialog.exec()
 
+    open_doubao_guide = open_deepseek_guide
+
     def open_redeem_character(self):
         self.sync_unlock_state()
         account = logged_in_account(self.unlock_state)
-        if not account:
-            if not self.open_account_dialog():
-                return
-            account = logged_in_account(self.unlock_state)
         token = str((account or {}).get("token") or "").strip()
-        if not token:
-            QMessageBox.information(self, "兑换角色", "当前登录状态已失效，请重新登录后再兑换。")
-            return
         dialog = RedeemCharacterDialog(
             token,
             state.ASSETS_DIR,
@@ -5485,10 +5935,7 @@ class ControlPanel(QWidget):
         return set(self.unlock_state.get("unlocked_asset_ids") or [])
 
     def locked_assets(self):
-        unlocked = self.unlocked_asset_ids()
-        if self.unlock_state.get("all_unlocked"):
-            return []
-        return [asset for asset in self.all_pet_assets() if asset.id not in unlocked]
+        return []
 
     def unlock_all_pets(self, reason=None):
         assets = self.all_pet_assets()
@@ -5997,6 +6444,70 @@ class ControlPanel(QWidget):
             self.add_selected_library_asset()
             self.refresh_overview_selection()
 
+    @staticmethod
+    def _is_dadeepseek_asset(asset):
+        """Return whether *asset* is the dedicated large DeepSeek role."""
+        if asset is None:
+            return False
+        metadata = getattr(asset, "metadata", {}) or {}
+        character_id = str(metadata.get("character_id") or getattr(asset, "id", "") or "").lower()
+        name = str(metadata.get("name") or getattr(asset, "name", "") or "").replace(" ", "").lower()
+        return "dadeepseek" in character_id or name in {"大deepseek", "dadeepseek"}
+
+    def connect_selected_deepseek_tools(self):
+        """Put 大 DeepSeek on the desktop and open every supported AI entry.
+
+        This is deliberately independent of the currently selected role.  The
+        button is a customer shortcut, so it finds 大 DeepSeek in the library,
+        puts it on the desktop, and then launches each installed app (or its
+        official web entry when the app is not installed).
+        """
+        asset = self.selected_library_asset()
+        if not self._is_dadeepseek_asset(asset):
+            # Find the role without asking the customer to change selection.
+            for row in range(self.library_list.count()):
+                item = self.library_list.item(row)
+                path = item.data(Qt.UserRole) if item is not None else None
+                if not path:
+                    continue
+                candidate = detect_asset(Path(path))
+                if self._is_dadeepseek_asset(candidate):
+                    self.library_list.setCurrentRow(row)
+                    asset = candidate
+                    break
+        if not self._is_dadeepseek_asset(asset):
+            QMessageBox.warning(self, "连接 AI", "角色库里没有找到大 DeepSeek，请先导入该角色。")
+            return False
+
+        window = self.running_window_for_asset(asset)
+        if window is None:
+            self.add_selected_library_asset()
+            window = self.running_window_for_asset(asset)
+        if window is None:
+            QMessageBox.warning(self, "大 DeepSeek", "无法把大 DeepSeek 放到桌面，请先检查角色素材。")
+            return False
+
+        results = launch_all_integrations()
+        opened = [item for item, ok, _message in results if ok]
+        missing = [(item, message) for item, ok, message in results if not ok]
+
+        # A newly connected role starts in the quiet waiting animation.  A
+        # tool can switch it to 思考 later through the existing windowpet://
+        # status callback, while customers can still use the right-click
+        # manual state actions.
+        play_status = getattr(window, "play_external_integration_status", None)
+        if callable(play_status):
+            play_status("waiting")
+
+        if len(opened) == len(results):
+            message = "大 DeepSeek 已就绪，AI 工具也已自动打开。"
+        elif opened:
+            message = "大 DeepSeek 已就绪，已为你打开可用的 AI 工具；其余工具可稍后安装。"
+        else:
+            message = "暂时无法打开 AI 工具，请检查网络后再点一次。"
+        QMessageBox.information(self, "大 DeepSeek 一键连接", message)
+        return bool(opened)
+
     def refresh_overview_selection(self):
         if not hasattr(self, "overview_preview_media"):
             return
@@ -6006,17 +6517,17 @@ class ControlPanel(QWidget):
         if action:
             if hasattr(self, "pet_control_card"):
                 self.pet_control_card.hide()
-            if action == "doubao":
+            if action in ("deepseek", "doubao"):
                 self.overview_preview_media.setActionHint(
-                    "doubao",
-                    "豆包生成",
-                    "复制写好的提示词，让豆包直接把完整角色包生成到本软件角色库。",
+                    "deepseek",
+                    "DeepSeek 生成",
+                    "复制精心设计的 WindowPet 2.0 规格提示词，让 DeepSeek 帮你构思并生成专属桌宠角色。",
                 )
             else:
                 self.overview_preview_media.setActionHint(
                     "redeem",
                     "兑换角色",
-                    "登录后输入兑换码，校验云端角色包并安全导入角色库。",
+                    "输入官方展馆兑换码，一键安全导入专属角色包，免登录直接激活。",
                 )
             return
 
@@ -6030,9 +6541,22 @@ class ControlPanel(QWidget):
                 if running is not None:
                     self.overview_pet_status_badge.setText("● 桌面运行中")
                     self.overview_pet_status_badge.setStyleSheet("color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 2px 10px; font-weight: bold;")
+                    if hasattr(self, "summon_pet_button"):
+                        self.summon_pet_button.setText("➕ 召唤到桌面 (已在运行)")
+                    if hasattr(self, "close_pet_button"):
+                        self.close_pet_button.setEnabled(True)
+                        self.close_pet_button.setText("✕ 关闭此桌宠")
                 else:
                     self.overview_pet_status_badge.setText("○ 待命准备中")
                     self.overview_pet_status_badge.setStyleSheet("color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 2px 10px;")
+                    if hasattr(self, "summon_pet_button"):
+                        self.summon_pet_button.setText("➕ 召唤到桌面 (支持双击卡片)")
+                    if hasattr(self, "close_pet_button"):
+                        self.close_pet_button.setEnabled(False)
+                        self.close_pet_button.setText("✕ 未在桌面运行")
+
+                if hasattr(self, "switch_pet_button"):
+                    self.switch_pet_button.setEnabled(bool(state.WINDOWS))
 
         if asset is None:
             self.overview_preview_media.setText("")
@@ -6423,8 +6947,8 @@ class ControlPanel(QWidget):
                 selected_item = item
 
         for label, action, tooltip in (
-            ("豆包生成", "doubao", "让豆包直接把完整角色包生成到本软件角色库"),
-            ("兑换角色", "redeem", "登录账号后，用兑换码从云端安全导入角色"),
+            ("DeepSeek 生成", "deepseek", "让 DeepSeek 构思专业提示词，打造属于你的全新专属桌宠"),
+            ("兑换角色", "redeem", "输入兑换码，校验角色包并导入角色库"),
         ):
             item = QListWidgetItem(label)
             item.setTextAlignment(Qt.AlignHCenter | Qt.AlignBottom)
@@ -6585,7 +7109,14 @@ class ControlPanel(QWidget):
         add_action.setEnabled(not bool(item.data(LIBRARY_LOCKED_ROLE)))
         menu.addAction(add_action)
 
-        studio_action = QAction("🎨 角色动作工坊 (设计动作)", self)
+        asset = self.selected_library_asset()
+        running = self.running_window_for_asset(asset) if asset else None
+        if running is not None:
+            close_action = QAction("✕ 关闭此桌宠", self)
+            close_action.triggered.connect(self.close_selected_pet)
+            menu.addAction(close_action)
+
+        studio_action = QAction("🎨 动作", self)
         studio_action.triggered.connect(lambda: self.open_character_action_studio())
         studio_action.setEnabled(not bool(item.data(LIBRARY_LOCKED_ROLE)))
         menu.addAction(studio_action)
@@ -6608,7 +7139,7 @@ class ControlPanel(QWidget):
         edit_action.triggered.connect(self.select_active)
         menu.addAction(edit_action)
 
-        studio_action = QAction("🎨 角色动作工坊", self)
+        studio_action = QAction("🎨 动作", self)
         studio_action.triggered.connect(self.open_active_character_action_studio)
         menu.addAction(studio_action)
 
@@ -6622,6 +7153,27 @@ class ControlPanel(QWidget):
 
         style_menu(menu).exec(self.active_list.mapToGlobal(pos))
 
+    def open_character_action_config(self, path=None):
+        if path is None:
+            path = self.library_path_from_current_item()
+        if path is None:
+            window = self.current_window()
+            if window is not None and getattr(window, "asset", None):
+                path = window.asset.path
+        if path is None or not Path(path).is_dir():
+            QMessageBox.information(self, "配置主宠动作", "请先在角色列表中选择一个角色。")
+            return
+
+        from .character_action_config_dialog import CharacterActionConfigDialog
+        dialog = CharacterActionConfigDialog(Path(path), parent=self)
+        dialog.exec()
+        self.refresh_packs()
+
+    def open_active_character_action_config(self):
+        window = self.window_from_current_item()
+        if window is not None and getattr(window, "asset", None):
+            self.open_character_action_config(window.asset.path)
+
     def open_character_action_studio(self, path=None):
         if path is None:
             path = self.library_path_from_current_item()
@@ -6630,7 +7182,7 @@ class ControlPanel(QWidget):
             if window is not None and getattr(window, "asset", None):
                 path = window.asset.path
         if path is None or not Path(path).is_dir():
-            QMessageBox.information(self, "角色动作工坊", "请先在角色列表中选择一个角色。")
+            QMessageBox.information(self, "动作", "请先在角色列表中选择一个角色。")
             return
 
         from .character_action_studio import CharacterActionStudioDialog
@@ -6808,23 +7360,46 @@ class ControlPanel(QWidget):
         if self.selected_window in state.WINDOWS:
             self.load_editor(self.selected_window)
 
-    def add_selected_library_asset(self):
-        item = self.library_list.currentItem()
-        if item is not None and item.data(LIBRARY_LOCKED_ROLE):
+    def add_selected_library_asset(self, item=None):
+        item = item or self.library_list.currentItem()
+        if item is None:
+            return
+        action = str(item.data(LIBRARY_ACTION_ROLE) or "")
+        if action in ("deepseek", "doubao"):
+            self.open_deepseek_guide()
+            return
+        if action == "redeem":
+            self.open_redeem_character()
+            return
+        if item.data(LIBRARY_LOCKED_ROLE):
             self.show_locked_pet_message()
             return
-        if item is not None and item.data(Qt.UserRole):
+        if item.data(Qt.UserRole):
             window = add_window(item.data(Qt.UserRole))
             if window is not None:
                 self.select_window(window)
+                self.refresh_overview_selection()
+
+    def close_selected_pet(self):
+        asset = self.selected_library_asset()
+        target = self.running_window_for_asset(asset) if asset else None
+        if target is None:
+            target = self.selected_window if self.selected_window in state.WINDOWS else (state.WINDOWS[0] if state.WINDOWS else None)
+        if target is not None:
+            if self.selected_window is target:
+                self.selected_window = None
+                self.load_editor(None)
+            target.close()
+            self.refresh_active()
+            self.refresh_overview_selection()
 
     def switch_library_asset_to_desktop(self, item=None):
         item = item or self.library_list.currentItem()
         if item is None:
             return
         action = str(item.data(LIBRARY_ACTION_ROLE) or "")
-        if action == "doubao":
-            self.open_doubao_guide()
+        if action in ("deepseek", "doubao"):
+            self.open_deepseek_guide()
             return
         if action == "redeem":
             self.open_redeem_character()
@@ -7088,6 +7663,17 @@ class ControlPanel(QWidget):
             self.selected_window.locked = checked
             save_config()
             self.refresh_active()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if hasattr(self, "overview_preview_media"):
+            self.overview_preview_media._stop_animation()
+        import gc
+        gc.collect()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.refresh_overview_selection()
 
     def closeEvent(self, event):
         self.clear_overlay_selection()

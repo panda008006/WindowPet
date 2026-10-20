@@ -5,6 +5,9 @@ from PySide6.QtGui import QPixmap
 from .assets import AssetType
 from .media_folder import VIDEO_EXTENSIONS
 
+AUDIO_EXTENSIONS = {".aac", ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".wma"}
+SUPPORTED_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS
+
 
 def validate_asset_metadata(asset_definition) -> list[str]:
     asset_type = getattr(asset_definition, "type", None)
@@ -50,10 +53,10 @@ def _validate_frame_animation_video_sources(folder: Path, metadata: dict) -> lis
         except ValueError:
             errors.append(f"动作 {name} 的视频来源路径不安全：{value}")
             continue
-        if resolved.suffix.lower() not in VIDEO_EXTENSIONS:
-            errors.append(f"动作 {name} 的视频来源格式不支持：{value}")
+        if resolved.suffix.lower() not in SUPPORTED_MEDIA_EXTENSIONS:
+            errors.append(f"动作 {name} 的音频/视频来源格式不支持：{value}")
         elif not resolved.is_file():
-            errors.append(f"动作 {name} 的视频来源文件不存在：{value}")
+            errors.append(f"动作 {name} 的音频/视频来源文件不存在：{value}")
     return errors
 
 

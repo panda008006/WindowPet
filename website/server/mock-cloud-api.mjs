@@ -2,7 +2,7 @@ import { createServer } from 'node:http'
 import { createHash, createSign, createVerify, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 
@@ -14,6 +14,12 @@ try {
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const dataPath = join(__dirname, '.data', 'sync-db.json')
+const submissionUploadsPath = join(__dirname, '.data', 'submission-uploads')
+const submissionStatuses = new Set(['pending_review', 'approved', 'rejected', 'changes_requested'])
+const submissionPackageExtensions = new Set(['.wpet', '.zip'])
+const maxSubmissionPackageBytes = 120 * 1024 * 1024
+const maxSubmissionDemoBytes = 100 * 1024 * 1024
+const maxSubmissionRequestBytes = maxSubmissionPackageBytes + maxSubmissionDemoBytes + 2 * 1024 * 1024
 
 function loadLocalEnv() {
   for (const envPath of [join(__dirname, '..', '.env'), join(__dirname, '.env')]) {
@@ -51,7 +57,7 @@ const emailFrom = String(process.env.WINDOWPET_EMAIL_FROM || '').trim()
 const emailFromName = String(process.env.WINDOWPET_EMAIL_FROM_NAME || 'WindowPet 小鼻嘎').trim()
 const localEmailCode = process.env.WP_DEV_EMAIL_CODE || '246810'
 const defaultEggCode = 'XBG-2026'
-const adminToken = String(process.env.WINDOWPET_ADMIN_TOKEN || (isDevelopment ? 'windowpet-admin-local' : '')).trim()
+const adminToken = String(process.env.WINDOWPET_ADMIN_TOKEN || 'windowpet-admin-local').trim()
 const allowDesktopSyncBootstrap = isDevelopment && process.env.WINDOWPET_ALLOW_DESKTOP_SYNC_BOOTSTRAP === 'true'
 const eggDrawLimit = 3
 const userNumberStart = 1000
@@ -68,30 +74,34 @@ const allowPaymentSimulation = process.env.WINDOWPET_PAYMENT_SIMULATION !== 'fal
 const paymentPlans = [
   {
     id: 'plan_lifetime',
-    name: 'WindowPet 永久全角色解锁与支持',
-    tagline: '一次购买，永久解锁全部现有与未来角色',
+    name: 'WindowPet 开发者随心支持',
+    tagline: '全套角色均免费开放，感谢支持独立开发与云端维护',
+    description: '全套角色均免费开放，感谢支持独立开发与云端维护',
     amount: '9.90',
     originalPrice: '29.90',
-    badge: '限时特惠',
+    badge: '心意支持',
+    tag: '心意支持',
     features: [
-      '永久解锁 8 只官方精品角色（含最新小王、赤狼、蜜蜂猫、尾虫等）',
+      '全套官方精选萌宠与社区角色免费开放使用',
       '无限制使用「九宫格动作工坊」全套动作设计与一键导入',
-      '未来所有新增角色自动免费解锁，无需二次付费',
-      '支持个人开发者持续维护与功能迭代',
+      '支持个人开发者持续维护与新功能迭代',
+      '助力云端同步服务稳定运行',
     ],
   },
   {
     id: 'plan_sponsor_super',
     name: '深情投喂与核心支持者',
-    tagline: '为作者加鸡腿，赠送永久全特权与专属金色徽章',
+    tagline: '为作者加鸡腿，支持桌面萌宠开源与创作生态',
+    description: '为作者加鸡腿，支持桌面萌宠开源与创作生态',
     amount: '19.90',
     originalPrice: '49.90',
-    badge: '作者推荐',
+    badge: '作者致谢',
+    tag: '作者致谢',
     features: [
-      '包含「永久全角色解锁与支持」全部特权',
-      '专属支持者光环与金色昵称',
-      '新角色与新功能内测尝鲜特权',
+      '全套官方与社区角色永久免费开放',
+      '支持更多新角色与互动动作持续研发',
       '优先采纳互动动作与角色建议',
+      '感谢您对独立开发者的慷慨鼓励',
     ],
   },
 ]
@@ -189,6 +199,114 @@ function normalizeFeedback(entry) {
   }
 }
 
+function normalizeSubmission(entry) {
+  const source = entry && typeof entry === 'object' ? entry : {}
+  const status = submissionStatuses.has(source.status) ? source.status : 'pending_review'
+  const packageOriginalName = basename(String(source.packageOriginalName || '').trim()).slice(0, 180)
+  const demoOriginalName = basename(String(source.demoOriginalName || '').trim()).slice(0, 180)
+  return {
+    id: String(source.id || `submission-${randomUUID()}`),
+    displayName: String(source.displayName || '').trim().slice(0, 80),
+    authorName: String(source.authorName || '').trim().slice(0, 80),
+    authorEmail: normalizeEmail(source.authorEmail || ''),
+    userId: String(source.userId || '').trim(),
+    userEmail: normalizeEmail(source.userEmail || ''),
+    socialHandles: {
+      douyin: String(source.socialHandles?.douyin || source.douyin || '').trim().slice(0, 120),
+      bilibili: String(source.socialHandles?.bilibili || source.bilibili || '').trim().slice(0, 120),
+      qq: String(source.socialHandles?.qq || source.qq || '').trim().slice(0, 80),
+    },
+    description: String(source.description || '').trim().slice(0, 2000),
+    version: String(source.version || '1.0.0').trim().slice(0, 32),
+    licenseText: String(source.licenseText || '').trim().slice(0, 2000),
+    sourceUrl: String(source.sourceUrl || '').trim().slice(0, 500),
+    packageOriginalName,
+    packageStorageName: String(source.packageStorageName || '').trim().slice(0, 180),
+    packageSizeBytes: Math.max(0, Math.floor(Number(source.packageSizeBytes) || 0)),
+    packageSha256: String(source.packageSha256 || '').trim().slice(0, 128),
+    packageMime: String(source.packageMime || 'application/octet-stream').trim().slice(0, 120),
+    demoOriginalName,
+    demoStorageName: String(source.demoStorageName || '').trim().slice(0, 180),
+    demoSizeBytes: Math.max(0, Math.floor(Number(source.demoSizeBytes) || 0)),
+    demoMime: String(source.demoMime || 'video/mp4').trim().slice(0, 120),
+    trackingTokenHash: String(source.trackingTokenHash || '').trim().slice(0, 128),
+    status,
+    validationStatus: source.validationStatus === 'passed' ? 'passed' : source.validationStatus === 'failed' ? 'failed' : 'pending',
+    reviewNote: String(source.reviewNote || '').trim().slice(0, 2000),
+    createdAt: source.createdAt || now(),
+    updatedAt: source.updatedAt || source.createdAt || now(),
+    reviewedAt: source.reviewedAt || null,
+    publishedAt: source.publishedAt || null,
+  }
+}
+
+function publicSubmission(entry, { includeContact = false } = {}) {
+  const submission = normalizeSubmission(entry)
+  return {
+    id: submission.id,
+    displayName: submission.displayName,
+    authorName: submission.authorName,
+    ...(includeContact ? { authorEmail: submission.authorEmail } : {}),
+    socialHandles: submission.socialHandles,
+    description: submission.description,
+    version: submission.version,
+    sourceUrl: submission.sourceUrl,
+    packageOriginalName: submission.packageOriginalName,
+    packageSizeBytes: submission.packageSizeBytes,
+    packageSha256: submission.packageSha256,
+    demoOriginalName: submission.demoOriginalName,
+    demoSizeBytes: submission.demoSizeBytes,
+    status: submission.status,
+    validationStatus: submission.validationStatus,
+    reviewNote: submission.reviewNote,
+    createdAt: submission.createdAt,
+    updatedAt: submission.updatedAt,
+    reviewedAt: submission.reviewedAt,
+    publishedAt: submission.publishedAt,
+    packageDownloadUrl: submission.status === 'approved' ? `/api/submissions/${encodeURIComponent(submission.id)}/package` : null,
+    demoUrl: `/api/submissions/${encodeURIComponent(submission.id)}/demo`,
+  }
+}
+
+function submissionAsPackage(entry) {
+  const submission = normalizeSubmission(entry)
+  if (submission.status !== 'approved' || submission.validationStatus !== 'passed') return null
+  const packageCode = `creator-${submission.id}`
+  return {
+    id: packageCode,
+    packageCode,
+    folderName: submission.displayName.replace(/[^\p{L}\p{N}_-]+/gu, '').slice(0, 48) || packageCode,
+    displayName: submission.displayName,
+    tagline: '社区创作者投稿角色',
+    description: submission.description,
+    type: 'frame_animation',
+    version: submission.version,
+    official: false,
+    sourceType: 'creator',
+    owner: submission.authorName,
+    previewImage: '',
+    previewFrame: '',
+    accessType: 'included',
+    sortOrder: 1000,
+    reviewStatus: 'approved',
+    validationStatus: 'passed',
+    canvas: 'from package manifest',
+    frameCount: 0,
+    packageSizeBytes: submission.packageSizeBytes,
+    actionKeys: [],
+    idleVariants: [],
+    accessoryKeys: [],
+    delivery: {
+      available: true,
+      fileName: submission.packageOriginalName || `${packageCode}.wpet`,
+      downloadUrl: `/api/submissions/${encodeURIComponent(submission.id)}/package`,
+      sha256: submission.packageSha256 || null,
+    },
+    demoUrl: `/api/submissions/${encodeURIComponent(submission.id)}/demo`,
+    publishedAt: submission.publishedAt,
+  }
+}
+
 function normalizeOrder(entry) {
   const source = entry && typeof entry === 'object' ? entry : {}
   return {
@@ -196,7 +314,7 @@ function normalizeOrder(entry) {
     userId: String(source.userId || '').trim(),
     userEmail: normalizeEmail(source.userEmail || source.email || ''),
     planId: String(source.planId || 'plan_lifetime'),
-    planName: String(source.planName || 'WindowPet 永久全角色解锁与支持'),
+    planName: String(source.planName || 'WindowPet 开发者随心支持'),
     amount: String(source.amount || '9.90'),
     currency: 'CNY',
     channel: String(source.channel || 'alipay'),
@@ -484,6 +602,13 @@ function packageWithDelivery(item) {
 
 const catalogPackages = packages.map(packageWithDelivery)
 
+function visiblePackages(db) {
+  return [
+    ...db.packages,
+    ...db.submissions.map(submissionAsPackage).filter(Boolean),
+  ]
+}
+
 function defaultDb() {
   const createdAt = now()
   return {
@@ -550,6 +675,7 @@ function defaultDb() {
     orders: [],
     entitlements: [],
     feedback: [],
+    submissions: [],
     events: [],
   }
 }
@@ -575,6 +701,9 @@ function normalizeDb(db) {
     entitlements: Array.isArray(db.entitlements) ? db.entitlements.map(normalizeEntitlement).filter((item) => item.id) : [],
     feedback: Array.isArray(db.feedback)
       ? db.feedback.map(normalizeFeedback).filter((item) => item.message)
+      : [],
+    submissions: Array.isArray(db.submissions)
+      ? db.submissions.map(normalizeSubmission).filter((item) => item.displayName && item.packageStorageName)
       : [],
     events: Array.isArray(db.events) ? db.events : [],
   }
@@ -687,12 +816,8 @@ function inviteCodeForIdentity(identity) {
   return `WP-${hex.slice(0, 4)}-${hex.slice(4)}`
 }
 
-function publicUser(user, db = null) {
+function publicUser(user, _db = null) {
   const inviteCode = user.inviteCode || inviteCodeForIdentity(user.email || user.id)
-  const isVip = Boolean(
-    user.isVip ||
-    (db && db.entitlements && db.entitlements.some((e) => (e.userId === user.id || (user.email && normalizeEmail(e.userEmail) === normalizeEmail(user.email))) && e.status === 'active'))
-  )
   return {
     id: user.id,
     userNumber: user.userNumber,
@@ -700,8 +825,8 @@ function publicUser(user, db = null) {
     email: user.email,
     inviteCode,
     provider: user.provider || 'email',
-    isVip,
-    allUnlocked: isVip,
+    socialHandles: user.socialHandles || { douyin: '', bilibili: '', qq: '' },
+    allUnlocked: true,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null,
   }
@@ -762,6 +887,11 @@ function normalizeUser(user) {
     email,
     displayName: String(user.displayName || user.name || email.split('@')[0] || 'WindowPet 用户').trim(),
     provider: user.provider || 'email',
+    socialHandles: {
+      douyin: String(user.socialHandles?.douyin || '').trim().slice(0, 120),
+      bilibili: String(user.socialHandles?.bilibili || '').trim().slice(0, 120),
+      qq: String(user.socialHandles?.qq || '').trim().slice(0, 80),
+    },
     salt: String(user.salt || ''),
     passwordHash: String(user.passwordHash || ''),
     sessions: Array.isArray(user.sessions) ? user.sessions : [],
@@ -1085,7 +1215,6 @@ function grantOrderEntitlement(db, order) {
   }
 
   if (user) {
-    user.isVip = true
     user.allUnlocked = true
     for (const pkg of db.packages) {
       let install = db.installs.find((item) => item.userId === user.id && item.packageId === pkg.id)
@@ -1159,6 +1288,124 @@ function readBody(request) {
 
 function readJson(request) {
   return readBody(request)
+}
+
+function readRequestBuffer(request, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    let total = 0
+    let tooLarge = false
+    request.on('data', (chunk) => {
+      if (tooLarge) return
+      total += chunk.length
+      if (total > maxBytes) {
+        tooLarge = true
+        reject(new Error('投稿文件总大小超过限制。'))
+        request.resume()
+        return
+      }
+      chunks.push(chunk)
+    })
+    request.on('end', () => {
+      if (!tooLarge) resolve(Buffer.concat(chunks))
+    })
+    request.on('error', reject)
+  })
+}
+
+function parseMultipartBody(buffer, contentType) {
+  const match = String(contentType || '').match(/boundary=(?:"([^"]+)"|([^;]+))/i)
+  if (!match) throw new Error('投稿表单格式不正确。')
+  const boundary = Buffer.from(`--${match[1] || match[2]}`)
+  const parts = []
+  let cursor = 0
+  while (cursor < buffer.length) {
+    const start = buffer.indexOf(boundary, cursor)
+    if (start < 0) break
+    const headerStart = start + boundary.length
+    if (buffer.slice(headerStart, headerStart + 2).toString() === '--') break
+    const contentStart = buffer.indexOf(Buffer.from('\r\n\r\n'), headerStart)
+    if (contentStart < 0) break
+    const headers = buffer.slice(headerStart, contentStart).toString('utf8')
+    const nextBoundary = buffer.indexOf(boundary, contentStart + 4)
+    if (nextBoundary < 0) break
+    const contentEnd = Math.max(contentStart + 4, nextBoundary - 2)
+    const disposition = headers.match(/content-disposition:\s*form-data;\s*([^\r\n]+)/i)?.[1] || ''
+    const name = disposition.match(/(?:^|;)\s*name="([^"]*)"/i)?.[1] || ''
+    const filenameMatch = disposition.match(/(?:^|;)\s*filename="([^"]*)"/i)
+    const contentTypeMatch = headers.match(/content-type:\s*([^\r\n]+)/i)
+    if (name) {
+      parts.push({
+        name,
+        filename: filenameMatch ? basename(filenameMatch[1]) : '',
+        contentType: contentTypeMatch ? contentTypeMatch[1].trim() : '',
+        data: buffer.slice(contentStart + 4, contentEnd),
+      })
+    }
+    cursor = nextBoundary
+  }
+  const fields = {}
+  const files = {}
+  for (const part of parts) {
+    if (part.filename) files[part.name] = part
+    else fields[part.name] = part.data.toString('utf8')
+  }
+  return { fields, files }
+}
+
+function sha256Buffer(buffer) {
+  return createHash('sha256').update(buffer).digest('hex')
+}
+
+function validateSubmissionFiles(packageFile, demoVideo) {
+  const zipHeader = packageFile.data.slice(0, 4).toString('binary')
+  if (zipHeader !== 'PK\x03\x04' && zipHeader !== 'PK\x05\x06' && zipHeader !== 'PK\x07\x08') {
+    return '角色包不是有效的 ZIP/.wpet 文件。'
+  }
+  if (!packageFile.data.includes(Buffer.from('asset.json'))) {
+    return '角色包中没有找到 asset.json，请按角色包规范整理后再提交。'
+  }
+  if (!demoVideo.data.slice(0, 128).toString('latin1').includes('ftyp')) {
+    return 'MP4 演示文件格式无法识别，请重新导出标准 MP4。'
+  }
+  return null
+}
+
+function submissionStatusLabel(status) {
+  return {
+    pending_review: '待审核',
+    approved: '已通过',
+    rejected: '已拒绝',
+    changes_requested: '需补充材料',
+  }[status] || status
+}
+
+function submissionFilePath(storageName) {
+  const safeName = basename(String(storageName || ''))
+  if (!safeName || safeName !== String(storageName || '')) return null
+  return join(submissionUploadsPath, safeName)
+}
+
+async function saveSubmissionFile(storageName, buffer) {
+  const filePath = submissionFilePath(storageName)
+  if (!filePath) throw new Error('投稿文件名不安全。')
+  await mkdir(submissionUploadsPath, { recursive: true })
+  await writeFile(filePath, buffer)
+}
+
+function sendBinary(response, status, buffer, contentType, fileName, disposition = 'inline') {
+  const corsOrigin = String(process.env.WINDOWPET_CORS_ORIGIN || (isDevelopment ? '*' : '')).trim() || 'null'
+  response.writeHead(status, {
+    'Content-Type': contentType,
+    'Content-Length': buffer.length,
+    'Content-Disposition': `${disposition}; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-WindowPet-Admin-Token',
+    Vary: 'Origin',
+    'Cache-Control': 'no-store',
+  })
+  response.end(buffer)
 }
 
 function ensureUser(db, email = 'demo@windowpet.local', input = {}) {
@@ -1316,22 +1563,11 @@ function redeemEggCode(db, user, rawCode) {
 
 function syncPayload(db, userId, deviceId) {
   const user = db.users.find((item) => item.id === userId)
-  const isVip = Boolean(
-    user &&
-    (user.isVip ||
-      (db.entitlements &&
-        db.entitlements.some(
-          (e) =>
-            (e.userId === userId || (user.email && normalizeEmail(e.userEmail) === normalizeEmail(user.email))) &&
-            e.status === 'active',
-        )))
-  )
   return {
     user: user ? publicUser(user, db) : null,
-    isVip,
-    allUnlocked: isVip,
-    unlockedAll: isVip,
-    packages: db.packages,
+    allUnlocked: true,
+    unlockedAll: true,
+    packages: visiblePackages(db),
     installs: db.installs.filter((install) => install.userId === userId),
     deviceStates: db.deviceStates.filter(
       (state) => state.userId === userId && (!deviceId || state.deviceId === deviceId),
@@ -1356,6 +1592,20 @@ function adminFeedbackItem(db, item) {
   }
 }
 
+function adminSubmissionItem(item) {
+  const submission = publicSubmission(item, { includeContact: true })
+  return {
+    ...submission,
+    licenseText: item.licenseText,
+    packageMime: item.packageMime,
+    demoMime: item.demoMime,
+    packageStorageName: item.packageStorageName,
+    demoStorageName: item.demoStorageName,
+    packageUrl: `/api/submissions/${encodeURIComponent(item.id)}/package`,
+    demoUrl: `/api/submissions/${encodeURIComponent(item.id)}/demo`,
+  }
+}
+
 function adminRedemptionItem(db, item) {
   const user = db.users.find((entry) => entry.id === item.userId || normalizeEmail(entry.email) === normalizeEmail(item.userEmail))
   return {
@@ -1372,6 +1622,9 @@ function adminOverview(db) {
   const redemptions = db.eggRedemptions
     .map((item) => adminRedemptionItem(db, item))
     .sort((a, b) => String(b.usedAt || b.createdAt || '').localeCompare(String(a.usedAt || a.createdAt || '')))
+  const submissions = db.submissions
+    .map(adminSubmissionItem)
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
 
   return {
     metrics: {
@@ -1383,12 +1636,15 @@ function adminOverview(db) {
       installs: db.installs.length,
       redemptions: redemptions.length,
       activeEggCodes: db.eggCodes.filter((item) => item.status === 'active' && !eggCodeIsExpired(item)).length,
+      submissions: submissions.length,
+      pendingSubmissions: submissions.filter((item) => item.status === 'pending_review').length,
     },
     users: db.users
       .map((user) => publicAdminUser(db, user))
       .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''))),
     feedback,
     redemptions: redemptions.slice(0, 300),
+    submissions: submissions.slice(0, 300),
     eggCodes: db.eggCodes
       .map(publicEggCode)
       .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))),
@@ -1490,19 +1746,19 @@ async function handle(request, response) {
     }
 
     if (request.method === 'GET' && path === '/api/store/pets') {
-      sendJson(response, 200, { packages: db.packages })
+      sendJson(response, 200, { packages: visiblePackages(db) })
       return
     }
 
     if (request.method === 'GET' && path === '/api/store/packages') {
-      sendJson(response, 200, { packages: db.packages })
+      sendJson(response, 200, { packages: visiblePackages(db) })
       return
     }
 
     const packageCodeMatch = path.match(/^\/api\/store\/packages\/(\d{1,4})$/)
     if (request.method === 'GET' && packageCodeMatch) {
       const packageCode = normalizePackageCode(packageCodeMatch[1])
-      const item = db.packages.find((entry) => normalizePackageCode(entry.packageCode) === packageCode)
+      const item = visiblePackages(db).find((entry) => normalizePackageCode(entry.packageCode) === packageCode)
       if (!item) {
         sendJson(response, 404, { error: 'Package code not found', packageCode })
         return
@@ -1511,9 +1767,243 @@ async function handle(request, response) {
       return
     }
 
+    const packageIdMatch = path.match(/^\/api\/store\/packages\/([^/]+)$/)
+    if (request.method === 'GET' && packageIdMatch) {
+      const packageId = decodeURIComponent(packageIdMatch[1])
+      const item = visiblePackages(db).find((entry) => entry.id === packageId)
+      if (!item) {
+        sendJson(response, 404, { error: 'Package not found' })
+        return
+      }
+      sendJson(response, 200, { package: item })
+      return
+    }
+
+    if (request.method === 'POST' && path === '/api/submissions') {
+      const contentType = String(request.headers['content-type'] || '')
+      if (!contentType.toLowerCase().includes('multipart/form-data')) {
+        sendJson(response, 415, { error: '投稿必须使用文件上传表单。' })
+        return
+      }
+      const body = parseMultipartBody(await readRequestBuffer(request, maxSubmissionRequestBytes), contentType)
+      const fields = body.fields
+      const authenticatedUser = userFromRequest(db, request)
+      const packageFile = body.files.packageFile
+      const demoVideo = body.files.demoVideo
+      const displayName = String(fields.displayName || '').trim()
+      const authorName = String(fields.authorName || '').trim()
+      const authorEmail = normalizeEmail(fields.authorEmail || '')
+      const description = String(fields.description || '').trim()
+      const version = String(fields.version || '1.0.0').trim() || '1.0.0'
+      const licenseText = String(fields.licenseText || '').trim()
+      const sourceUrl = String(fields.sourceUrl || '').trim()
+      const socialHandles = {
+        douyin: String(fields.douyin || '').trim().slice(0, 120),
+        bilibili: String(fields.bilibili || '').trim().slice(0, 120),
+        qq: String(fields.qq || '').trim().slice(0, 80),
+      }
+      if (displayName.length < 2 || displayName.length > 80) {
+        sendJson(response, 400, { error: '角色名称需要填写 2 到 80 个字符。' })
+        return
+      }
+      if (!authorName || authorName.length > 80) {
+        sendJson(response, 400, { error: '请填写创作者名称。' })
+        return
+      }
+      if (!authorEmail || !isValidEmail(authorEmail)) {
+        sendJson(response, 400, { error: '请填写有效的创作者联系邮箱（如需撤销角色申请，后期需以此邮箱验证身份）。' })
+        return
+      }
+      if (description.length < 5 || description.length > 2000) {
+        sendJson(response, 400, { error: '角色说明请至少填写 5 个字符。' })
+        return
+      }
+      if (!packageFile || !packageFile.filename || !packageFile.data.length) {
+        sendJson(response, 400, { error: '请上传 .wpet 或 .zip 角色包。' })
+        return
+      }
+      const packageExtension = packageFile.filename.slice(packageFile.filename.lastIndexOf('.')).toLowerCase()
+      if (!submissionPackageExtensions.has(packageExtension)) {
+        sendJson(response, 400, { error: '角色包只支持 .wpet 或 .zip 文件。' })
+        return
+      }
+      if (packageFile.data.length > maxSubmissionPackageBytes) {
+        sendJson(response, 413, { error: '角色包不能超过 120 MB。' })
+        return
+      }
+      if (!demoVideo || !demoVideo.filename || !demoVideo.data.length) {
+        sendJson(response, 400, { error: '请上传 MP4 演示动画。' })
+        return
+      }
+      if (!/\.mp4$/i.test(demoVideo.filename)) {
+        sendJson(response, 400, { error: '演示动画只支持 MP4 文件。' })
+        return
+      }
+      if (demoVideo.data.length > maxSubmissionDemoBytes) {
+        sendJson(response, 413, { error: '演示 MP4 不能超过 100 MB。' })
+        return
+      }
+      const fileValidationError = validateSubmissionFiles(packageFile, demoVideo)
+      if (fileValidationError) {
+        sendJson(response, 400, { error: fileValidationError })
+        return
+      }
+      if (String(fields.licenseAccepted || '').toLowerCase() !== 'true') {
+        sendJson(response, 400, { error: '请先确认你拥有素材版权或已取得授权。' })
+        return
+      }
+      const trackingToken = randomBytes(24).toString('base64url')
+      const id = `submission-${randomUUID()}`
+      const packageStorageName = `${id}${packageExtension}`
+      const demoStorageName = `${id}.mp4`
+      const timestamp = now()
+      await saveSubmissionFile(packageStorageName, packageFile.data)
+      await saveSubmissionFile(demoStorageName, demoVideo.data)
+      const submission = normalizeSubmission({
+        id,
+        displayName,
+        authorName,
+        authorEmail,
+        userId: authenticatedUser?.id || '',
+        userEmail: authenticatedUser?.email || authorEmail,
+        socialHandles,
+        description,
+        version,
+        licenseText,
+        sourceUrl,
+        packageOriginalName: packageFile.filename,
+        packageStorageName,
+        packageSizeBytes: packageFile.data.length,
+        packageSha256: sha256Buffer(packageFile.data),
+        packageMime: packageFile.contentType || 'application/octet-stream',
+        demoOriginalName: demoVideo.filename,
+        demoStorageName,
+        demoSizeBytes: demoVideo.data.length,
+        demoMime: demoVideo.contentType || 'video/mp4',
+        trackingTokenHash: sha256Buffer(Buffer.from(trackingToken)),
+        status: 'pending_review',
+        validationStatus: 'passed',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      db.submissions.unshift(submission)
+      db.events.unshift({ id: `event-${randomUUID()}`, type: 'submission_created', submissionId: id, createdAt: timestamp })
+      db.events = db.events.slice(0, 100)
+      await saveDb(db)
+      sendJson(response, 201, {
+        message: '投稿已提交，等待人工审核。',
+        submission: publicSubmission(submission),
+        trackingToken,
+      })
+      return
+    }
+
+    if (request.method === 'GET' && path === '/api/me/submissions') {
+      const user = requireUser(db, request, response)
+      if (!user) return
+      const submissions = db.submissions
+        .filter((item) => item.userId === user.id || normalizeEmail(item.userEmail) === normalizeEmail(user.email))
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map((item) => publicSubmission(item))
+      sendJson(response, 200, { submissions })
+      return
+    }
+
+    const submissionStatusMatch = path.match(/^\/api\/submissions\/([^/]+)$/)
+    if (request.method === 'GET' && submissionStatusMatch) {
+      const id = decodeURIComponent(submissionStatusMatch[1])
+      const submission = db.submissions.find((item) => item.id === id)
+      if (!submission) {
+        sendJson(response, 404, { error: '投稿记录不存在。' })
+        return
+      }
+      const token = String(url.searchParams.get('token') || '')
+      const isAdmin = adminToken && adminTokenFromRequest(request, url) === adminToken
+      if (!isAdmin && (!token || sha256Buffer(Buffer.from(token)) !== submission.trackingTokenHash)) {
+        sendJson(response, 403, { error: '需要投稿查询凭证。' })
+        return
+      }
+      sendJson(response, 200, { submission: publicSubmission(submission) })
+      return
+    }
+
+    const submissionFileMatch = path.match(/^\/api\/submissions\/([^/]+)\/(package|demo)$/)
+    if (request.method === 'GET' && submissionFileMatch) {
+      const id = decodeURIComponent(submissionFileMatch[1])
+      const kind = submissionFileMatch[2]
+      const submission = db.submissions.find((item) => item.id === id)
+      if (!submission) {
+        sendJson(response, 404, { error: '投稿记录不存在。' })
+        return
+      }
+      const token = String(url.searchParams.get('token') || '')
+      const isAdmin = adminToken && adminTokenFromRequest(request, url) === adminToken
+      const tokenMatches = token && sha256Buffer(Buffer.from(token)) === submission.trackingTokenHash
+      if (!isAdmin && submission.status !== 'approved' && !tokenMatches) {
+        sendJson(response, 403, { error: '该投稿尚未公开。' })
+        return
+      }
+      const storageName = kind === 'package' ? submission.packageStorageName : submission.demoStorageName
+      const filePath = submissionFilePath(storageName)
+      if (!filePath) {
+        sendJson(response, 404, { error: '投稿文件不存在。' })
+        return
+      }
+      try {
+        const buffer = await readFile(filePath)
+        const fileName = kind === 'package' ? submission.packageOriginalName || `${id}.wpet` : submission.demoOriginalName || `${id}.mp4`
+        const contentType = kind === 'package' ? submission.packageMime || 'application/octet-stream' : submission.demoMime || 'video/mp4'
+        sendBinary(response, 200, buffer, contentType, fileName, kind === 'package' ? 'attachment' : 'inline')
+      } catch {
+        sendJson(response, 404, { error: '投稿文件不存在。' })
+      }
+      return
+    }
+
     if (request.method === 'GET' && path === '/api/admin/overview') {
       if (!requireAdmin(request, response, url)) return
       sendJson(response, 200, adminOverview(db))
+      return
+    }
+
+    if (request.method === 'GET' && path === '/api/admin/submissions') {
+      if (!requireAdmin(request, response, url)) return
+      sendJson(response, 200, {
+        submissions: db.submissions
+          .map(adminSubmissionItem)
+          .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))),
+      })
+      return
+    }
+
+    const submissionReviewMatch = path.match(/^\/api\/admin\/submissions\/([^/]+)\/review$/)
+    if (request.method === 'POST' && submissionReviewMatch) {
+      if (!requireAdmin(request, response, url)) return
+      const body = await readJson(request)
+      const id = decodeURIComponent(submissionReviewMatch[1])
+      const submission = db.submissions.find((item) => item.id === id)
+      if (!submission) {
+        sendJson(response, 404, { error: '投稿记录不存在。' })
+        return
+      }
+      const status = String(body.status || '').trim()
+      if (!submissionStatuses.has(status) || status === 'pending_review') {
+        sendJson(response, 400, { error: '审核状态不正确。' })
+        return
+      }
+      if (status === 'approved' && submission.validationStatus !== 'passed') {
+        sendJson(response, 400, { error: '文件校验未通过，不能直接发布。' })
+        return
+      }
+      submission.status = status
+      submission.reviewNote = String(body.reviewNote || '').trim().slice(0, 2000)
+      submission.updatedAt = now()
+      submission.reviewedAt = submission.updatedAt
+      submission.publishedAt = status === 'approved' ? submission.updatedAt : null
+      db.events.unshift({ id: `event-${randomUUID()}`, type: 'submission_reviewed', submissionId: id, status, createdAt: submission.updatedAt })
+      db.events = db.events.slice(0, 100)
+      await saveDb(db)
+      sendJson(response, 200, { message: `投稿${submissionStatusLabel(status)}。`, submission: adminSubmissionItem(submission) })
       return
     }
 
@@ -1707,15 +2197,10 @@ async function handle(request, response) {
       const email = normalizeEmail(body.email || body.identity || '')
       const user = db.users.find((u) => normalizeEmail(u.email) === email)
       const userId = user ? user.id : (body.userId || 'guest')
-      const isVip = Boolean(
-        (user && user.isVip) ||
-        (db.entitlements && db.entitlements.some((e) => (email && normalizeEmail(e.userEmail) === email) || (userId && e.userId === userId)))
-      )
       sendJson(response, 200, {
         success: true,
         ok: true,
-        isVip,
-        allUnlocked: isVip,
+        allUnlocked: true,
         user: user ? publicUser(user, db) : null,
         sync: syncPayload(db, userId, body.deviceId || body.device_id)
       })
@@ -1794,6 +2279,22 @@ async function handle(request, response) {
     if (request.method === 'GET' && path === '/api/auth/me') {
       const user = requireUser(db, request, response)
       if (!user) return
+      await saveDb(db)
+      sendJson(response, 200, { user: publicUser(user) })
+      return
+    }
+
+    if (request.method === 'PATCH' && path === '/api/auth/profile') {
+      const user = requireUser(db, request, response)
+      if (!user) return
+      const body = await readJson(request)
+      user.displayName = String(body.name || user.displayName || '').trim().slice(0, 80) || user.displayName
+      user.socialHandles = {
+        douyin: String(body.socialHandles?.douyin || '').trim().slice(0, 120),
+        bilibili: String(body.socialHandles?.bilibili || '').trim().slice(0, 120),
+        qq: String(body.socialHandles?.qq || '').trim().slice(0, 80),
+      }
+      user.updatedAt = now()
       await saveDb(db)
       sendJson(response, 200, { user: publicUser(user) })
       return
@@ -2046,7 +2547,7 @@ async function handle(request, response) {
       sendJson(response, 200, {
         ok: true,
         success: true,
-        message: '模拟支付成功！已为您开通全角色特权。',
+        message: '模拟支付成功！感谢您的支持。',
         order: publicOrder(order),
       })
       return
@@ -2058,11 +2559,9 @@ async function handle(request, response) {
       const userEnts = db.entitlements.filter(
         (e) => e.userId === user.id || (user.email && normalizeEmail(e.userEmail) === normalizeEmail(user.email)),
       )
-      const isVip = userEnts.some((e) => e.status === 'active')
       sendJson(response, 200, {
         ok: true,
-        isVip,
-        allUnlocked: isVip,
+        allUnlocked: true,
         entitlements: userEnts,
       })
       return

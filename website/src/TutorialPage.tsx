@@ -11,20 +11,22 @@ import {
   Layers,
   Monitor,
   MousePointerClick,
+  ShieldCheck,
   Sparkles,
+  Upload,
   Volume2,
 } from 'lucide-react'
 import './subpages.css'
+import { releaseInstallerHref, releaseInstallerName } from './releaseConfig'
 
 interface TutorialPageProps {
   onBackToHome?: () => void
   onOpenGallery?: () => void
   onOpenFaq?: () => void
+  onOpenSubmit?: () => void
 }
 
-const releaseInstallerHref = 'https://github.com/panda008006/WindowPet/releases/download/v1.0.32/WindowPet_Setup_v1.0.32.exe'
-
-export function TutorialPage({ onBackToHome, onOpenGallery, onOpenFaq }: TutorialPageProps) {
+export function TutorialPage({ onBackToHome, onOpenGallery, onOpenFaq, onOpenSubmit }: TutorialPageProps) {
   return (
     <div className="page-view-pane">
       <div className="subpage-container">
@@ -41,11 +43,11 @@ export function TutorialPage({ onBackToHome, onOpenGallery, onOpenFaq }: Tutoria
             <a
               className="primary-download"
               href={releaseInstallerHref}
-              download="WindowPet_Setup_v1.0.32.exe"
+              download={releaseInstallerName}
               style={{ padding: '12px 28px', fontSize: '15px' }}
             >
               <Download size={18} />
-              <span>下载安装包体验 (仅 50MB)</span>
+              <span>下载绿色免安装版体验</span>
             </a>
 
             {onOpenFaq && (
@@ -69,6 +71,18 @@ export function TutorialPage({ onBackToHome, onOpenGallery, onOpenFaq }: Tutoria
               >
                 <Sparkles size={16} />
                 <span>浏览小鼻嘎展馆</span>
+              </button>
+            )}
+
+            {onOpenSubmit && (
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={onOpenSubmit}
+                style={{ padding: '12px 22px', fontSize: '14px' }}
+              >
+                <Upload size={16} />
+                <span>创作者投稿</span>
               </button>
             )}
 
@@ -305,21 +319,117 @@ export function TutorialPage({ onBackToHome, onOpenGallery, onOpenFaq }: Tutoria
           </div>
         </section>
 
+        {/* 开放生态：向社区投稿你的角色 */}
+        <section style={{ marginBottom: '48px' }}>
+          <div className="subpage-section-header">
+            <span className="subpage-section-badge">
+              <Upload size={14} />
+              <span>CREATOR ECOSYSTEM</span>
+            </span>
+            <h2>🎉 开放生态：向社区投稿你的角色</h2>
+            <p>
+              无论你是像素画师、二创画手，还是用 AI / 3D 渲染原创形象的创作者，都可以将你的角色制作成 WindowPet 扩展包投稿至小鼻嘎展馆！
+            </p>
+          </div>
+
+          <div className="tutorial-chapter-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            <article className="subpage-card tutorial-card">
+              <div className="tutorial-card-header">
+                <div className="tutorial-card-icon" style={{ background: 'rgba(232, 95, 109, 0.12)', color: '#e85f6d' }}>
+                  <Feather size={22} />
+                </div>
+                <h3>1. 准备角色资产包</h3>
+              </div>
+              <p>
+                包含角色静止帧、待机动图（WebP/GIF）、互动动作及 <code>pet.json</code> 动作配置文件。建议包含 3~8 个动作序列。
+              </p>
+            </article>
+
+            <article className="subpage-card tutorial-card">
+              <div className="tutorial-card-header">
+                <div className="tutorial-card-icon" style={{ background: 'rgba(47, 159, 147, 0.12)', color: '#2f9f93' }}>
+                  <ShieldCheck size={22} />
+                </div>
+                <h3>2. 在线提交与作者署名</h3>
+              </div>
+              <p>
+                进入创作者投稿通道，填写作者昵称、社交主页、作品简介，并上传角色缩略图与压缩包。创作者拥有 100% 署名权与打赏渠道展示。
+              </p>
+            </article>
+
+            <article className="subpage-card tutorial-card">
+              <div className="tutorial-card-header">
+                <div className="tutorial-card-icon" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
+                  <Sparkles size={22} />
+                </div>
+                <h3>3. 自动化审查与入驻展馆</h3>
+              </div>
+              <p>
+                审核通过后，角色将自动上线【小鼻嘎展馆】，获得专属公开兑换码与一键导入直链，面向数万桌面宠物玩家永久展示。
+              </p>
+            </article>
+          </div>
+
+          <div
+            className="subpage-card"
+            style={{
+              marginTop: '24px',
+              padding: '24px 28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexWrap: 'wrap',
+              background: 'linear-gradient(135deg, rgba(255,245,245,0.92) 0%, rgba(240,253,250,0.92) 100%)',
+              border: '1.5px dashed rgba(232, 95, 109, 0.35)',
+            }}
+          >
+            <div>
+              <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem', color: '#08233f' }}>
+                准备好展示你的作品了吗？
+              </h3>
+              <p style={{ margin: 0, color: '#4b6a86', fontSize: '0.94rem', lineHeight: 1.6 }}>
+                支持个人画师自由投稿，也欢迎开源社区共同维护。通过专设投稿入口提交，随时查询审核流转进度。
+              </p>
+            </div>
+            {onOpenSubmit && (
+              <button
+                type="button"
+                className="primary-download"
+                onClick={onOpenSubmit}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  border: 'none',
+                  flexShrink: 0,
+                }}
+              >
+                <Upload size={16} />
+                <span>进入创作者投稿中心</span>
+              </button>
+            )}
+          </div>
+        </section>
+
         {/* 底部 CTA 卡片 */}
         <div className="subpage-cta-box">
           <div>
             <h3>准备好开启你的桌面陪伴之旅了吗？</h3>
-            <p>轻量绿色安装包仅 50MB，永久开源免费，无任何弹窗广告。</p>
+            <p>原生绿色免安装版，解压即用，永久开源免费，无任何弹窗广告。</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <a
               className="primary-download"
               href={releaseInstallerHref}
-              download="WindowPet_Setup_v1.0.32.exe"
+              download={releaseInstallerName}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', textDecoration: 'none' }}
             >
               <Download size={18} />
-              <span>免费下载 Windows 安装包</span>
+              <span>免费下载 Windows 绿色免安装版</span>
             </a>
           </div>
         </div>

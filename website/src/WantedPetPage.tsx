@@ -359,6 +359,7 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
   } | null>(null)
 
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const bubbleSequenceRef = useRef(0)
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
@@ -434,7 +435,8 @@ export function WantedPetPage({ onBackToHome, onOpenGallery, onOpenCustom }: Wan
 
     // 选择配色
     const pal = colorPalettes[bubbles.length % colorPalettes.length]
-    const newBubbleId = `custom-${Date.now()}`
+    bubbleSequenceRef.current += 1
+    const newBubbleId = `custom-${bubbleSequenceRef.current}`
 
     // 1. 启动底部冒起升腾动画！
     setAscendingBubble({

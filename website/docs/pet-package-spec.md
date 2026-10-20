@@ -9,7 +9,7 @@
 | `jiyi` | `JiyiPet` | 吉伊 | 官方 | 192x208 | 69 | 13 | 轻快互动与合奏哼唱 |
 | `usagi` | `UsagiPet` | 乌萨奇 | 官方 | 192x208 | 101 | 17 | 治愈陪伴、烟花合奏与活泼短动作 |
 | `nuonuo` | `NuonuoPet` | 糯糯 | 自有IP | 192x208 | 64 | 15 | 粉发小团子、待机陪伴与基础互动动作 |
-| `window-pet-buddy` | `WindowPetBuddy` | 电光小宠 | 官方 | 512x512 | 82 | 8 | 高清会员包与配饰 |
+| `window-pet-buddy` | `WindowPetBuddy` | 电光小宠 | 官方 | 512x512 | 82 | 8 | 高清角色包与配饰 |
 | `xiaoba` | `XiaobaPet` | 小八 | 创作者 | 192x208 | 69 | 13 | 第三方投稿审核示例 |
 
 ## 最小文件结构
@@ -81,7 +81,7 @@ PetFolder/
 - 同一动作文件夹内的帧尺寸必须一致。
 - 所有路径必须是包内相对路径，不能包含绝对路径、外链、脚本或可执行文件。
 - 第三方包必须提交版权来源、授权声明和创作者信息。
-- 第三方包默认进入 `pending_review`，审核通过后才能购买或生成下载授权。
+- 第三方包默认进入 `pending_review`，审核通过后才能生成下载授权。
 
 ## 后端字段
 
@@ -108,7 +108,7 @@ type PetPackage = {
   frameCount: number
   canvas: string
   defaultFps: number
-  priceType: 'free' | 'paid' | 'member'
+  priceType: 'free'
   priceCents: number
   currency: 'CNY'
   fileName: string

@@ -4,12 +4,13 @@ import re
 import shutil
 import tempfile
 import zlib
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QImageReader, QMovie, QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon, QImage, QImageReader, QMovie, QPixmap
 
 from .constants import BASE_DIR, BUNDLED_ASSETS_DIR, CONFIG_PATH, DEFAULT_ASSETS_DIR, THUMBNAIL_SIZE
 from . import state
@@ -77,6 +78,7 @@ WINDOW_CONFIG_KEYS = {
     "pet_serial",
     "character_id",
     "pet_display_name",
+    "ai_integration_key",
 }
 
 
@@ -287,6 +289,43 @@ def detect_asset(path):
         if package_code:
             metadata["package_code"] = package_code
         metadata_type = str(metadata.get("type") or "").strip().lower() if metadata else ""
+        animations = metadata.get("animations")
+        idle_definition = animations.get("idle") if isinstance(animations, dict) else None
+        idle_video = (
+            idle_definition.get("video") or idle_definition.get("video_source")
+            if isinstance(idle_definition, dict)
+            else None
+        )
+        video_sources = metadata.get("video_sources")
+        idle_audio_or_video = (
+            video_sources.get("idle") if isinstance(video_sources, dict) else None
+        )
+        has_video_source = bool(
+            metadata_type == "video_animation"
+            or idle_video
+            or idle_audio_or_video
+            or (path / "idle.mov").is_file()
+            or (path / "idle.mp4").is_file()
+            or (path / "idle.webp").is_file()
+        )
+        if has_video_source:
+            preview_file = _metadata_preview(path, metadata)
+            if not preview_file:
+                for candidate in ["preview.png", "preview.jpg", "preview.webp"]:
+                    cp = path / candidate
+                    if cp.is_file():
+                        preview_file = cp
+                        break
+            return AssetDefinition(
+                id=stored_path(path),
+                name=str(metadata.get("name") or path.name),
+                type=AssetType.FRAME_ANIMATION,
+                path=path,
+                pack=pack_name_for(path),
+                metadata=metadata,
+                preview_path=preview_file,
+                fps=_metadata_int(metadata, "fps", DEFAULT_FRAME_FPS),
+            )
         if metadata_type in METADATA_ASSET_TYPES and metadata_type != AssetType.FRAME_ANIMATION:
             return AssetDefinition(
                 id=stored_path(path),
@@ -449,15 +488,133 @@ def gifs_for_pack(pack_dir):
     return sorted(path for path in pack_dir.glob("*.gif") if path.is_file())
 
 
+VIDEO_PREVIEW_WORK_SIZE = 360
+
+
+def _transparent_video_preview(image: QImage, target_size: QSize | None = THUMBNAIL_SIZE) -> QImage:
+    """Remove the flat stage background from a video role's preview card.
+
+    The video production tool intentionally writes an opaque dark stage
+    thumbnail next to each transparent MOV.  Showing that image directly
+    makes the library cards look like gray rectangles even though the actual
+    animation has a valid alpha channel.  Remove only border-connected stage
+    pixels before the final thumbnail reduction.  Doing the flood fill at a
+    larger working size is important: shrinking first blends dark hair and
+    clothing with the stage and makes them disappear from the card.
+    """
+    if image.isNull():
+        return image
+    converted = image.convertToFormat(QImage.Format_RGBA8888)
+    # Check if the image already has a transparent background (e.g. matted PNG with alpha).
+    # If the corners are transparent, skip the legacy stage flood-fill and avoid downsampling
+    # to VIDEO_PREVIEW_WORK_SIZE (360), which would destroy high-resolution crispness.
+    orig_corners = [
+        converted.pixelColor(0, 0),
+        converted.pixelColor(converted.width() - 1, 0),
+        converted.pixelColor(0, converted.height() - 1),
+        converted.pixelColor(converted.width() - 1, converted.height() - 1),
+    ]
+    if any(c.alpha() == 0 for c in orig_corners):
+        if target_size is not None and (converted.width() != target_size.width() or converted.height() != target_size.height()):
+            return converted.scaled(target_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        return converted
+
+    max_dimension = max(converted.width(), converted.height())
+    if max_dimension > VIDEO_PREVIEW_WORK_SIZE:
+        work_scale = VIDEO_PREVIEW_WORK_SIZE / max_dimension
+        scaled = converted.scaled(
+            QSize(
+                max(1, round(converted.width() * work_scale)),
+                max(1, round(converted.height() * work_scale)),
+            ),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        )
+    else:
+        scaled = converted
+    width, height = scaled.width(), scaled.height()
+    if width <= 2 or height <= 2:
+        return scaled
+
+    corners = [
+        scaled.pixelColor(0, 0),
+        scaled.pixelColor(width - 1, 0),
+        scaled.pixelColor(0, height - 1),
+        scaled.pixelColor(width - 1, height - 1),
+    ]
+    # The stage is nearly uniform (#1f211e in the bundled previews).  A wide
+    # tolerance erases dark character details that happen to touch the stage;
+    # this tighter threshold still removes the stage and its small compression
+    # variations while keeping black hair, clothes and shoes.
+    tolerance_squared = 24 * 24
+
+    def close_to_stage(color):
+        return any(
+            (color.red() - corner.red()) ** 2
+            + (color.green() - corner.green()) ** 2
+            + (color.blue() - corner.blue()) ** 2
+            <= tolerance_squared
+            for corner in corners
+        )
+
+    queue = deque()
+    seen = set()
+    for x in range(width):
+        queue.append((x, 0))
+        queue.append((x, height - 1))
+    for y in range(1, height - 1):
+        queue.append((0, y))
+        queue.append((width - 1, y))
+
+    while queue:
+        x, y = queue.popleft()
+        if (x, y) in seen:
+            continue
+        seen.add((x, y))
+        color = scaled.pixelColor(x, y)
+        if color.alpha() == 0 or not close_to_stage(color):
+            continue
+        color.setAlpha(0)
+        scaled.setPixelColor(x, y, color)
+        if x:
+            queue.append((x - 1, y))
+        if x + 1 < width:
+            queue.append((x + 1, y))
+        if y:
+            queue.append((x, y - 1))
+        if y + 1 < height:
+            queue.append((x, y + 1))
+    if target_size is not None:
+        scaled = scaled.scaled(
+            target_size,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation,
+        )
+    return scaled
+
+
 def make_thumbnail(asset_or_path):
-    path = asset_or_path.preview_path if isinstance(asset_or_path, AssetDefinition) else asset_or_path
+    asset_definition = asset_or_path if isinstance(asset_or_path, AssetDefinition) else None
+    path = asset_definition.preview_path if asset_definition is not None else asset_or_path
     if Path(path).suffix.lower() in SUPPORTED_VIDEO_EXTENSIONS:
         first_frame = first_frame_for_media_source(path)
         if first_frame is not None:
             path = first_frame
     reader = QImageReader(str(path))
     reader.setAutoTransform(True)
+    if asset_definition is not None and str((asset_definition.metadata or {}).get("type") or "").lower() == "video_animation":
+        source_size = reader.size()
+        if source_size.isValid() and source_size.width() > 0 and source_size.height() > 0:
+            scale = min(
+                1.0,
+                VIDEO_PREVIEW_WORK_SIZE / source_size.width(),
+                VIDEO_PREVIEW_WORK_SIZE / source_size.height(),
+            )
+            reader.setScaledSize(QSize(max(1, round(source_size.width() * scale)), max(1, round(source_size.height() * scale))))
     image = reader.read()
+
+    if asset_definition is not None and str((asset_definition.metadata or {}).get("type") or "").lower() == "video_animation" and not image.isNull():
+        image = _transparent_video_preview(image)
 
     if image.isNull():
         movie = QMovie(str(path))
@@ -767,7 +924,7 @@ def normalize_pet_unlocks(raw_state):
     return {
         "unlock_rule_version": max(0, int(raw_state.get("unlock_rule_version", 0) or 0)),
         "initialized": bool(raw_state.get("initialized", False)),
-        "all_unlocked": bool(raw_state.get("all_unlocked", False)),
+        "all_unlocked": True,
         "unlocks": unlocks,
         "unlocked_asset_ids": unlocked_asset_ids,
         "email": email,

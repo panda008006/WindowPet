@@ -79,10 +79,9 @@ body {
 .ft { text-align: center; font-size: 12px; color: #999; margin-top: 20px; }
 .user-info { text-align: center; padding: 20px 0; }
 .user-badge {
-  display: inline-block; background: #fff3e0; color: #e65100; font-size: 12px; font-weight: 600;
-  padding: 4px 10px; border-radius: 12px; margin-top: 8px; border: 1px solid #ffe082;
+  display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 12px; margin-top: 8px; border: 1px solid #a5d6a7;
 }
-.user-badge.vip { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
 .nav-btn {
   display: inline-block; margin-top: 16px; padding: 10px 20px; background: var(--primary);
   color: #fff; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;
@@ -167,10 +166,9 @@ body {
   <div id="user-container" style="display:none;" class="user-info">
     <h2 id="u-name" style="font-size:18px;"></h2>
     <p id="u-email" style="font-size:13px;color:var(--text-subtle);margin-top:4px;"></p>
-    <div id="u-badge" class="user-badge">标准账号</div>
+    <div id="u-badge" class="user-badge">已登录 · 全角色免费开放</div>
     <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;">
       <a href="/pet/" class="nav-btn">返回官网</a>
-      <a href="/pet/pay.html" class="nav-btn" style="background:#07c160;">赞助与特权</a>
     </div>
     <div style="margin-top:16px;">
       <a onclick="handleLogout()" style="font-size:12px;color:var(--danger);cursor:pointer;">退出登录</a>
@@ -366,13 +364,8 @@ function renderUser() {
     document.getElementById('u-name').textContent = user.name || 'WindowPet 用户';
     document.getElementById('u-email').textContent = user.email || '';
     const badge = document.getElementById('u-badge');
-    if (user.isVip || user.allUnlocked) {
-      badge.textContent = '🌟 VIP 会员 · 永久全角色已解锁';
-      badge.className = 'user-badge vip';
-    } else {
-      badge.textContent = '标准账号（未解锁全角色）';
-      badge.className = 'user-badge';
-    }
+    badge.textContent = '已登录 · 全角色免费开放';
+    badge.className = 'user-badge';
   } catch {
     handleLogout();
   }

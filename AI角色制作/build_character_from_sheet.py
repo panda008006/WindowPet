@@ -71,7 +71,12 @@ def _estimate_background(cell: Image.Image) -> tuple[int, int, int]:
                 min(height, y + sample_radius),
             )
         )
-        samples.extend(crop.get_flattened_data())
+        # Pillow 10+ removed Image.get_flattened_data(); RGB crops already
+        # yield plain (r, g, b) tuples through getdata().  Keeping the sample
+        # pixels as tuples makes automatic background estimation work across
+        # supported Pillow versions and prevents newly built roles from
+        # retaining a solid black/green sheet background.
+        samples.extend(list(crop.getdata()))
     return tuple(int(statistics.median(channel)) for channel in zip(*samples))
 
 

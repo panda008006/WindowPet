@@ -18,6 +18,7 @@ from PySide6.QtGui import (
     QMovie,
     QPainter,
     QPainterPath,
+    QPalette,
     QPen,
     QPixmap,
 )
@@ -46,12 +47,19 @@ from .assets import (
     import_asset_to_assets,
     save_config,
     stored_path,
+    _transparent_video_preview,
 )
 from .asset_validation import validate_asset_metadata
 from .constants import APP_DISPLAY_NAME, BASE_DIR
 from .behavior_packs import SCREEN_SAVER_ENTER, SCREEN_SAVER_EXIT, STARTUP, resolve_behavior_action
 from .frame_animation_player import FrameAnimationPlayer
-from .media_folder import media_source_frames, video_sources_for_folder
+from .media_folder import (
+    VIDEO_EXTENSIONS,
+    cached_frames_for_source,
+    media_source_frames,
+    media_source_frames_async,
+    video_sources_for_folder,
+)
 from .video_audio_player import VideoAudioPlayer, VideoMediaPlayer
 from .focus import (
     FOCUS_MODE_BREAK,
@@ -75,9 +83,8 @@ from .physics import OverlayPhysics
 from .startup import set_startup_enabled, startup_enabled
 from .style_utils import style_menu, style_message_box
 from .updater import check_for_updates, open_official_site
-from .feather_tool import show_feather_tool
-from .whip_tool import show_whip_tool
 from .interactions import infer_character_id_from_path
+from .external_integrations import integration_for, integrations, launch_all_integrations, launch_integration
 from .vibe_components import VibeVerticalSizeControl
 
 
@@ -87,6 +94,7 @@ EDGE_CRAWL_ANIMATIONS = {
     "edge-crawl-left",
     "edge-crawl-right",
 }
+ANIMATED_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS | {".webp", ".gif"}
 BASIC_ACTION_NAMES = (
     "idle",
     "click",
@@ -284,6 +292,11 @@ def add_window(asset_path, config=None, save=True):
         window = OverlayWindow(asset, config or {})
     except ValueError as exc:
         log_warning("%s", exc)
+        return None
+    except Exception as exc:
+        # A malformed video, decoder failure, or unexpected asset plugin
+        # error must not escape a Qt click handler and tear down the cockpit.
+        log_warning("Unable to create overlay for %s: %s", asset_path, exc)
         return None
     state.WINDOWS.append(window)
     window.show()
@@ -697,7 +710,7 @@ class SpeechBubbleWindow(QWidget):
 
 class MicFloatingBadge(QPushButton):
     """悬浮在桌宠身上的麦克风状态图标与闭麦控制按钮。
-    - 右键点击桌宠后显现，或处于闭麦(静音)状态时常驻提示；
+    - 默认隐藏，避免遮挡桌宠；
     - 单击图标即可一键完成闭麦/开麦；
     - 提供温润灵动的微拟态视觉反馈与气泡联动。
     """
@@ -712,17 +725,17 @@ class MicFloatingBadge(QPushButton):
         self._auto_hide_timer.timeout.connect(self._on_auto_hide)
         self.clicked.connect(self._on_clicked)
         self.update_state()
+        self.hide()  # 默认绝对不常驻显示，保持桌面宠物外观干净
 
     def update_state(self):
         is_muted = get_microphone_muted()
         if is_muted:
-            self._auto_hide_timer.stop()
             self.setText("🔇")
-            self.setToolTip("当前麦克风已闭麦 · 点击重新开麦")
+            self.setToolTip("当前已闭麦 · 点击重新开麦")
             self.setStyleSheet("""
                 QPushButton {
                     background: #ffebee;
-                    border: 2px solid #ff526c;
+                    border: 1.5px solid #ff526c;
                     border-radius: 15px;
                     font-size: 14px;
                     color: #ff526c;
@@ -733,8 +746,6 @@ class MicFloatingBadge(QPushButton):
                     border-color: #ff3355;
                 }
             """)
-            self.show()
-            self.raise_()
         else:
             self.setText("🎙️")
             self.setToolTip("点击闭麦 (静音系统麦克风)")
@@ -751,20 +762,16 @@ class MicFloatingBadge(QPushButton):
                     border-color: #10ac58;
                 }
             """)
-            if self.isVisible():
-                self._auto_hide_timer.start(8000)
 
     def reveal(self):
-        """右键触发时显现麦克风图标"""
+        """短暂显示麦克风状态图标，数秒后自动隐藏。"""
         self.update_state()
         self.show()
         self.raise_()
-        if not get_microphone_muted():
-            self._auto_hide_timer.start(8000)
+        self._auto_hide_timer.start(4000)
 
     def _on_auto_hide(self):
-        if not get_microphone_muted():
-            self.hide()
+        self.hide()
 
     def _on_clicked(self):
         if self.overlay is not None:
@@ -785,6 +792,9 @@ class OverlayWindow(QWidget):
         self.gif_path = self.asset_path
         self.locked = bool(config.get("locked", False))
         self.always_on_top = bool(config.get("always_on_top", True))
+        # Positions from older configs were often arbitrary/off-screen.  Only
+        # restore a position after the user has explicitly dragged the pet.
+        self.position_user_set = bool(config.get("position_user_set", False))
         self.click_through = bool(config.get("click_through", False))
         self.scale = self.config_int(config, "scale", 50)
         self.opacity = self.config_int(config, "opacity", 100)
@@ -829,6 +839,8 @@ class OverlayWindow(QWidget):
         self.memo_text = str(config.get("memo_text") or "")
         self.memo_checked = bool(config.get("memo_checked", False))
         self.notchnotes_window = None
+        self._speech_sync_last = 0.0
+        self._speech_sync_interval = 0.25
         self.power_action_type = str(config.get("power_action_type") or "")
         self.power_action_due_at = str(config.get("power_action_due_at") or "")
         self.power_timer = QTimer(self)
@@ -838,8 +850,12 @@ class OverlayWindow(QWidget):
         self.head_track_enabled = bool(config.get("head_track_enabled", True))
         self.head_track_frames = []
         self.head_track_index = -1
+        # Head tracking is an input-following mode, rather than a normal
+        # animation.  Sampling too often makes the 5x5 grid visibly jitter
+        # and needlessly wakes the GUI on every small pointer movement.
+        self.head_track_interval_ms = max(80, min(160, self.config_int(config, "head_track_interval_ms", 100)))
         self.head_track_timer = QTimer(self)
-        self.head_track_timer.setInterval(40)
+        self.head_track_timer.setInterval(self.head_track_interval_ms)
         self.head_track_timer.timeout.connect(self.tick_head_track)
         self.whip_hit_cooldown_until = 0.0
         enabled_accessories = config.get("enabled_accessories")
@@ -847,15 +863,42 @@ class OverlayWindow(QWidget):
         self.accessory_cache = {}
         self.current_frame_animation = "idle"
         self.return_to_idle_after_animation = False
+        self.external_integration_state = "waiting"
+        self.external_integration_connected = False
+        self._external_integration_cycle_active = False
+        # Name of the action that owns the current AI status transition.
+        # This is separate from ``current_frame_animation`` because a video
+        # action can still be decoding while the visible surface is already
+        # the quiet preview image.
+        self._external_integration_current_action = ""
+        self._external_integration_action_names = set()
+        configured_ai = str(config.get("ai_integration_key") or "").strip().lower()
+        configured_item = integration_for(configured_ai)
+        self.ai_integration_key = configured_item.key if configured_item is not None else ""
         self.movie = None
         self.static_pixmap = QPixmap()
         self.current_pixmap = QPixmap()
         self.current_pixmap_content_cache_key = None
         self.frame_player = None
+        self._media_frame_generation = 0
+        self._clamp_content_margins = None
+        # Video action paths are prepared off the GUI thread.  Keeping only
+        # paths here (the FrameAnimationPlayer owns a small rolling pixmap
+        # cache) avoids both first-click stalls and per-role memory spikes.
+        self._animation_frame_cache = {}
+        self._animation_frame_tasks = {}
+        self._pending_animation_requests = {}
+        # The badge is opt-in: keep the pet unobstructed until the user asks
+        # for it from the context menu.  Persist this preference per pet.
+        self.mic_badge_visible = bool(config.get("mic_badge_visible", False))
         self.mic_badge = MicFloatingBadge(self)
-        if not get_microphone_muted():
+        if self.mic_badge_visible:
+            self.mic_badge.show()
+        else:
             self.mic_badge.hide()
-        # 角色自身声音静音状态 (刚下载时所有角色默认静音，静心陪伴)
+        # 角色自身声音静音状态 (默认开启声音，可在右键菜单中一键静音)
+        # New roles start silent; users can enable character audio from the
+        # single right-click sound toggle when they want it.
         self.sound_muted = bool(config.get("sound_muted", True))
         self.sprite_player = None
         self.video_player = None
@@ -874,16 +917,29 @@ class OverlayWindow(QWidget):
         self.setMouseTracking(True)
         self.setStyleSheet("background: transparent; border: 0; margin: 0; padding: 0;")
 
-        if not self.load_asset_content():
+        try:
+            loaded = self.load_asset_content()
+        except Exception as exc:
+            log_warning("Overlay creation raised for %s: %s", self.asset_path, exc)
+            loaded = False
+        if not loaded:
             raise ValueError(f"Unable to load asset: {self.asset_path}")
+
+        icon = QApplication.windowIcon()
+        if icon is not None and not icon.isNull():
+            self.setWindowIcon(icon)
 
         self.apply_window_flags()
         self.apply_click_through()
         self.setWindowOpacity(self.opacity / 100)
 
-        x = self.config_int(config, "x", 100)
-        y = self.config_int(config, "y", 100)
-        self.move(self.restored_position(QPoint(x, y)))
+        if self.position_user_set and "x" in config and "y" in config:
+            x = self.config_int(config, "x", 0)
+            y = self.config_int(config, "y", 0)
+            initial_position = self.restored_position(QPoint(x, y))
+        else:
+            initial_position = self.default_bottom_right_position()
+        self.move(initial_position)
         self.initializing_position = False
         self.physics = OverlayPhysics(self, enabled=self.physics_enabled)
 
@@ -897,13 +953,20 @@ class OverlayWindow(QWidget):
             )
         self.physics.start()
         self.setup_head_track()
+        if self.ai_integration_key:
+            # A saved binding is a user request for automatic connection.  A
+            # short delay lets the first frame render before launching the
+            # external client, avoiding a startup hitch.
+            QTimer.singleShot(1500, self.auto_connect_selected_ai)
 
     def load_asset_content(self):
         errors = validate_asset_metadata(self.asset)
         if errors:
             for error in errors:
                 log_warning("%s: %s", self.asset.path, error)
-            return False
+            fatal_types = {AssetType.SPRITE_STRIP, AssetType.SPRITESHEET, AssetType.COMPOSITE_UI}
+            if self.asset_type in fatal_types:
+                return False
 
         if self.asset_type == AssetType.GIF:
             self.movie = QMovie(str(self.asset_path))
@@ -934,34 +997,19 @@ class OverlayWindow(QWidget):
             if not self.asset_path.is_file():
                 log_warning("Unreadable video skipped: %s", self.asset_path)
                 return False
-            self.video_player = VideoMediaPlayer(self)
-            self.video_player.frame_changed.connect(self.update_from_video_player)
-            self.video_player.finished.connect(self.frame_animation_finished)
-            first_frame = media_source_frames(self.asset_path)
-            if first_frame:
-                self.current_pixmap = QPixmap(str(first_frame[0]))
-                if self.current_pixmap.isNull():
-                    self.current_pixmap = QPixmap()
-                else:
-                    self.base_size = self.current_pixmap.size()
-                    self.apply_scale()
-                    self.video_player.set_display_size(self.base_size)
+            # Decode the visual track to PNG frames in the worker pool instead
+            # of blocking the click handler.  Qt's native sink remains only as
+            # a fallback when ffmpeg is unavailable or cannot decode the file.
+            self._begin_async_video_frames(self.asset_path)
             return True
 
         if self.asset_type == AssetType.FRAME_ANIMATION:
-            frame_paths, fps, _loop = self.frame_animation_definition("idle")
-            if not frame_paths and self.animation_video_source("idle") is not None:
-                self.video_action_player = VideoMediaPlayer(self)
-                self.video_action_player.frame_changed.connect(self.update_from_video_player)
-                self.video_action_player.finished.connect(self.frame_animation_finished)
-                first_frame = media_source_frames(self.animation_video_source("idle"))
-                if first_frame:
-                    self.current_pixmap = QPixmap(str(first_frame[0]))
-                    if not self.current_pixmap.isNull():
-                        self.base_size = self.current_pixmap.size()
-                        self.apply_scale()
-                        self.video_action_player.set_display_size(self.base_size)
+            metadata_type = str((self.asset.metadata or {}).get("type") or "").strip().lower()
+            idle_source = self.animation_video_source("idle")
+            if metadata_type == "video_animation" and idle_source is not None:
+                self._begin_async_video_frames(idle_source)
                 return True
+            frame_paths, fps, _loop = self.frame_animation_definition("idle")
             self.frame_player = FrameAnimationPlayer(
                 frame_paths,
                 fps=fps,
@@ -1023,6 +1071,211 @@ class OverlayWindow(QWidget):
 
         return False
 
+    def _begin_async_video_frames(self, source: Path) -> None:
+        """Load a video role's visual frames off the GUI thread.
+
+        The first preview is shown immediately; once ffmpeg finishes, the
+        normal frame player is installed and idle playback starts.  This
+        keeps the control panel responsive when a role is first placed on the
+        desktop.
+        """
+        self._media_frame_generation += 1
+        generation = self._media_frame_generation
+        source = Path(source).resolve()
+        preview = self.asset.preview_path or self.asset_path
+        preview_pixmap = self._video_preview_pixmap(preview)
+        if not preview_pixmap.isNull():
+            self.current_pixmap = preview_pixmap
+            self.base_size = preview_pixmap.size()
+            self.apply_scale()
+
+        def finished(frame_paths, error):
+            self._on_async_video_frames_ready(generation, source, frame_paths, error)
+
+        cache_folder = self.asset_path if self.asset_path.is_dir() else self.asset_path.parent
+        media_source_frames_async(source, cache_folder, finished)
+
+    def _video_preview_pixmap(self, preview) -> QPixmap:
+        """Load a video-role preview without showing its opaque stage."""
+        if preview is None:
+            return QPixmap()
+        preview = Path(preview)
+        if not preview.is_file():
+            return QPixmap()
+        reader = QImageReader(str(preview))
+        reader.setAutoTransform(True)
+        metadata_type = str((self.asset.metadata or {}).get("type") or "").strip().lower()
+        target_size = None
+        if metadata_type == "video_animation":
+            source_size = reader.size()
+            if source_size.isValid() and source_size.height() > 1440:
+                scale = 1440 / max(1, source_size.height())
+                target_size = QSize(
+                    max(1, round(source_size.width() * scale)),
+                    1440,
+                )
+                reader.setScaledSize(target_size)
+        image = reader.read()
+        if image.isNull():
+            return QPixmap()
+
+        if metadata_type == "video_animation":
+            image = _transparent_video_preview(image, target_size or image.size())
+        return QPixmap.fromImage(image)
+
+    def _on_async_video_frames_ready(self, generation, source, frame_paths, error):
+        if generation != self._media_frame_generation:
+            return
+        if self.asset_type not in {AssetType.FRAME_ANIMATION, AssetType.VIDEO}:
+            return
+        if error is not None:
+            log_warning("Unable to decode video role %s: %s", source, error)
+            return
+        if not frame_paths:
+            if self.asset_type == AssetType.VIDEO:
+                self.video_player = VideoMediaPlayer(self)
+                self.video_player.frame_changed.connect(self.update_from_video_player)
+                self.video_player.finished.connect(self.frame_animation_finished)
+                self.video_player.play(self.asset_path, loop=True, speed=self.speed)
+            log_warning("Video role produced no frames: %s", source)
+            return
+
+        self.frame_player = FrameAnimationPlayer(
+            frame_paths,
+            fps=self.asset.fps or 12,
+            parent=self,
+            loop=True,
+        )
+        self.frame_player.set_speed(self.speed)
+        self.frame_player.pixmap_changed.connect(self.update_from_frame_player)
+        self.frame_player.finished.connect(self.frame_animation_finished)
+        if not self.frame_player.frames:
+            log_warning("Video role frames could not be loaded: %s", source)
+            self.frame_player = None
+            return
+        self.current_pixmap = self.frame_player.frames[0]
+        self._animation_frame_cache["idle"] = list(frame_paths)
+        self.base_size = self.current_pixmap.size()
+        self.apply_scale()
+        self.start_playback()
+        self._prewarm_video_action_frames()
+        self._drain_pending_animation_requests()
+        self.update()
+
+    def _video_animation_timing(self, name):
+        metadata = self.asset.metadata or {}
+        animations = metadata.get("animations")
+        definition = animations.get(name, {}) if isinstance(animations, dict) else {}
+        if not isinstance(definition, dict):
+            definition = {}
+        fps = self.config_int(definition, "fps", self.asset.fps or 12)
+        loop = bool(definition.get("loop", name == "idle"))
+        return fps, loop
+
+    def _queue_video_action_frames(self, name):
+        """Decode one video action in the worker pool and cache its paths."""
+        source = self.animation_video_source(name)
+        if source is None or source.suffix.lower() not in ANIMATED_MEDIA_EXTENSIONS:
+            return None
+        cached = self._animation_frame_cache.get(name)
+        if cached:
+            return cached
+        if name in self._animation_frame_tasks:
+            return None
+
+        generation = self._media_frame_generation
+
+        def finished(frame_paths, error):
+            self._animation_frame_tasks.pop(name, None)
+            if generation != self._media_frame_generation:
+                return
+            pending = self._pending_animation_requests.pop(name, None)
+            if error is not None:
+                log_warning("Unable to decode video action %s: %s", source, error)
+                if pending is not None:
+                    self._abort_external_integration_action(name)
+                return
+            if not frame_paths:
+                log_warning("Video action produced no frames: %s", source)
+                if pending is not None:
+                    self._abort_external_integration_action(name)
+                return
+            paths = list(frame_paths)
+            self._animation_frame_cache[name] = paths
+            if pending is not None:
+                # An AI action may have been superseded while ffmpeg was
+                # decoding it (for example, the answer arrived before the
+                # thinking clip was ready).  Never resurrect that stale
+                # action after the state machine has moved on.
+                if (
+                    name in getattr(self, "_external_integration_action_names", set())
+                    and name != getattr(self, "_external_integration_current_action", "")
+                ):
+                    return
+                if self.frame_player is None:
+                    # The idle source can still be installing its player.
+                    # Keep the request until that player is ready instead of
+                    # dropping the user's click.
+                    self._pending_animation_requests[name] = pending
+                    return
+                pending_loop, pending_return = pending
+                fps, default_loop = self._video_animation_timing(name)
+                self._play_frame_animation_paths(
+                    name,
+                    paths,
+                    fps,
+                    default_loop,
+                    loop=pending_loop,
+                    return_to_idle=pending_return,
+                )
+
+        cache_folder = self.asset_path if self.asset_path.is_dir() else self.asset_path.parent
+        task = media_source_frames_async(source, cache_folder, finished)
+        self._animation_frame_tasks[name] = task
+        return None
+
+    def _drain_pending_animation_requests(self):
+        if self.frame_player is None:
+            return
+        for name, pending in list(self._pending_animation_requests.items()):
+            paths = self._animation_frame_cache.get(name)
+            if not paths:
+                continue
+            if (
+                name in getattr(self, "_external_integration_action_names", set())
+                and name != getattr(self, "_external_integration_current_action", "")
+            ):
+                self._pending_animation_requests.pop(name, None)
+                continue
+            self._pending_animation_requests.pop(name, None)
+            pending_loop, pending_return = pending
+            fps, default_loop = self._video_animation_timing(name)
+            self._play_frame_animation_paths(
+                name,
+                paths,
+                fps,
+                default_loop,
+                loop=pending_loop,
+                return_to_idle=pending_return,
+            )
+
+    def _prewarm_video_action_frames(self):
+        """Start click/drag/action extraction after idle is ready.
+
+        The work is queued only after the first frame is visible, so opening a
+        role remains responsive while the next interaction is made ready in
+        the background.
+        """
+        if self.asset_type != AssetType.FRAME_ANIMATION:
+            return
+        animations = (self.asset.metadata or {}).get("animations")
+        if not isinstance(animations, dict):
+            return
+        for name in animations:
+            if str(name) == "idle":
+                continue
+            self._queue_video_action_frames(str(name))
+
     def start_playback(self):
         if self.movie is not None:
             self.movie.start()
@@ -1030,7 +1283,7 @@ class OverlayWindow(QWidget):
             if self.prefers_calm_static_idle():
                 self.movie.stop()
         if self.frame_player is not None:
-            calm_idle = self.prefers_calm_static_idle() and self.animation_video_source("idle") is None
+            calm_idle = self.prefers_calm_static_idle() and self.current_frame_animation == "idle"
             self.frame_player.start()
             if self.current_frame_animation == "idle" and calm_idle:
                 self.frame_player.stop()
@@ -1038,11 +1291,6 @@ class OverlayWindow(QWidget):
                 self.current_frame_animation or "idle",
                 not calm_idle,
             )
-        video_action_player = getattr(self, "video_action_player", None)
-        if video_action_player is not None:
-            source = self.animation_video_source(self.current_frame_animation or "idle")
-            if source is not None:
-                video_action_player.play(source, loop=True, speed=self.speed)
         if self.sprite_player is not None:
             self.sprite_player.start()
             if self.current_frame_animation == "idle" and self.prefers_calm_static_idle():
@@ -1058,10 +1306,39 @@ class OverlayWindow(QWidget):
             variants = meta.get("idle_variants")
             if isinstance(variants, list) and variants:
                 return [v for v in variants if v in self.available_animations()]
+            # 若未显式列出 idle_variants，默认全量使用除 idle 和纯定向移动外的可用动作
+            avail = self.available_animations()
+            default_pool = [a for a in avail if a not in {"idle", "running-left", "drag", "head_track"}]
+            if default_pool:
+                return default_pool
+            return [a for a in avail if a != "idle"]
         return []
 
+    def is_head_track_role(self):
+        """Whether this asset owns the idle surface through pointer tracking."""
+        meta = getattr(self.asset, "metadata", {}) or {}
+        return (
+            meta.get("interaction_mode") == "head_track"
+            and self.head_track_enabled
+            and len(self.head_track_frames) == 25
+        )
+
+    def reload_asset_metadata(self):
+        """实时重载角色的元数据配置（triggers、idle_variants、fixed_idle等），即刻生效无需重启"""
+        try:
+            asset_json_path = Path(self.asset_path) / "asset.json"
+            if asset_json_path.exists():
+                content = asset_json_path.read_text(encoding="utf-8-sig")
+                self.asset.metadata = json.loads(content)
+        except Exception:
+            pass
+        self.schedule_next_idle_variant()
+
     def schedule_next_idle_variant(self):
-        if self.head_track_enabled and len(self.head_track_frames) == 25:
+        if getattr(self, "external_integration_connected", False):
+            self.idle_variant_timer.stop()
+            return
+        if self.is_head_track_role():
             self.idle_variant_timer.stop()
             return
         if self.prefers_calm_static_idle():
@@ -1071,10 +1348,12 @@ class OverlayWindow(QWidget):
         if not variants:
             self.idle_variant_timer.stop()
             return
-        self.idle_variant_timer.start(random.randint(6500, 14000))
+        # 工作场景下让角色保持安静：随机待机动作约每 2~3 分钟才触发一次。
+        # 需要完全静止时，在角色配置中保持 fixed_idle=true 即可关闭该计时器。
+        self.idle_variant_timer.start(random.randint(120000, 180000))
 
     def play_random_idle_variant(self):
-        if self.head_track_enabled and len(self.head_track_frames) == 25:
+        if self.is_head_track_role():
             self.schedule_next_idle_variant()
             return
         variants = self.idle_variant_names()
@@ -1123,6 +1402,10 @@ class OverlayWindow(QWidget):
         if self.always_on_top:
             flags |= Qt.WindowStaysOnTopHint
         self.setWindowFlags(flags)
+        # setWindowFlags may recreate the native HWND on Windows. Re-apply
+        # every transparency guard after that operation so a video overlay
+        # cannot fall back to a solid black backing surface.
+        self._ensure_transparent_surface()
         self.move(self.clamped_position(pos))
         self.apply_click_through()
         if was_visible:
@@ -1133,6 +1416,21 @@ class OverlayWindow(QWidget):
     def apply_click_through(self):
         self.setAttribute(Qt.WA_TransparentForMouseEvents, self.click_through)
         self.update()
+
+    def _ensure_transparent_surface(self):
+        """Keep the overlay's native surface and palette fully transparent."""
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAutoFillBackground(False)
+        palette = self.palette()
+        transparent = QColor(0, 0, 0, 0)
+        for role in (
+            QPalette.ColorRole.Window,
+            QPalette.ColorRole.Base,
+            QPalette.ColorRole.AlternateBase,
+        ):
+            palette.setColor(role, transparent)
+        self.setPalette(palette)
 
     def physics_time_seconds(self):
         return time.monotonic()
@@ -1162,6 +1460,24 @@ class OverlayWindow(QWidget):
             geometry.top() + max(0, (geometry.height() - max(1, self.height())) // 2),
         )
 
+    def default_bottom_right_position(self):
+        """Place a new/unpositioned pet neatly in the primary work area's corner."""
+        geometry = self.available_geometry() or self.visible_screen_geometry()
+        if geometry is None:
+            return QPoint(100, 100)
+        # Keep a small visual inset while allowing transparent canvas margins
+        # to extend beyond the work area.
+        _left_margin, _top_margin, right_margin, bottom_margin = self.content_margins_for_clamp()
+        x = geometry.right() - max(1, self.width()) + 1 + right_margin - 24
+        y = geometry.bottom() - max(1, self.height()) + 1 + bottom_margin - 24
+        pet_index = state.WINDOWS.index(self) if self in state.WINDOWS else len(state.WINDOWS)
+        if pet_index > 0:
+            offset_x = (pet_index % 6) * 160
+            offset_y = ((pet_index // 6) % 3) * 60
+            x -= offset_x
+            y -= offset_y
+        return self.clamped_position(QPoint(x, y))
+
     def restored_position(self, pos):
         visible_geometry = self.visible_screen_geometry()
         if visible_geometry is None:
@@ -1178,11 +1494,46 @@ class OverlayWindow(QWidget):
         if geometry is None:
             return pos
 
-        max_x = max(geometry.left(), geometry.right() - max(1, self.width()) + 1)
-        max_y = max(geometry.top(), geometry.bottom() - max(1, self.height()) + 1)
-        x = min(max(pos.x(), geometry.left()), max_x)
-        y = min(max(pos.y(), geometry.top()), max_y)
+        # Clamp the visible pixels, not the transparent QWidget canvas.  A
+        # tall/landscape video often has large alpha margins; clamping the
+        # canvas made the invisible box hit the screen edge while the pet was
+        # still visibly short of it.
+        left_margin, top_margin, right_margin, bottom_margin = self.content_margins_for_clamp()
+        min_x = geometry.left() - left_margin
+        max_x = geometry.right() - max(1, self.width()) + 1 + right_margin
+        min_y = geometry.top() - top_margin
+        max_y = geometry.bottom() - max(1, self.height()) + 1 + bottom_margin
+        if max_x < min_x:
+            min_x = max_x = geometry.left() - (self.width() // 2)
+        if max_y < min_y:
+            min_y = max_y = geometry.top() - (self.height() // 2)
+        x = min(max(pos.x(), min_x), max_x)
+        y = min(max(pos.y(), min_y), max_y)
         return QPoint(x, y)
+
+    def content_margins_for_clamp(self):
+        """Return transparent margins in current window pixels.
+
+        The result is cached across animation frames so drag events never
+        rescan a large video frame.  It is invalidated when the canvas size or
+        action changes, then computed from the first available frame.
+        """
+        if self._clamp_content_margins is not None:
+            return self._clamp_content_margins
+        pixmap = self.current_pixmap
+        rect = self.current_content_rect()
+        if pixmap.isNull() or rect is None:
+            self._clamp_content_margins = (0, 0, 0, 0)
+            return self._clamp_content_margins
+        scale_x = self.width() / max(1, pixmap.width())
+        scale_y = self.height() / max(1, pixmap.height())
+        self._clamp_content_margins = (
+            max(0, round(rect.left() * scale_x)),
+            max(0, round(rect.top() * scale_y)),
+            max(0, round((pixmap.width() - rect.right() - 1) * scale_x)),
+            max(0, round((pixmap.height() - rect.bottom() - 1) * scale_y)),
+        )
+        return self._clamp_content_margins
 
     def screen_geometry_for_window(self):
         window_rect = QRect(self.pos(), self.size())
@@ -1238,8 +1589,7 @@ class OverlayWindow(QWidget):
         rect = self.current_content_rect()
         pixmap = self.current_pixmap
         if rect is None or pixmap.isNull():
-            return QRect(self.pos(), self.size()).adjusted(-10, -10, 10, 10)
-
+            return self.geometry()
         scale_x = self.width() / max(1, pixmap.width())
         scale_y = self.height() / max(1, pixmap.height())
         hit_rect = QRect(
@@ -1255,12 +1605,23 @@ class OverlayWindow(QWidget):
 
     def handle_whip_hit(self):
         now = time.monotonic()
-        if now < self.whip_hit_cooldown_until:
+        if now < getattr(self, "whip_hit_cooldown_until", 0.0):
             return False
         self.whip_hit_cooldown_until = now + 0.9
+        if "whip-hit" in self.all_action_keys():
+            self.play_menu_action("whip-hit")
+            return True
         return False
 
     def handle_feather_touch(self):
+        now = time.monotonic()
+        if now < getattr(self, "whip_hit_cooldown_until", 0.0):
+            return False
+        self.whip_hit_cooldown_until = now + 0.9
+        for key in ("feather-tickle", "feather-touch"):
+            if key in self.all_action_keys():
+                self.play_menu_action(key)
+                return True
         return False
 
     def visible_edge_size(self, mode=None):
@@ -1309,9 +1670,11 @@ class OverlayWindow(QWidget):
 
     def prefers_calm_static_idle(self):
         asset = getattr(self, "asset", None)
+        if asset is None:
+            return True
         meta = getattr(asset, "metadata", {}) or {}
-        if meta.get("fixed_idle") is False:
-            return False
+        if "fixed_idle" in meta:
+            return bool(meta.get("fixed_idle"))
         return True
 
     def edge_crawl_animation_name(self):
@@ -1781,20 +2144,72 @@ class OverlayWindow(QWidget):
     def keep_docked_position_after_frame_change(self):
         if self.initializing_position or self.dock_mode == "none":
             return
-        self.move(self.docked_position(self.pos(), self.dock_mode))
+        new_position = self.docked_position(self.pos(), self.dock_mode)
+        if new_position != self.pos():
+            self.move(new_position)
 
     def frame_animation_definition(self, name):
         metadata = self.asset.metadata or {}
         animations = metadata.get("animations")
-        if name != "idle" and (not isinstance(animations, dict) or name not in animations):
+        if name not in {"idle", "static"} and (not isinstance(animations, dict) or name not in animations):
             return [], self.asset.fps or 12, False
         definition = animations.get(name, {}) if isinstance(animations, dict) else {}
         if not isinstance(definition, dict):
             definition = {}
 
-        folder_name = str(definition.get("folder") or ".")
-        folder = self.asset_path if folder_name in {"", "."} else self.asset_path / folder_name
-        frame_paths = frame_paths_for_folder(folder)
+        # 优先支持单张透明静态图片（如 static.png / preview.png）
+        image_val = definition.get("image") or definition.get("file")
+        if image_val:
+            img_path = (self.asset_path / str(image_val)).resolve()
+            if img_path.is_file():
+                fps = self.config_int(definition, "fps", 1)
+                loop = bool(definition.get("loop", False))
+                return [img_path], fps, loop
+
+        if name == "static":
+            for static_name in ("static.png", "static.webp", "static.jpg", "preview.png"):
+                img_path = self.asset_path / static_name
+                if img_path.is_file():
+                    return [img_path], 1, False
+
+        source = self.animation_video_source(name)
+        folder_value = definition.get("folder")
+        metadata_type = str((metadata.get("type") or "")).strip().lower()
+        is_video_manifest = metadata_type == "video_animation" or bool(
+            definition.get("video") or definition.get("video_source")
+        )
+        # video_animation manifests store each action's video in its own
+        # subdirectory and often omit a separate ``folder`` key.  Use the
+        # declared source directory in that case; otherwise every action
+        # would accidentally reuse the idle video's frames.
+        if not folder_value and source is not None:
+            folder = source.parent
+        else:
+            folder_name = str(folder_value or ".")
+            folder = self.asset_path if folder_name in {"", "."} else self.asset_path / folder_name
+        if is_video_manifest and source is None and not folder_value:
+            # A release build can omit the original video after its frames
+            # have been cached.  Do not let preview.png/static.png in the
+            # character root masquerade as the action sequence.
+            frame_paths = self.cached_video_animation_frames(name)
+        elif source is not None and source.suffix.lower() in ANIMATED_MEDIA_EXTENSIONS:
+            # A video-animation package keeps preview.png beside idle.mov.
+            # Use only the declared source for this action so the preview
+            # image cannot become an extra first frame.
+            frame_paths = media_source_frames(source, self.asset_path)
+        else:
+            frame_paths = frame_paths_for_folder(folder)
+        if not frame_paths:
+            # Release packages may omit the original multi-gigabyte video but
+            # retain its transparent PNG cache.  Use that cache by source stem
+            # so built-in video characters remain playable offline.
+            frame_paths = self.cached_video_animation_frames(name)
+        # Video-animation packages may declare a source video without a
+        # separate folder entry.  Expand that source to cached PNG frames so
+        # transparent qtrle/MP4 media follows the same alpha-safe path.
+        if not frame_paths:
+            if source is not None:
+                frame_paths = media_source_frames(source, self.asset_path)
         if not frame_paths and name != "idle":
             return [], self.asset.fps or 12, False
         if not frame_paths:
@@ -1803,6 +2218,38 @@ class OverlayWindow(QWidget):
         fps = self.config_int(definition, "fps", self.asset.fps or 12)
         loop = bool(definition.get("loop", name == "idle"))
         return frame_paths, fps, loop
+
+    def cached_video_animation_frames(self, name):
+        """Resolve cached frames for a video action when the source is absent."""
+        metadata = self.asset.metadata or {}
+        animations = metadata.get("animations")
+        definition = animations.get(name, {}) if isinstance(animations, dict) else {}
+        if not isinstance(definition, dict):
+            definition = {}
+
+        source_value = definition.get("video") or definition.get("video_source")
+        video_sources = metadata.get("video_sources")
+        if not source_value and isinstance(video_sources, dict):
+            source_value = video_sources.get(name)
+        if not isinstance(source_value, str) or not source_value.strip():
+            return []
+
+        source_path = Path(source_value.strip())
+        source_candidates = (
+            [source_path]
+            if source_path.is_absolute()
+            else [self.asset_path / source_path, self.asset_path.parent / source_path]
+        )
+        folder_name = str(definition.get("folder") or ".")
+        action_folder = self.asset_path if folder_name in {"", "."} else self.asset_path / folder_name
+        cache_folders = [self.asset_path, action_folder]
+        for candidate in source_candidates:
+            cache_folders.append(candidate.parent)
+            for cache_folder in cache_folders:
+                frame_paths = cached_frames_for_source(candidate, cache_folder)
+                if frame_paths:
+                    return frame_paths
+        return []
 
     def animation_video_source(self, name):
         """Resolve the optional original video that supplies an action's sound."""
@@ -1837,7 +2284,16 @@ class OverlayWindow(QWidget):
         return None
 
     def play_animation_audio(self, name, loop):
+        # Most roles start muted.  Do not create a QMediaPlayer or negotiate a
+        # video audio stream just to send silent samples; that work was a
+        # noticeable source of switch-time stalls and backend warnings.
+        if self.sound_muted:
+            if self.video_audio_player is not None:
+                self.video_audio_player.stop()
+            return False
         source = self.animation_video_source(name)
+        if source is None and self.asset_type == AssetType.VIDEO:
+            source = self.asset_path
         if source is None:
             if self.video_audio_player is not None:
                 self.video_audio_player.stop()
@@ -1849,65 +2305,102 @@ class OverlayWindow(QWidget):
         return self.video_audio_player.play(source, loop=loop, speed=self.speed)
 
     def play_frame_animation(self, name, *, loop=None, return_to_idle=True):
+        # A head-track role has no ordinary idle animation to play.  Treat
+        # both idle and head_track requests as a harmless request to restore
+        # the tracking surface, so clicks and drag release cannot race the
+        # pointer timer with a second frame player.
+        if self.is_head_track_role() and str(name) in {"idle", "head_track"}:
+            self.play_idle_animation()
+            return True
         if self.asset_type == AssetType.SPRITESHEET:
             return self.play_spritesheet_animation(name, loop=loop, return_to_idle=return_to_idle)
         if self.asset_type == AssetType.VIDEO:
-            if self.video_player is None:
-                return False
+            if self.frame_player is None:
+                if self.video_player is None:
+                    return False
+                self.animation_duration_timer.stop()
+                self.current_frame_animation = str(name)
+                self.current_animation = str(name)
+                playback_loop = True if loop is None else bool(loop)
+                self.return_to_idle_after_animation = bool(return_to_idle)
+                return self.video_player.play(self.asset_path, loop=playback_loop, speed=self.speed)
             self.animation_duration_timer.stop()
             self.current_frame_animation = str(name)
             self.current_animation = str(name)
             playback_loop = True if loop is None else bool(loop)
             self.return_to_idle_after_animation = bool(return_to_idle)
-            return self.video_player.play(self.asset_path, loop=playback_loop, speed=self.speed)
+            self.frame_player.set_frames(
+                self._animation_frame_cache.get("idle") or media_source_frames(self.asset_path),
+                fps=self.asset.fps or 12,
+                loop=playback_loop,
+            )
+            self.frame_player.set_speed(self.speed)
+            self.frame_player.start()
+            self.play_animation_audio("idle", playback_loop)
+            return True
         if self.asset_type != AssetType.FRAME_ANIMATION:
             return False
 
-        frame_paths, fps, default_loop = self.frame_animation_definition(name)
-        video_source = self.animation_video_source(name)
-        if not frame_paths:
-            if video_source is None:
+        source = self.animation_video_source(name)
+        if source is not None and source.suffix.lower() in ANIMATED_MEDIA_EXTENSIONS:
+            frame_paths = self._animation_frame_cache.get(name)
+            if not frame_paths:
+                # Never wait for ffmpeg on the GUI thread.  Leave the current
+                # good frame visible and start the requested action as soon
+                # as the worker has prepared its cached PNG paths.
+                self._pending_animation_requests[name] = (loop, return_to_idle)
+                self._queue_video_action_frames(name)
+                return True
+            fps, default_loop = self._video_animation_timing(name)
+        else:
+            frame_paths, fps, default_loop = self.frame_animation_definition(name)
+            if not frame_paths:
                 return False
-            if self.frame_player is not None:
-                self.frame_player.stop()
-            if self.video_action_player is None:
-                self.video_action_player = VideoMediaPlayer(self)
-                self.video_action_player.frame_changed.connect(self.update_from_video_player)
-                self.video_action_player.finished.connect(self.frame_animation_finished)
-            self.animation_duration_timer.stop()
-            self.current_frame_animation = str(name)
-            self.current_animation = str(name)
-            if name != "idle":
-                self.idle_variant_timer.stop()
-            duration_seconds = self.frame_animation_duration_seconds(name)
-            timed_action = duration_seconds > 0 and name != "idle"
-            self.return_to_idle_after_animation = bool(return_to_idle)
-            playback_loop = True if timed_action else (default_loop if loop is None else loop)
-            self.video_action_player.play(video_source, loop=playback_loop, speed=self.speed)
-            if timed_action:
-                self.animation_duration_timer.start(round(duration_seconds * 1000))
-            return True
 
+        return self._play_frame_animation_paths(
+            name,
+            frame_paths,
+            fps,
+            default_loop,
+            loop=loop,
+            return_to_idle=return_to_idle,
+        )
+
+    def _play_frame_animation_paths(
+        self,
+        name,
+        frame_paths,
+        fps,
+        default_loop,
+        *,
+        loop=None,
+        return_to_idle=True,
+    ):
         if self.frame_player is None:
             return False
         if self.video_action_player is not None:
             self.video_action_player.stop()
 
         self.animation_duration_timer.stop()
+        self._clamp_content_margins = None
         self.current_frame_animation = name
         self.current_animation = str(name)
         if name != "idle":
             self.idle_variant_timer.stop()
         duration_seconds = self.frame_animation_duration_seconds(name)
-        timed_action = duration_seconds > 0 and name != "idle"
+        timed_action = (
+            duration_seconds > 0
+            and name != "idle"
+            and name not in getattr(self, "_external_integration_action_names", set())
+        )
         self.return_to_idle_after_animation = bool(return_to_idle)
         playback_loop = True if timed_action else (default_loop if loop is None else loop)
         self.frame_player.set_frames(frame_paths, fps=fps, loop=playback_loop)
         self.frame_player.set_speed(self.speed)
         self.frame_player.start()
-        if name == "idle" and self.prefers_calm_static_idle() and video_source is None:
+        if name == "idle" and self.prefers_calm_static_idle():
             self.frame_player.stop()
-        calm_idle = self.prefers_calm_static_idle() and video_source is None
+        calm_idle = self.prefers_calm_static_idle() and name == "idle"
         self.play_animation_audio(name, playback_loop and not calm_idle)
         if timed_action:
             self.animation_duration_timer.start(round(duration_seconds * 1000))
@@ -1942,7 +2435,11 @@ class OverlayWindow(QWidget):
             self.idle_variant_timer.stop()
 
         duration_seconds = self.frame_animation_duration_seconds(self.current_frame_animation)
-        timed_action = duration_seconds > 0 and self.current_frame_animation != "idle"
+        timed_action = (
+            duration_seconds > 0
+            and self.current_frame_animation != "idle"
+            and self.current_frame_animation not in getattr(self, "_external_integration_action_names", set())
+        )
         self.return_to_idle_after_animation = bool(return_to_idle)
         playback_loop = True if timed_action else (default_loop if loop is None else loop)
 
@@ -1988,28 +2485,116 @@ class OverlayWindow(QWidget):
             return 1
 
     def play_idle_animation(self):
-        # Head-track roles allow idle playback; tick_head_track manages static/active switching.
+        if (
+            getattr(self, "external_integration_connected", False)
+            and getattr(self, "external_integration_state", "waiting") == "waiting"
+        ):
+            self._show_external_integration_silent()
+            return
+        # Head-track roles own the idle surface themselves.  Starting the
+        # regular frame player here used to overwrite the tracked frame after
+        # every click/drag and caused black flashes and apparent lag.
+        if self.is_head_track_role():
+            self.animation_duration_timer.stop()
+            self.idle_variant_timer.stop()
+            if self.frame_player is not None:
+                self.frame_player.stop()
+            self.current_frame_animation = "idle"
+            self.current_animation = "idle"
+            if self.head_track_index < 0:
+                self.head_track_index = getattr(self, "_head_neutral_index", 12)
+            if self.current_pixmap != self.head_track_frames[self.head_track_index]:
+                self.current_pixmap = self.head_track_frames[self.head_track_index]
+                self.current_pixmap_content_cache_key = None
+                self.update()
+            return
+        calm_idle = self.prefers_calm_static_idle()
+        if calm_idle:
+            self.animation_duration_timer.stop()
+            self.idle_variant_timer.stop()
+            static_p = self.asset_path / "static.png"
+            if not static_p.exists():
+                static_p = self.asset_path / "preview.png"
+            if static_p.is_file():
+                if self.frame_player is not None:
+                    self.frame_player.stop()
+                pm = QPixmap(str(static_p))
+                if not pm.isNull():
+                    self.current_frame_animation = "static"
+                    self.current_animation = "idle"
+                    self.current_pixmap = pm
+                    self.current_pixmap_content_cache_key = None
+                    self.update()
+                    return
+                self.play_frame_animation("static", loop=False, return_to_idle=False)
+                if self.frame_player is not None:
+                    self.frame_player.stop()
+                return
+
         if self.asset_type == AssetType.FRAME_ANIMATION:
             self.animation_duration_timer.stop()
-            calm_idle = self.prefers_calm_static_idle() and self.animation_video_source("idle") is None
             self.play_frame_animation("idle", loop=not calm_idle, return_to_idle=False)
-            self.schedule_next_idle_variant()
+            if not calm_idle:
+                self.schedule_next_idle_variant()
         elif self.asset_type == AssetType.SPRITESHEET:
             self.animation_duration_timer.stop()
             self.play_spritesheet_animation("idle", loop=False, return_to_idle=False)
-            self.schedule_next_idle_variant()
+            if not calm_idle:
+                self.schedule_next_idle_variant()
         elif self.asset_type == AssetType.VIDEO:
             self.current_frame_animation = "idle"
             self.current_animation = "idle"
-            if self.video_player is not None:
-                self.video_player.play(self.asset_path, loop=True, speed=self.speed)
+            if self.frame_player is not None:
+                self.frame_player.set_frames(
+                    self._animation_frame_cache.get("idle") or media_source_frames(self.asset_path),
+                    fps=self.asset.fps or 12,
+                    loop=not calm_idle,
+                )
+                self.frame_player.set_speed(self.speed)
+                self.frame_player.start()
+                if calm_idle:
+                    self.frame_player.stop()
+                else:
+                    self.play_animation_audio("idle", True)
+            elif self.video_player is not None:
+                if calm_idle:
+                    self.video_player.stop()
+                else:
+                    self.video_player.play(self.asset_path, loop=True, speed=self.speed)
 
     def finish_timed_frame_animation(self):
         if self.return_to_idle_after_animation:
             self.play_idle_animation()
 
     def frame_animation_finished(self):
-        if self.return_to_idle_after_animation:
+        current_name = str(getattr(self, "current_frame_animation", "") or "")
+        external_actions = getattr(self, "_external_integration_action_names", set())
+        current_external_action = str(
+            getattr(self, "_external_integration_current_action", "") or ""
+        )
+        # A stale finish signal can arrive after an external action has been
+        # replaced.  Only the action that owns the current status may change
+        # the AI state; this prevents an old thinking clip from cancelling a
+        # newly requested answer.
+        if current_name != current_external_action:
+            if current_name in external_actions:
+                return
+        if (
+            getattr(self, "external_integration_state", "") == "thinking"
+            and current_name == current_external_action
+        ):
+            self._show_external_integration_silent()
+            return
+        if (
+            getattr(self, "external_integration_state", "") == "result"
+            and current_name == current_external_action
+        ):
+            self.external_integration_state = "waiting"
+            self._external_integration_cycle_active = False
+            self._external_integration_current_action = ""
+            self._show_external_integration_silent()
+            return
+        if self.return_to_idle_after_animation and self.current_frame_animation != "idle":
             self.play_idle_animation()
         elif self.current_frame_animation == "idle":
             self.schedule_next_idle_variant()
@@ -2034,6 +2619,8 @@ class OverlayWindow(QWidget):
             self.head_track_index = self._head_neutral_index
             self.current_pixmap = self.head_track_frames[self._head_neutral_index]
             self.current_pixmap_content_cache_key = None
+            self.idle_variant_timer.stop()
+            self.head_track_timer.setInterval(self.head_track_interval_ms)
             self.head_track_timer.start()
             log_info("Head tracking enabled for %s (%d frames)", self.character_id, len(frames))
 
@@ -2051,13 +2638,41 @@ class OverlayWindow(QWidget):
             return
         center = self.frameGeometry().center()
         cursor = QCursor.pos()
+        if self._head_last_cursor is not None:
+            # Ignore sub-pixel-sized hand tremor between samples.  The timer
+            # still runs at a modest cadence so a real move is picked up
+            # promptly without repainting 25 times per second.
+            if (cursor - self._head_last_cursor).manhattanLength() < 8:
+                return
+        self._head_last_cursor = cursor
         dx = cursor.x() - center.x()
         dy = cursor.y() - center.y()
         radius = max(120.0, min(self.width(), self.height()) * 2.2)
         dxn = max(-1.0, min(1.0, dx / radius))
         dyn = max(-1.0, min(1.0, dy / radius))
-        col = max(0, min(4, int(round((dxn + 1) * 2))))
-        row = max(0, min(4, int(round((dyn + 1) * 2))))
+        previous_row, previous_col = divmod(self.head_track_index if self.head_track_index >= 0 else 12, 5)
+
+        def quantize(value, previous):
+            # Four boundaries divide the normalised range into five poses.
+            # A small hysteresis band around the current bin prevents the
+            # character from flickering when the pointer rests on a boundary.
+            boundaries = (-0.75, -0.25, 0.25, 0.75)
+            candidate = max(0, min(4, int(round((value + 1) * 2))))
+            if candidate == previous:
+                return previous
+            margin = 0.10
+            if candidate > previous:
+                boundary = boundaries[previous]
+                if value < boundary + margin:
+                    return previous
+            else:
+                boundary = boundaries[candidate]
+                if value > boundary - margin:
+                    return previous
+            return candidate
+
+        col = quantize(dxn, previous_col)
+        row = quantize(dyn, previous_row)
         index = row * 5 + col
         # Static head-track-only pet: no idle; neutral frame shown when cursor near center.
         if index != self.head_track_index:
@@ -2149,6 +2764,71 @@ class OverlayWindow(QWidget):
             items.append((name, self.animation_display_name(name, binding_labels.get(name, ""))))
         return items
 
+    def all_action_items(self):
+        """返回该宠物可从右键菜单直接触发的动作列表。"""
+        raw_actions = self.available_animations()
+        excluded = {
+            "head_track",
+            "right-double-click",
+            "whip-hit",
+            "feather-tickle",
+            "feather-touch",
+            "fall",
+            "land",
+        }
+        filtered = [x for x in raw_actions if x not in excluded and not x.startswith(("edge-crawl-", "trio-"))]
+
+        order_map = {
+            "static": 0,
+            "idle": 1,
+            "click": 2,
+            "drag": 3,
+            "thinking": 4,
+            "habit1": 4,
+            "result": 5,
+            "habit2": 5,
+            "hover": 6,
+            "jumping": 7,
+            "waving": 8,
+            "waiting": 9,
+            "running": 10,
+        }
+        filtered.sort(key=lambda x: order_map.get(x, 10))
+
+        metadata = self.asset.metadata or {}
+        anims_meta = metadata.get("animations", {}) if isinstance(metadata.get("animations"), dict) else {}
+
+        preset_labels = {
+            "static": "🖼️ 基础静态",
+            "idle": "💤 常规待机",
+            "click": "👆 轻戳点击",
+            "drag": "🐾 提溜悬空",
+            "thinking": "💫 思考中",
+            "habit1": "💫 思考中",
+            "result": "🎉 已出结果",
+            "habit2": "🎉 已出结果",
+            "hover": "✨ 悬浮轻抚",
+            "jumping": "🦘 欢快跳跃",
+            "waving": "👋 挥手招呼",
+            "waiting": "⏳ 乖乖等待",
+            "running": "🏃 奔跑",
+            "running-left": "🏃 向左跑",
+            "running-right": "🏃 向右跑",
+            "reward": "🎁 奖励互动",
+            "sleep": "🌙 睡觉小憩",
+        }
+
+        items = []
+        for name in filtered:
+            lbl = None
+            if isinstance(anims_meta.get(name), dict):
+                lbl = anims_meta[name].get("label")
+            if not lbl:
+                lbl = preset_labels.get(name) or self.animation_display_name(name, "")
+            items.append((name, str(lbl)))
+
+        return items
+
     def play_named_action(self, animation_name):
         """Play one named extra action once, then return the pet to idle."""
         if self.click_through or self.screen_saver_active:
@@ -2156,6 +2836,265 @@ class OverlayWindow(QWidget):
         name = str(animation_name or "").strip()
         if name not in {action_name for action_name, _label in self.named_action_items()}:
             return False
+        return self.play_frame_animation(name, loop=False, return_to_idle=True)
+
+    def supports_external_ai_integration(self):
+        """Whether this role has the dedicated thinking/result animations."""
+        metadata = getattr(self.asset, "metadata", {}) or {}
+        character_id = str(metadata.get("character_id") or self.character_id or "").lower()
+        name = str(metadata.get("name") or self.pet_display_name or "").lower()
+        return "dadeepseek" in character_id or "deepseek" in name
+
+    def play_external_integration_status(self, status):
+        """Run one thinking or result action for the current AI response.
+
+        The status can be driven by a local ``windowpet://status`` callback or
+        selected manually from the connection submenu.  Thinking is played
+        once; if it finishes before the answer arrives, the preview image is
+        held silently.  A result switches to the answer action once and then
+        returns to that same silent image.  Video actions are still queued
+        through the normal asynchronous media path, so the callback never
+        blocks the GUI thread.
+        """
+        if not self.supports_external_ai_integration():
+            return False
+        status = str(status or "waiting").strip().lower()
+        status_aliases = {
+            "thinking": "thinking",
+            "working": "thinking",
+            "started": "thinking",
+            "generating": "thinking",
+            "waiting": "waiting",
+            "idle": "waiting",
+            "result": "result",
+            "done": "result",
+            "completed": "result",
+            "complete": "result",
+            "answered": "result",
+            "finished": "result",
+            "success": "result",
+        }
+        status = status_aliases.get(status)
+        if status is None:
+            return False
+
+        # ``waiting`` is a connection/quiet state, not an animation.  Older
+        # manifests called the answer action ``deepseek-waiting``; keeping the
+        # alias in the lookup below preserves those files without showing an
+        # extra waiting loop.
+        if status == "waiting":
+            self.external_integration_connected = True
+            self._external_integration_cycle_active = False
+            self._external_integration_current_action = ""
+            self._clear_external_integration_requests()
+            self.external_integration_state = "waiting"
+            self._show_external_integration_silent()
+            return True
+
+        if status == "thinking" and self.external_integration_state == "thinking":
+            return True
+        if status == "result" and not self._external_integration_cycle_active:
+            # A second result callback after the answer has finished must not
+            # replay the answer.  A new thinking callback opens the next cycle.
+            return True
+
+        metadata = getattr(self.asset, "metadata", {}) or {}
+        triggers = metadata.get("triggers", {}) if isinstance(metadata.get("triggers"), dict) else {}
+        if status == "thinking":
+            trigger_keys = ("ai-thinking", "deepseek-thinking", "codex-thinking", "thinking")
+            fallback_names = ("thinking", "habit1")
+        else:
+            trigger_keys = ("ai-result", "deepseek-result", "codex-answered", "result", "answered", "deepseek-waiting")
+            fallback_names = ("result", "habit2")
+        animation = next(
+            (
+                str(triggers.get(key) or "").strip()
+                for key in trigger_keys
+                if str(triggers.get(key) or "").strip() in self.available_animations()
+            ),
+            next((name for name in fallback_names if name in self.available_animations()), ""),
+        )
+        if animation not in self.available_animations():
+            return False
+        self._clear_external_integration_requests()
+        self._external_integration_action_names.add(animation)
+        self.external_integration_connected = True
+        self.idle_variant_timer.stop()
+        self.external_integration_state = status
+        if status == "thinking":
+            self._external_integration_cycle_active = True
+        else:
+            self._external_integration_cycle_active = False
+
+        # Stop the previous external action before starting or queueing this
+        # one.  In particular, when the answer arrives during a long
+        # thinking clip, the old player must not continue to emit frames (or a
+        # finish signal) while the answer video is being prepared.
+        self._external_integration_current_action = animation
+        self._show_external_integration_silent()
+        played = self.play_frame_animation(animation, loop=False, return_to_idle=False)
+        if not played:
+            self._external_integration_current_action = ""
+            self._external_integration_cycle_active = False
+            self._show_external_integration_silent()
+            self.external_integration_state = "waiting"
+        return played
+
+    def _clear_external_integration_requests(self):
+        """Drop stale queued thinking/result requests when the state changes."""
+        for name in tuple(getattr(self, "_external_integration_action_names", ())):
+            self._pending_animation_requests.pop(name, None)
+
+    def _abort_external_integration_action(self, name):
+        """Return to the quiet preview if the current AI clip cannot load."""
+        if str(name or "") != str(
+            getattr(self, "_external_integration_current_action", "") or ""
+        ):
+            return
+        if getattr(self, "external_integration_state", "") not in {"thinking", "result"}:
+            return
+        self._external_integration_current_action = ""
+        self._external_integration_cycle_active = False
+        self.external_integration_state = "waiting"
+        self._show_external_integration_silent()
+
+    def _show_external_integration_silent(self):
+        """Hold the role's transparent preview image without starting a loop."""
+        self.animation_duration_timer.stop()
+        self.idle_variant_timer.stop()
+        if self.frame_player is not None:
+            self.frame_player.stop()
+        if self.sprite_player is not None:
+            self.sprite_player.stop()
+        if self.movie is not None:
+            self.movie.stop()
+        if self.video_player is not None:
+            self.video_player.stop()
+        if self.video_action_player is not None:
+            self.video_action_player.stop()
+        if self.video_audio_player is not None:
+            self.video_audio_player.stop()
+
+        preview = getattr(self.asset, "preview_path", None)
+        if preview is not None and Path(preview).is_file():
+            metadata_type = str((self.asset.metadata or {}).get("type") or "").strip().lower()
+            pixmap = self._video_preview_pixmap(preview) if metadata_type == "video_animation" else QPixmap(str(preview))
+            if not pixmap.isNull():
+                self.static_pixmap = pixmap
+                self.current_frame_animation = "external-silent"
+                self.current_animation = "idle"
+                self.return_to_idle_after_animation = False
+                self.set_current_pixmap(pixmap)
+                return True
+        # Even without a preview file, mark the animation as silent after
+        # stopping its player.  This prevents a delayed finish signal from an
+        # old player being mistaken for the current AI action.
+        self.current_frame_animation = "external-silent"
+        self.current_animation = "idle"
+        self.return_to_idle_after_animation = False
+        return False
+
+    def set_ai_integration(self, integration_key):
+        """Bind this role to one AI provider and launch its local entry point."""
+        item = integration_for(integration_key)
+        self.ai_integration_key = item.key if item is not None else ""
+        self.external_integration_connected = False
+        self._external_integration_current_action = ""
+        self._external_integration_cycle_active = False
+        self._clear_external_integration_requests()
+        save_config()
+        if item is None:
+            self.external_integration_state = "waiting"
+            if self.supports_external_ai_integration() and "idle" in self.available_animations():
+                self.play_frame_animation("idle", loop=True, return_to_idle=False)
+            self.schedule_next_idle_variant()
+            self.say("🔗 已取消 AI 连接", duration_ms=1800)
+            return True
+        return self.connect_external_integration(item.key)
+
+    def connect_external_integration(self, integration_key):
+        item = integration_for(integration_key)
+        if item is None:
+            return False
+        self.ai_integration_key = item.key
+        save_config()
+        ok, message = launch_integration(item.key)
+        if ok:
+            if self.supports_external_ai_integration():
+                # Opening a tool means it is ready for work; keep the role in
+                # its calm waiting state until a thinking/result callback.
+                self.play_external_integration_status("waiting")
+            self.say(f"🔗 已连接 {item.label}：{message}", duration_ms=2400)
+        else:
+            self.say(f"⚠️ {message}", duration_ms=3000)
+        return ok
+
+    def auto_connect_selected_ai(self):
+        """Reconnect the provider saved for this role after startup."""
+        item = integration_for(self.ai_integration_key)
+        if item is None:
+            return False
+        ok, _message = launch_integration(item.key)
+        if ok and self.supports_external_ai_integration():
+            self.play_external_integration_status("waiting")
+        return ok
+
+    def add_external_integrations_menu(self, menu):
+        integrations_menu = menu.addMenu("🔗 连接 AI")
+        style_menu(integrations_menu)
+        current = integration_for(self.ai_integration_key)
+        current_label = current.label if current is not None else "未选择"
+        current_action = QAction(f"当前连接：{current_label}", self)
+        current_action.setEnabled(False)
+        integrations_menu.addAction(current_action)
+        integrations_menu.addSeparator()
+
+        disconnect_action = QAction("○ 不连接 AI", self)
+        disconnect_action.setCheckable(True)
+        disconnect_action.setChecked(current is None)
+        disconnect_action.triggered.connect(lambda: self.set_ai_integration(""))
+        integrations_menu.addAction(disconnect_action)
+        integrations_menu.addSeparator()
+        for integration in integrations():
+            action = QAction(
+                f"✓ {integration.label}" if current is not None and current.key == integration.key else f"连接 {integration.label}",
+                self,
+            )
+            action.setCheckable(True)
+            action.setChecked(current is not None and current.key == integration.key)
+            action.triggered.connect(
+                lambda checked=False, key=integration.key: self.set_ai_integration(key)
+            )
+            integrations_menu.addAction(action)
+
+        if self.supports_external_ai_integration():
+            integrations_menu.addSeparator()
+            connect_all = QAction("🚀 一键打开全部 AI 工具", self)
+            connect_all.triggered.connect(self.connect_all_external_integrations)
+            integrations_menu.addAction(connect_all)
+
+    def connect_all_external_integrations(self):
+        if not self.supports_external_ai_integration():
+            return False
+        results = launch_all_integrations()
+        launched = sum(int(ok) for _integration, ok, _message in results)
+        self.play_external_integration_status("waiting")
+        self.say(f"🔗 已接入 {launched}/{len(integrations())} 个 AI 工具", duration_ms=2800)
+        return launched > 0
+
+    def play_menu_action(self, animation_name):
+        """用户从右键动作列表中点击时播放指定动作。"""
+        if self.click_through or self.screen_saver_active:
+            return False
+        name = str(animation_name or "").strip()
+        if name == "celebrate":
+            return self.trigger_offwork_celebration()
+        if name == "idle":
+            if hasattr(self, "play_idle_animation"):
+                self.play_idle_animation()
+            else:
+                self.play_frame_animation("idle", loop=True, return_to_idle=False)
+            return True
         return self.play_frame_animation(name, loop=False, return_to_idle=True)
 
     def set_layer_value(self, layer_name, value):
@@ -2173,11 +3112,15 @@ class OverlayWindow(QWidget):
         if not isinstance(animations, dict) or animation_name not in animations:
             return False
         if self.asset_type == AssetType.FRAME_ANIMATION:
-            frame_paths, _fps, default_loop = self.frame_animation_definition(animation_name)
-            if not frame_paths:
-                return False
-            self.current_animation = str(animation_name)
-            return self.play_frame_animation(animation_name, loop=default_loop, return_to_idle=not default_loop)
+            definition = animations.get(animation_name, {})
+            default_loop = bool(
+                definition.get("loop", animation_name == "idle")
+            ) if isinstance(definition, dict) else animation_name == "idle"
+            return self.play_frame_animation(
+                animation_name,
+                loop=default_loop,
+                return_to_idle=not default_loop,
+            )
         if self.asset_type == AssetType.SPRITESHEET:
             definition = self.spritesheet_animation_definition(animation_name)
             default_loop = bool(definition.get("loop", animation_name == "idle"))
@@ -2224,8 +3167,21 @@ class OverlayWindow(QWidget):
         self.video_audio_player = None
         self.video_action_player = None
         self.composite_renderer = None
+        self._animation_frame_cache = {}
+        self._animation_frame_tasks = {}
+        self._pending_animation_requests = {}
         self.current_pixmap = QPixmap()
-        if not self.load_asset_content():
+        # Do not carry the old role's dimensions into an asynchronously
+        # loaded video.  Keeping a horizontal size while the new role has no
+        # preview is what made the temporary transparent surface look like a
+        # stale black rectangle.
+        self.base_size = QSize()
+        try:
+            loaded = self.load_asset_content()
+        except Exception as exc:
+            log_warning("Overlay reload raised for %s: %s", self.asset_path, exc)
+            loaded = False
+        if not loaded:
             self._restore_renderer_state(old_state)
             self.setup_head_track()
             log_warning("Overlay reload failed: %s", self.asset_path)
@@ -2237,6 +3193,9 @@ class OverlayWindow(QWidget):
         return True
 
     def stop_playback(self):
+        # Invalidate any ffmpeg worker that is still decoding the previous
+        # asset.  Its queued result will be ignored after a switch or close.
+        self._media_frame_generation += 1
         if self.movie is not None:
             self.movie.stop()
         if self.frame_player is not None:
@@ -2290,15 +3249,26 @@ class OverlayWindow(QWidget):
 
     def paintEvent(self, event):
         pixmap = self.current_pixmap
+        painter = QPainter(self)
+        painter.setCompositionMode(QPainter.CompositionMode_Source)
+        # Clear even while an asynchronous video is being decoded. Leaving
+        # the backing store untouched can turn a temporary null pixmap into a
+        # visible black rectangle on some Windows/DWM combinations.
+        painter.fillRect(self.rect(), Qt.transparent)
         if not pixmap.isNull():
-            painter = QPainter(self)
-            painter.setCompositionMode(QPainter.CompositionMode_Source)
-            painter.fillRect(self.rect(), Qt.transparent)
-            painter.drawPixmap(self.rect(), pixmap)
+            # Most roles already use a pixmap at the widget's current size.
+            # Drawing it directly avoids invoking the raster scaler on every
+            # video frame; scaling remains available for roles whose canvas
+            # size differs from the current window.
+            if pixmap.size() == self.size():
+                painter.drawPixmap(0, 0, pixmap)
+            else:
+                painter.drawPixmap(self.rect(), pixmap)
             painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
             painter.setRenderHint(QPainter.Antialiasing, True)
             self.draw_accessories(painter)
             self.draw_status_overlays(painter)
+        painter.end()
 
     def draw_accessories(self, painter):
         if not self.enabled_accessories or not self.base_size.isValid():
@@ -2362,7 +3332,7 @@ class OverlayWindow(QWidget):
         """Show an expressive speech bubble message over the pet's head."""
         self._transient_speech = str(text or "").strip()
         self._transient_kind = str(kind or "chat")
-        self._sync_speech_bubble()
+        self._sync_speech_bubble(force=True)
         if not hasattr(self, "_transient_speech_timer"):
             self._transient_speech_timer = QTimer(self)
             self._transient_speech_timer.setSingleShot(True)
@@ -2371,9 +3341,13 @@ class OverlayWindow(QWidget):
 
     def _clear_transient_speech(self):
         self._transient_speech = ""
-        self._sync_speech_bubble()
+        self._sync_speech_bubble(force=True)
 
-    def _sync_speech_bubble(self):
+    def _sync_speech_bubble(self, force=False):
+        now = time.monotonic()
+        if not force and now - self._speech_sync_last < self._speech_sync_interval:
+            return
+        self._speech_sync_last = now
         lines = self._speech_lines()
         if not lines:
             if self._speech_bubble is not None:
@@ -2391,9 +3365,14 @@ class OverlayWindow(QWidget):
     def apply_scale(self):
         if not self.base_size.isValid():
             return
+        self._clamp_content_margins = None
         width = max(1, round(self.base_size.width() * self.scale / 100))
         height = max(1, round(self.base_size.height() * self.scale / 100))
         self.setFixedSize(width, height)
+        if hasattr(self, "video_action_player") and self.video_action_player is not None:
+            self.video_action_player.set_display_size(self.size())
+        if hasattr(self, "video_player") and self.video_player is not None:
+            self.video_player.set_display_size(self.size())
         if hasattr(self, "mic_badge"):
             self.mic_badge.move(max(0, self.width() - 34), 4)
         if self.initializing_position:
@@ -2409,7 +3388,9 @@ class OverlayWindow(QWidget):
             if custom_action and custom_action in self.available_animations():
                 return [(custom_action, 1.0)]
         fallback = MOUSE_TRIGGER_ACTIONS.get(trigger_name)
-        return [(fallback, 1.0)] if fallback else []
+        if fallback and fallback in self.available_animations():
+            return [(fallback, 1.0)]
+        return []
 
     def select_trigger_animation(self, trigger_name):
         candidates = self.trigger_animation_candidates(trigger_name)
@@ -2678,6 +3659,7 @@ class OverlayWindow(QWidget):
             released_drag_button = self.drag_button
             if self.is_dragging_asset:
                 self.is_dragging_asset = False
+                self.position_user_set = True
                 self.move(self.clamped_position(self.pos()))
                 self.play_idle_animation()
                 self.physics.resume_after_drag(force_landing_animation=False)
@@ -2721,27 +3703,43 @@ class OverlayWindow(QWidget):
         new_muted = toggle_microphone_muted()
         if hasattr(self, "mic_badge"):
             self.mic_badge.update_state()
-            self.mic_badge.show()
-            self.mic_badge.raise_()
         for win in getattr(state, "WINDOWS", []):
             if win != self and hasattr(win, "mic_badge"):
                 win.mic_badge.update_state()
         msg = "🤫 麦克风已闭麦" if new_muted else "🎙️ 麦克风已开麦"
         self.say(msg, duration_ms=2500)
 
+    def set_mic_badge_visible(self, visible):
+        """Show or hide the optional microphone badge and persist the choice."""
+        self.mic_badge_visible = bool(visible)
+        if not hasattr(self, "mic_badge"):
+            return
+        self.mic_badge._auto_hide_timer.stop()
+        self.mic_badge.update_state()
+        if self.mic_badge_visible:
+            self.mic_badge.show()
+            self.mic_badge.raise_()
+        else:
+            self.mic_badge.hide()
+        save_config()
+
     def toggle_sound_muted(self):
         """切换角色自身的声音静音状态 (刚下载时所有角色默认静音)"""
         self.sound_muted = not self.sound_muted
-        if self.video_audio_player is not None:
-            self.video_audio_player.set_muted(self.sound_muted)
+        if self.sound_muted:
+            if self.video_audio_player is not None:
+                self.video_audio_player.stop()
+            if self.video_action_player is not None:
+                self.video_action_player.set_muted(True)
+        else:
+            if self.video_action_player is not None:
+                self.video_action_player.set_muted(False)
+            self.play_animation_audio(self.current_animation or "idle", loop=True)
         msg = "🔈 角色已静音" if self.sound_muted else "🔊 角色声音已开启"
         self.say(msg, duration_ms=2500)
         save_config()
 
     def open_menu(self, pos):
-        if hasattr(self, "mic_badge"):
-            self.mic_badge.reveal()
-
         menu = style_menu(QMenu(self))
 
         # 1. 软件控制台主页
@@ -2749,49 +3747,46 @@ class OverlayWindow(QWidget):
         open_control_panel_action.triggered.connect(self.open_control_panel)
         menu.addAction(open_control_panel_action)
 
-        # 麦克风闭麦 / 开麦一键控制
+        # 系统麦克风只保留一个直接开关，菜单文案始终明确表示点击后的动作。
         is_muted = get_microphone_muted()
-        mic_text = "🔇 麦克风已闭麦 (点击开麦)" if is_muted else "🎙️ 闭麦 (静音麦克风)"
-        mic_action = QAction(mic_text, self)
+        mic_action = QAction("开启麦克风" if is_muted else "关闭麦克风", self)
         mic_action.triggered.connect(self.toggle_microphone_mute)
         menu.addAction(mic_action)
 
-        # 角色自身声音静音/开启控制 (刚下载时所有角色默认静音)
-        sound_text = "🔈 角色已静音 (点击开启声音)" if self.sound_muted else "🔊 角色声音已开启 (点击静音)"
-        sound_action = QAction(sound_text, self)
+        sound_label = "🔊 开启角色声音" if self.sound_muted else "🔈 静音角色声音"
+        sound_action = QAction(sound_label, self)
         sound_action.triggered.connect(self.toggle_sound_muted)
         menu.addAction(sound_action)
 
+        top_action = QAction(
+            "取消置顶" if self.always_on_top else "置顶角色",
+            self,
+        )
+        top_action.triggered.connect(self.toggle_always_on_top)
+        menu.addAction(top_action)
+
         menu.addSeparator()
 
-        # 2. 核心互动与动作类
-        celebrate_action = QAction("🎉 欢庆时刻 (变大起舞)", self)
-        celebrate_action.triggered.connect(lambda: self.trigger_offwork_celebration())
-        menu.addAction(celebrate_action)
-
-        whip_action = QAction("🪄 抽鞭子", self)
-        whip_action.triggered.connect(lambda: show_whip_tool(self))
-        menu.addAction(whip_action)
-
-        feather_action = QAction("🪶 小羽毛", self)
-        feather_action.triggered.connect(lambda: show_feather_tool(self))
-        menu.addAction(feather_action)
-
-        actions = self.named_action_items()
+        # 2. 动作列表 (收纳该宠物的全部动作，悬停向右展开)
+        actions = self.all_action_items()
         if actions:
             animation_menu = menu.addMenu("🎭 动作列表")
+            style_menu(animation_menu)
             for animation_name, display_name in actions:
                 animation_action = QAction(str(display_name), self)
-                if str(display_name) != str(animation_name):
-                    animation_action.setToolTip(str(animation_name))
                 animation_action.triggered.connect(
-                    lambda checked=False, name=animation_name: self.play_named_action(name)
+                    lambda checked=False, name=animation_name: self.play_menu_action(name)
                 )
                 animation_menu.addAction(animation_action)
+
+        # AI connection is configured from the control panel's prominent
+        # "一键连接 AI" button.  Keep the desktop context menu focused on
+        # everyday pet actions instead of exposing provider/setup details.
 
         accessories = self.accessory_definitions()
         if accessories:
             accessory_menu = menu.addMenu("🎀 配件")
+            style_menu(accessory_menu)
             for key, definition in accessories.items():
                 accessory_action = QAction(self.accessory_display_name(key, definition), self)
                 accessory_action.setCheckable(True)
@@ -2799,10 +3794,12 @@ class OverlayWindow(QWidget):
                 accessory_action.triggered.connect(lambda checked=False, value=str(key): self.toggle_accessory(value))
                 accessory_menu.addAction(accessory_action)
 
-        menu.addSeparator()
+        # 3. 实用轻量工具：计时、便签与电源计划
+        tools_menu = menu.addMenu("⏰ 效率与工具")
+        style_menu(tools_menu)
 
-        # 3. 实用轻量工具：计时器 & 便签
-        timer_menu = menu.addMenu("⏰ 计时与专注")
+        timer_menu = tools_menu.addMenu("⏱️ 计时与专注")
+        style_menu(timer_menu)
         timer_visible_action = QAction("隐藏计时器" if self.timer_visible else "显示计时器", self)
         timer_visible_action.triggered.connect(self.toggle_timer_visible)
         timer_menu.addAction(timer_visible_action)
@@ -2828,7 +3825,27 @@ class OverlayWindow(QWidget):
             adjust_action.triggered.connect(lambda checked=False, value=minutes: self.adjust_timer_minutes(value))
             timer_menu.addAction(adjust_action)
 
-        power_menu = menu.addMenu("🌙 定时休眠与关机")
+        memo_menu = tools_menu.addMenu("📝 NotchNotes 便签")
+        style_menu(memo_menu)
+        notchnotes_open_action = QAction("展开/收起 NotchNotes 便签", self)
+        notchnotes_open_action.triggered.connect(self.toggle_notchnotes)
+        memo_menu.addAction(notchnotes_open_action)
+        memo_menu.addSeparator()
+        memo_show_action = QAction("隐藏桌宠头顶气泡" if self.memo_visible else "在桌宠头顶显示待办气泡", self)
+        memo_show_action.triggered.connect(self.toggle_memo_visible)
+        memo_menu.addAction(memo_show_action)
+        quick_task_action = QAction("快速添加待办任务...", self)
+        quick_task_action.triggered.connect(self.quick_add_todo_task)
+        memo_menu.addAction(quick_task_action)
+        memo_edit_action = QAction("编辑简易便签文本...", self)
+        memo_edit_action.triggered.connect(self.edit_memo)
+        memo_menu.addAction(memo_edit_action)
+        memo_clear_action = QAction("清空所有待办与便签", self)
+        memo_clear_action.triggered.connect(self.clear_memo)
+        memo_menu.addAction(memo_clear_action)
+
+        power_menu = tools_menu.addMenu("🌙 定时休眠与关机")
+        style_menu(power_menu)
         due_at = self.parse_power_due_at()
         if self.power_action_type and due_at is not None:
             lbl = self.power_action_label()
@@ -2848,27 +3865,9 @@ class OverlayWindow(QWidget):
         exact_action.triggered.connect(self.schedule_power_at_time)
         power_menu.addAction(exact_action)
 
-        memo_menu = menu.addMenu("📝 NotchNotes 便签")
-        notchnotes_open_action = QAction("展开/收起 NotchNotes 便签", self)
-        notchnotes_open_action.triggered.connect(self.toggle_notchnotes)
-        memo_menu.addAction(notchnotes_open_action)
-        memo_menu.addSeparator()
-        memo_show_action = QAction("隐藏桌宠头顶气泡" if self.memo_visible else "在桌宠头顶显示待办气泡", self)
-        memo_show_action.triggered.connect(self.toggle_memo_visible)
-        memo_menu.addAction(memo_show_action)
-        quick_task_action = QAction("快速添加待办任务...", self)
-        quick_task_action.triggered.connect(self.quick_add_todo_task)
-        memo_menu.addAction(quick_task_action)
-        memo_edit_action = QAction("编辑简易便签文本...", self)
-        memo_edit_action.triggered.connect(self.edit_memo)
-        memo_menu.addAction(memo_edit_action)
-        memo_clear_action = QAction("清空所有待办与便签", self)
-        memo_clear_action.triggered.connect(self.clear_memo)
-        memo_menu.addAction(memo_clear_action)
-
         menu.addSeparator()
 
-        # 4. 全新竖向大小滚轮滑块 (Vertical Wheel / Slider Control)
+        # 5. 竖向大小滚轮滑块 (Vertical Wheel / Slider Control)
         size_widget = VibeVerticalSizeControl(current_scale=self.scale, on_scale_changed=self.set_scale, parent=menu)
         size_action = QWidgetAction(menu)
         size_action.setDefaultWidget(size_widget)
@@ -3005,6 +4004,7 @@ class OverlayWindow(QWidget):
         refresh_control_panel()
 
     def showEvent(self, event):
+        self._ensure_transparent_surface()
         remove_native_border(self)
         super().showEvent(event)
         self._sync_speech_bubble()
@@ -3075,6 +4075,7 @@ class OverlayWindow(QWidget):
             "asset_type": self.asset_type,
             "x": pos.x(),
             "y": pos.y(),
+            "position_user_set": self.position_user_set,
             "locked": self.locked,
             "always_on_top": self.always_on_top,
             "click_through": self.click_through,
@@ -3096,7 +4097,9 @@ class OverlayWindow(QWidget):
             "pet_serial": self.pet_serial,
             "character_id": self.character_id,
             "pet_display_name": self.pet_display_name,
+            "ai_integration_key": self.ai_integration_key,
             "sound_muted": self.sound_muted,
+            "mic_badge_visible": self.mic_badge_visible,
         }
         if self.layer_values:
             data["layer_values"] = self.layer_values
@@ -3116,10 +4119,10 @@ class OverlayWindow(QWidget):
             super().closeEvent(event)
             return
 
-        save_config()
         if self in state.WINDOWS:
             state.WINDOWS.remove(self)
         log_info("Overlay removed: %s", self.asset_path)
         save_config()
         refresh_control_panel()
+        self.deleteLater()
         super().closeEvent(event)

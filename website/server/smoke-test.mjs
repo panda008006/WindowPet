@@ -38,6 +38,32 @@ const numberedPackage = await request('/api/store/packages/0006')
 if (numberedPackage.package.packageCode !== '0006' || numberedPackage.package.id !== 'jiyi') {
   throw new Error('Four-digit package lookup returned the wrong package')
 }
+
+const submissionForm = new FormData()
+submissionForm.set('displayName', `Smoke Pet ${Date.now()}`)
+submissionForm.set('authorName', 'Smoke Test Creator')
+submissionForm.set('authorEmail', email)
+submissionForm.set('version', '1.0.0')
+submissionForm.set('description', '这是用于 API smoke test 的角色投稿说明，包含足够的描述文字。')
+submissionForm.set('licenseText', 'Smoke test owns the submitted test assets.')
+submissionForm.set('licenseAccepted', 'true')
+submissionForm.set('packageFile', new Blob([Buffer.from([0x50, 0x4b, 0x03, 0x04]), new TextEncoder().encode('asset.json')], { type: 'application/zip' }), 'smoke-pet.wpet')
+submissionForm.set('demoVideo', new Blob([Buffer.from('0000ftypisom-smoke')], { type: 'video/mp4' }), 'smoke-demo.mp4')
+const submitted = await request('/api/submissions', { method: 'POST', body: submissionForm })
+const pendingSubmission = await request(`/api/submissions/${submitted.submission.id}?token=${encodeURIComponent(submitted.trackingToken)}`)
+const adminSubmissions = await request('/api/admin/submissions', { headers: adminHeaders() })
+const reviewedSubmission = await request(`/api/admin/submissions/${submitted.submission.id}/review`, {
+  method: 'POST',
+  headers: adminHeaders(),
+  body: JSON.stringify({ status: 'approved', reviewNote: 'Smoke test approved.' }),
+})
+const publishedStore = await request('/api/store/pets')
+if (pendingSubmission.submission.status !== 'pending_review' || reviewedSubmission.submission.status !== 'approved') {
+  throw new Error('Submission review flow returned an unexpected status')
+}
+if (!publishedStore.packages.some((item) => item.id === `creator-${submitted.submission.id}`)) {
+  throw new Error('Approved submission did not enter the public package catalog')
+}
 let registered
 let login
 if (process.env.WINDOWPET_RETURN_DEV_CODE === 'true') {
@@ -69,6 +95,14 @@ if (process.env.WINDOWPET_RETURN_DEV_CODE === 'true') {
   })
   login = registered
 }
+const profile = await request('/api/auth/profile', {
+  method: 'PATCH',
+  headers: authHeaders(login.token),
+  body: JSON.stringify({ socialHandles: { douyin: 'smoke-douyin', bilibili: 'smoke-bili', qq: '10086' } }),
+})
+if (profile.user.socialHandles.qq !== '10086') throw new Error('Profile social handles were not saved')
+const mySubmissions = await request('/api/me/submissions', { headers: { Authorization: `Bearer ${login.token}` } })
+if (!Array.isArray(mySubmissions.submissions)) throw new Error('Authenticated submission list was not returned')
 const batch = await request('/api/admin/egg-codes/batch', {
   method: 'POST',
   headers: adminHeaders(),
@@ -136,6 +170,9 @@ console.log(
       authProviders: providers,
       packageCount: store.packages.length,
       numberedPackage: `${numberedPackage.package.packageCode}:${numberedPackage.package.id}`,
+      submissionId: submitted.submission.id,
+      submissionStatus: reviewedSubmission.submission.status,
+      adminSubmissionCount: adminSubmissions.submissions.length,
       registeredUser: registered.user.email,
       loginUser: login.user.email,
       generatedEggCode: batch.codes[0].code,
@@ -147,7 +184,7 @@ console.log(
       createdOrderId: order.order.id,
       paymentVerified: finalStatus.isPaid,
       entitlementsCount: entitlements.entitlements.length,
-      userIsVip: entitlements.isVip,
+      allUnlocked: entitlements.allUnlocked,
     },
     null,
     2,

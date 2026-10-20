@@ -1,12 +1,39 @@
 {
   "schema_version": 1,
   "asset_root": "assets",
-  "windows": [],
+  "windows": [
+    {
+      "path": "assets/DaDeepSeekPet",
+      "asset_id": "DaDeepSeekPet",
+      "asset_type": "video_animation",
+      "character_id": "DaDeepSeekPet",
+      "pet_display_name": "大DeepSeek",
+      "scale": 50,
+      "opacity": 100,
+      "speed": 100,
+      "always_on_top": true,
+      "physics_enabled": false,
+      "dock_mode": "none"
+    },
+    {
+      "path": "assets/DaFeiYuPet",
+      "asset_id": "DaFeiYuPet",
+      "asset_type": "video_animation",
+      "character_id": "DaFeiYuPet",
+      "pet_display_name": "大肥鱼",
+      "scale": 50,
+      "opacity": 100,
+      "speed": 100,
+      "always_on_top": true,
+      "physics_enabled": false,
+      "dock_mode": "none"
+    }
+  ],
   "_settings": {
     "activity_state": {
       "unlock_rule_version": 0,
       "initialized": false,
-      "all_unlocked": false,
+      "all_unlocked": true,
       "unlocks": {},
       "unlocked_asset_ids": [],
       "email": null,
